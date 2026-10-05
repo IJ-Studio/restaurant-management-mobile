@@ -1,0 +1,102 @@
+# .github/workflows/project-pr-status.yml
+# PR borrador -> issue vinculado en "In progress"
+# PR listo para revisión -> issue vinculado en "In review"
+# El issue se vincula con "Closes #N" en la descripción del PR (o desde Development).
+# "Merged -> Done" lo hace el workflow integrado del Project.
+name: Project - Status según el PR
+
+on:
+  pull_request:
+    types: [opened, reopened, ready_for_review, converted_to_draft]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: project-pr-status-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+env:
+  ORG: IJ-Studio
+  PROJECT_NUMBER: "1"
+  STATUS_FIELD: "Status"
+  DRAFT_STATUS: "In progress"
+  REVIEW_STATUS: "In review"
+
+jobs:
+  update-status:
+    # Los PR de forks y de Dependabot no reciben secretos
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.actor != 'dependabot[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Mover los issues vinculados
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}   # GITHUB_TOKEN no edita Projects de una organización
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          IS_DRAFT: ${{ github.event.pull_request.draft }}
+          REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          OWNER="${REPO%%/*}"; NAME="${REPO##*/}"
+
+          if [ "$IS_DRAFT" = "true" ]; then TARGET="$DRAFT_STATUS"; else TARGET="$REVIEW_STATUS"; fi
+          echo "PR #$PR_NUMBER -> Status destino: $TARGET"
+
+          # 1) IDs del proyecto, del campo Status y de la opción destino
+          META=$(gh api graphql -F num="$PROJECT_NUMBER" -f org="$ORG" -f query='
+            query($org:String!,$num:Int!){
+              organization(login:$org){
+                projectV2(number:$num){
+                  id
+                  fields(first:50){
+                    nodes{ ... on ProjectV2SingleSelectField{ id name options{ id name } } }
+                  }
+                }
+              }
+            }')
+          PROJECT_ID=$(jq -r '.data.organization.projectV2.id' <<<"$META")
+          STATUS_ID=$(jq -r --arg n "$STATUS_FIELD" '.data.organization.projectV2.fields.nodes[] | select(.name==$n) | .id' <<<"$META")
+          OPTION_ID=$(jq -r --arg n "$STATUS_FIELD" --arg o "$TARGET" '.data.organization.projectV2.fields.nodes[] | select(.name==$n) | .options[]? | select(.name==$o) | .id' <<<"$META")
+          for v in PROJECT_ID STATUS_ID OPTION_ID; do
+            if [ -z "${!v}" ] || [ "${!v}" = "null" ]; then
+              echo "::error::No se encontró $v. Revisa STATUS_FIELD y el nombre de la opción '$TARGET'."
+              exit 1
+            fi
+          done
+
+          # 2) Items del Project que corresponden a los issues que cierra este PR
+          ITEMS=$(gh api graphql -F num="$PR_NUMBER" -f owner="$OWNER" -f name="$NAME" -f query='
+            query($owner:String!,$name:String!,$num:Int!){
+              repository(owner:$owner,name:$name){
+                pullRequest(number:$num){
+                  closingIssuesReferences(first:10){
+                    nodes{
+                      number
+                      projectItems(first:10){ nodes{ id project{ id } } }
+                    }
+                  }
+                }
+              }
+            }' | jq -c --arg p "$PROJECT_ID" '
+              .data.repository.pullRequest.closingIssuesReferences.nodes[]
+              | {num: .number, item: (.projectItems.nodes[] | select(.project.id==$p) | .id)}')
+
+          if [ -z "$ITEMS" ]; then
+            echo "El PR no tiene issues vinculados en este Project. Nada que hacer."
+            exit 0
+          fi
+
+          # 3) Actualizar el Status de cada uno
+          while IFS= read -r row; do
+            [ -z "$row" ] && continue
+            ITEM_ID=$(jq -r '.item' <<<"$row"); NUM=$(jq -r '.num' <<<"$row")
+            gh api graphql -f query='
+              mutation($p:ID!,$i:ID!,$f:ID!,$o:String!){
+                updateProjectV2ItemFieldValue(input:{
+                  projectId:$p, itemId:$i, fieldId:$f,
+                  value:{ singleSelectOptionId:$o }
+                }){ projectV2Item{ id } }
+              }' -f p="$PROJECT_ID" -f i="$ITEM_ID" -f f="$STATUS_ID" -f o="$OPTION_ID" > /dev/null
+            echo "  ✔ issue #$NUM -> $TARGET"
+          done <<<"$ITEMS"
