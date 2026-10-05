@@ -1,0 +1,155 @@
+# .github/workflows/project-notify.yml
+# Resumen diario por correo, una persona por correo, solo con SUS tareas:
+#   - Inician hoy (Start date = hoy) y la fecha en que vencen
+#   - Retrasadas (Target date < hoy, no Done), con los días de retraso (solo lunes a viernes)
+# Solo issues abiertos y que no estén en Done. Las tareas sin responsable no notifican a nadie.
+name: Project - Correo diario (inician hoy y retrasadas)
+
+on:
+  schedule:
+    - cron: "0 13 * * *"   # 13:00 UTC = 07:00 en México (UTC-6, sin horario de verano)
+  workflow_dispatch:
+    inputs:
+      date:
+        description: "Fecha a simular (YYYY-MM-DD). Vacío = hoy"
+        required: false
+      dry_run:
+        description: "true = solo muestra los correos, no envía nada"
+        type: choice
+        options: ["true", "false"]
+        default: "true"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: project-notify
+  cancel-in-progress: false
+
+env:
+  ORG: IJ-Studio
+  PROJECT_NUMBER: "1"
+  START_FIELD: "Start date"
+  TARGET_FIELD: "Target date"
+  STATUS_FIELD: "Status"
+  DONE_STATUS: "Done"
+  TZ_NAME: "America/Mexico_City"
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Enviar correos del día
+        env:
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          SMTP_USER: ${{ secrets.SMTP_USER }}
+          SMTP_PASS: ${{ secrets.SMTP_PASS }}
+          EMAILS_JSON: ${{ secrets.EMAILS_JSON }}
+          INPUT_DATE: ${{ github.event.inputs.date }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: |
+          set -euo pipefail
+          TODAY="${INPUT_DATE:-$(TZ="$TZ_NAME" date +%F)}"
+          DOW=$(date -d "$TODAY" +%u)          # 1 = lunes ... 7 = domingo
+          SEND_OVERDUE=true
+          if [ "$DOW" -ge 6 ]; then SEND_OVERDUE=false; fi
+          echo "Fecha de referencia: $TODAY (día $DOW) | retrasadas=$SEND_OVERDUE | dry_run=$DRY_RUN"
+
+          # 1) Items del Project (paginado)
+          gh api graphql --paginate -F num="$PROJECT_NUMBER" -f org="$ORG" -f query='
+            query($org:String!,$num:Int!,$endCursor:String){
+              organization(login:$org){
+                projectV2(number:$num){
+                  items(first:100, after:$endCursor){
+                    pageInfo{ hasNextPage endCursor }
+                    nodes{
+                      content{
+                        __typename
+                        ... on Issue{
+                          number title url state
+                          repository{ nameWithOwner }
+                          assignees(first:10){ nodes{ login } }
+                        }
+                      }
+                      fieldValues(first:30){
+                        nodes{
+                          __typename
+                          ... on ProjectV2ItemFieldDateValue{ date field{ ... on ProjectV2Field{ name } } }
+                          ... on ProjectV2ItemFieldSingleSelectValue{ name field{ ... on ProjectV2SingleSelectField{ name } } }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }' > items.json
+
+          # 2) Issues abiertos y que no estén en Done
+          jq -c --arg s "$START_FIELD" --arg t "$TARGET_FIELD" --arg st "$STATUS_FIELD" --arg done "$DONE_STATUS" '
+            .data.organization.projectV2.items.nodes[]
+            | select(.content.__typename=="Issue" and .content.state=="OPEN")
+            | { repo: (.content.repository.nameWithOwner | split("/")[1]),
+                num: .content.number, title: .content.title, url: .content.url,
+                assignees: [.content.assignees.nodes[].login],
+                start:  ([.fieldValues.nodes[] | select(.field.name==$s and .date != null) | .date][0]),
+                target: ([.fieldValues.nodes[] | select(.field.name==$t and .date != null) | .date][0]),
+                status: ([.fieldValues.nodes[] | select(.field.name==$st) | .name][0]) }
+            | select(.status != $done)
+          ' items.json > issues.jsonl
+
+          # 3) Agrupar por persona: qué inicia hoy y qué está retrasado
+          jq -s -c --arg today "$TODAY" --arg ov "$SEND_OVERDUE" '
+            def days_late: ((($today + "T00:00:00Z") | fromdateiso8601) - ((.target + "T00:00:00Z") | fromdateiso8601)) / 86400;
+            map(. as $i | $i.assignees[] | {login: ., issue: $i})
+            | group_by(.login)
+            | map({
+                login: .[0].login,
+                starting: [ .[].issue | select(.start == $today) ],
+                overdue: (if $ov == "true"
+                          then ([ .[].issue | select(.target != null and .target < $today) | . + {days: days_late} ] | sort_by(.target))
+                          else [] end)
+              })
+            | map(select((.starting | length) > 0 or (.overdue | length) > 0))
+            | .[]
+          ' issues.jsonl > by-person.jsonl
+
+          [ -s by-person.jsonl ] || { echo "Nada que avisar hoy."; exit 0; }
+
+          # 4) Un correo por persona
+          while IFS= read -r row; do
+            LOGIN=$(jq -r '.login' <<<"$row")
+            NS=$(jq -r '.starting | length' <<<"$row")
+            NO=$(jq -r '.overdue | length' <<<"$row")
+            EMAIL=$(jq -r --arg l "$LOGIN" '.[$l] // empty' <<<"$EMAILS_JSON")
+            if [ -z "$EMAIL" ]; then
+              echo "::warning::No hay correo para $LOGIN en EMAILS_JSON; se omite."
+              continue
+            fi
+
+            BODY=$(jq -r --arg d "$TODAY" '
+              def inicia: "• \(.repo)#\(.num) — \(.title)\n  Vence: \(.target // "sin fecha límite")\n  \(.url)";
+              def tarde:  "• \(.repo)#\(.num) — \(.title)\n  Venció: \(.target) (\(.days) día(s) de retraso)\n  \(.url)";
+              "Hola, este es tu resumen del \($d).\n"
+              + (if (.starting | length) > 0 then "\nINICIAN HOY:\n\n" + (.starting | map(inicia) | join("\n\n")) + "\n" else "" end)
+              + (if (.overdue  | length) > 0 then "\nRETRASADAS (ya pasó su fecha límite):\n\n" + (.overdue | map(tarde) | join("\n\n")) + "\n" else "" end)
+            ' <<<"$row")
+            SUBJECT="Resumen $TODAY: $NS inician hoy, $NO retrasada(s)"
+
+            if [ "$DRY_RUN" != "false" ]; then
+              echo "--- [dry-run] para $LOGIN <$EMAIL> ---"; echo "$SUBJECT"; echo "$BODY"; continue
+            fi
+
+            {
+              printf 'From: %s\r\n' "$SMTP_USER"
+              printf 'To: %s\r\n' "$EMAIL"
+              printf 'Subject: =?UTF-8?B?%s?=\r\n' "$(printf '%s' "$SUBJECT" | base64 -w0)"
+              printf 'MIME-Version: 1.0\r\nContent-Type: text/plain; charset=UTF-8\r\nContent-Transfer-Encoding: 8bit\r\n\r\n'
+              printf '%s\r\n' "$BODY"
+            } > mail.txt
+
+            curl --silent --show-error --ssl-reqd --url "smtps://smtp.gmail.com:465" \
+                 --user "$SMTP_USER:$SMTP_PASS" --mail-from "$SMTP_USER" \
+                 --mail-rcpt "$EMAIL" --upload-file mail.txt
+            echo "  ✉ enviado a $LOGIN ($NS inician hoy, $NO retrasada(s))"
+          done < by-person.jsonl
