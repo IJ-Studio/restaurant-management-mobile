@@ -22,13 +22,12 @@
   "scripts": {
     "lint": "expo lint",
     "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web"
-  },
-  "jest": {
-    "preset": "jest-expo"
   },
   "private": true
 }
