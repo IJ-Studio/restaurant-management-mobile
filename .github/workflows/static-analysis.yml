@@ -1,0 +1,32 @@
+name: static-analysis
+
+on:
+  pull_request:
+    branches: [main, develop]
+  push:
+    branches: [main, develop]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: static-analysis-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-analysis:
+    name: ESLint, TypeScript y Prettier
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: ESLint (falla ante cualquier warning)
+        run: npm run lint
+      - name: TypeScript (tsc --noEmit)
+        run: npm run typecheck
+      - name: Prettier (formato)
+        run: npm run format:check
