@@ -1,0 +1,176 @@
+# .github/workflows/project-ready.yml
+# Automatiza el tablero según las fechas del GitHub Project:
+#   1) Start date <= hoy                    -> Status "Ready" (solo desde Backlog / sin Status)
+#   2) Target date <  hoy y no está Done    -> label "retrasado" (Status y Priority NO se tocan)
+#   3) Tiene el label pero ya no aplica (Done o fecha movida) -> se quita el label
+# Solo toca issues ABIERTOS.
+# Lanzado a mano usa dry_run=true por defecto: muestra lo que haría sin modificar nada.
+name: Project - Ready por fecha de inicio y label retrasado por vencimiento
+
+on:
+  schedule:
+    - cron: "0 12 * * *"   # 12:00 UTC = 06:00 hora del centro de México (UTC-6, sin horario de verano)
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "true = solo muestra lo que haría, sin modificar nada"
+        type: choice
+        options: ["true", "false"]
+        default: "true"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: project-ready
+  cancel-in-progress: false
+
+env:
+  ORG: IJ-Studio
+  PROJECT_NUMBER: "1"
+  STATUS_FIELD: "Status"
+  READY_STATUS: "Ready"
+  FROM_STATUS: "Backlog"
+  DONE_STATUS: "Done"
+  START_FIELD: "Start date"
+  TARGET_FIELD: "Target date"
+  DELAYED_LABEL: "retrasado"
+  TZ_NAME: "America/Mexico_City"
+
+jobs:
+  sync-board:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Actualizar Status y labels según las fechas
+        env:
+          # PAT (classic con scopes `project` y `repo`). GITHUB_TOKEN no puede editar Projects de una organización.
+          GH_TOKEN: ${{ secrets.PROJECT_TOKEN }}
+          DRY_RUN: ${{ github.event.inputs.dry_run || 'false' }}
+        run: |
+          set -euo pipefail
+          TODAY=$(TZ="$TZ_NAME" date +%F)
+          echo "Hoy (${TZ_NAME}): $TODAY | dry_run=$DRY_RUN"
+
+          TAG=""
+          if [ "$DRY_RUN" = "true" ]; then TAG="[dry-run] "; fi
+          # Ejecuta el comando solo si no es dry run
+          run() { if [ "$DRY_RUN" = "true" ]; then return 0; fi; "$@"; }
+
+          # 1) IDs del proyecto, del campo Status y de la opción Ready
+          META=$(gh api graphql -F num="$PROJECT_NUMBER" -f org="$ORG" -f query='
+            query($org:String!,$num:Int!){
+              organization(login:$org){
+                projectV2(number:$num){
+                  id
+                  fields(first:50){
+                    nodes{
+                      ... on ProjectV2Field{ id name }
+                      ... on ProjectV2SingleSelectField{ id name options{ id name } }
+                    }
+                  }
+                }
+              }
+            }')
+          PROJECT_ID=$(jq -r '.data.organization.projectV2.id' <<<"$META")
+          STATUS_ID=$(jq -r --arg n "$STATUS_FIELD" '.data.organization.projectV2.fields.nodes[] | select(.name==$n) | .id' <<<"$META")
+          READY_ID=$(jq -r --arg n "$STATUS_FIELD" --arg o "$READY_STATUS" '.data.organization.projectV2.fields.nodes[] | select(.name==$n) | .options[]? | select(.name==$o) | .id' <<<"$META")
+          for v in PROJECT_ID STATUS_ID READY_ID; do
+            if [ -z "${!v}" ] || [ "${!v}" = "null" ]; then
+              echo "::error::No se encontró $v. Revisa ORG, PROJECT_NUMBER, STATUS_FIELD y READY_STATUS."
+              exit 1
+            fi
+          done
+
+          # 2) Todos los items del proyecto (paginado)
+          gh api graphql --paginate -F num="$PROJECT_NUMBER" -f org="$ORG" -f query='
+            query($org:String!,$num:Int!,$endCursor:String){
+              organization(login:$org){
+                projectV2(number:$num){
+                  items(first:100, after:$endCursor){
+                    pageInfo{ hasNextPage endCursor }
+                    nodes{
+                      id
+                      content{
+                        __typename
+                        ... on Issue{
+                          number state
+                          repository{ nameWithOwner }
+                          labels(first:50){ nodes{ name } }
+                        }
+                      }
+                      fieldValues(first:30){
+                        nodes{
+                          __typename
+                          ... on ProjectV2ItemFieldDateValue{ date field{ ... on ProjectV2Field{ name } } }
+                          ... on ProjectV2ItemFieldSingleSelectValue{ name field{ ... on ProjectV2SingleSelectField{ name } } }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            }' > items.json
+
+          # Normaliza cada issue abierto: id, repo, número, start, target, status, labels
+          jq -c --arg s "$START_FIELD" --arg t "$TARGET_FIELD" --arg st "$STATUS_FIELD" '
+            .data.organization.projectV2.items.nodes[]
+            | select(.content.__typename=="Issue" and .content.state=="OPEN")
+            | { id,
+                repo: .content.repository.nameWithOwner,
+                num:  .content.number,
+                start:  ([.fieldValues.nodes[] | select(.field.name==$s  and .date != null) | .date][0]),
+                target: ([.fieldValues.nodes[] | select(.field.name==$t  and .date != null) | .date][0]),
+                status: ([.fieldValues.nodes[] | select(.field.name==$st) | .name][0]),
+                labels: [.content.labels.nodes[].name] }
+          ' items.json > issues.jsonl
+
+          # 3) Retrasados: Target date < hoy, no Done y sin el label -> agregar label
+          jq -c --arg today "$TODAY" --arg done "$DONE_STATUS" --arg lab "$DELAYED_LABEL" '
+            select(.target != null and .target < $today and .status != $done and (.labels | index($lab) == null))
+          ' issues.jsonl > add.jsonl
+          echo "Issues a etiquetar como ${DELAYED_LABEL}: $(wc -l < add.jsonl | tr -d ' ')"
+          declare -A LABEL_READY
+          while IFS= read -r row; do
+            [ -z "$row" ] && continue
+            REPO=$(jq -r '.repo' <<<"$row"); NUM=$(jq -r '.num' <<<"$row"); TARGET=$(jq -r '.target' <<<"$row")
+            if [ -z "${LABEL_READY[$REPO]:-}" ]; then
+              # Crea el label si no existe (si ya existe, no lo modifica)
+              run gh label create "$DELAYED_LABEL" --repo "$REPO" --color D93F0B \
+                --description "Pasó su fecha límite (Target date)" > /dev/null 2>&1 || true
+              LABEL_READY[$REPO]=1
+            fi
+            run gh issue edit "$NUM" --repo "$REPO" --add-label "$DELAYED_LABEL" > /dev/null
+            echo "  ⚠ ${TAG}$REPO#$NUM (venció $TARGET) -> label ${DELAYED_LABEL}"
+          done < add.jsonl
+
+          # 4) Ya no aplica: tiene el label pero está Done o su fecha límite ya no ha vencido -> quitarlo
+          jq -c --arg today "$TODAY" --arg done "$DONE_STATUS" --arg lab "$DELAYED_LABEL" '
+            select((.labels | index($lab) != null)
+                   and (.status == $done or .target == null or .target >= $today))
+          ' issues.jsonl > remove.jsonl
+          echo "Issues a quitar el label ${DELAYED_LABEL}: $(wc -l < remove.jsonl | tr -d ' ')"
+          while IFS= read -r row; do
+            [ -z "$row" ] && continue
+            REPO=$(jq -r '.repo' <<<"$row"); NUM=$(jq -r '.num' <<<"$row")
+            run gh issue edit "$NUM" --repo "$REPO" --remove-label "$DELAYED_LABEL" > /dev/null
+            echo "  ↺ ${TAG}$REPO#$NUM -> sin label ${DELAYED_LABEL}"
+          done < remove.jsonl
+
+          # 5) Ready: Start date <= hoy y en FROM_STATUS (o sin Status)
+          jq -c --arg today "$TODAY" --arg from "$FROM_STATUS" '
+            select(.start != null and .start <= $today and (.status == $from or .status == null))
+          ' issues.jsonl > ready.jsonl
+          echo "Issues a mover a ${READY_STATUS}: $(wc -l < ready.jsonl | tr -d ' ')"
+          while IFS= read -r row; do
+            [ -z "$row" ] && continue
+            ITEM_ID=$(jq -r '.id' <<<"$row"); REPO=$(jq -r '.repo' <<<"$row"); NUM=$(jq -r '.num' <<<"$row"); START=$(jq -r '.start' <<<"$row")
+            run gh api graphql -f query='
+              mutation($p:ID!,$i:ID!,$f:ID!,$o:String!){
+                updateProjectV2ItemFieldValue(input:{
+                  projectId:$p, itemId:$i, fieldId:$f,
+                  value:{ singleSelectOptionId:$o }
+                }){ projectV2Item{ id } }
+              }' -f p="$PROJECT_ID" -f i="$ITEM_ID" -f f="$STATUS_ID" -f o="$READY_ID" > /dev/null
+            echo "  ✔ ${TAG}$REPO#$NUM (inicio $START) -> $READY_STATUS"
+          done < ready.jsonl
