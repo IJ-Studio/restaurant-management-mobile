@@ -22,6 +22,16 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
+    "plugins": [
+      [
+        "@sentry/react-native/expo",
+        {
+          "url": "https://sentry.io/",
+          "organization": "jose-6r",
+          "project": "react-native"
+        }
+      ]
+    ],
     "extra": {
       "eas": {
         "projectId": "c63e0e6d-265d-42d1-ac04-5ff93777dba7"

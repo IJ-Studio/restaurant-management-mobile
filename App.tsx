@@ -1,7 +1,10 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
+import { initSentry, Sentry } from './src/core/monitoring/sentry';
 
-export default function App() {
+initSentry();
+
+function App() {
   return (
     <View style={styles.container}>
       <Text>Open up App.tsx to start working on your app!</Text>
@@ -18,3 +21,5 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
 });
+
+export default Sentry.wrap(App);
