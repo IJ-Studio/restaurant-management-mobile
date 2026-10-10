@@ -28,8 +28,5 @@
     "ios": "expo start --ios",
     "web": "expo start --web"
   },
-  "private": true,
-  "allowScripts": {
-    "@sentry/cli@2.58.4": true
-  }
+  "private": true
 }
