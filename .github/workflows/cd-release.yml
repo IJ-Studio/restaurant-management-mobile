@@ -1,0 +1,134 @@
+# .github/workflows/cd-release.yml
+# APK firmado + GitHub Release (en borrador) al crear un tag v*.
+# Las credenciales de firma las gestiona EAS. EXPO_TOKEN es un GitHub Secret.
+name: CD Release (APK firmado)
+
+on:
+  push:
+    tags: ['v*']
+
+permissions:
+  contents: write   # crear el GitHub Release
+  checks: read
+
+concurrency:
+  group: cd-release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    environment: production   # con Required reviewers: espera la aprobación de José
+    steps:
+      - name: Comprobar que EXPO_TOKEN existe
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::Falta el secreto EXPO_TOKEN."
+            exit 1
+          fi
+
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Verificar que el tag está donde Gitflow lo permite
+        run: |
+          set -euo pipefail
+          BRANCHES="origin/main"
+          case "$GITHUB_REF_NAME" in
+            *-rc.*) BRANCHES="origin/main $(git branch -r --list 'origin/release/*' | tr -d ' ')" ;;
+          esac
+          for b in $BRANCHES; do
+            if git merge-base --is-ancestor "$GITHUB_SHA" "$b"; then
+              echo "El commit del tag está en $b."
+              exit 0
+            fi
+          done
+          echo "::error::El tag $GITHUB_REF_NAME no apunta a un commit de main (los candidatos -rc.N también pueden salir de release/*)."
+          exit 1
+
+      - name: Esperar y verificar que el commit tiene CI en verde
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 20); do
+            RESULT=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs?per_page=100" \
+              --jq '[.check_runs[] | select(.name=="lint-test")]
+                    | {ok: (map(select(.conclusion=="success")) | length),
+                       bad: (map(select(.conclusion=="failure" or .conclusion=="timed_out")) | length)}')
+            OK=$(jq -r .ok <<<"$RESULT"); BAD=$(jq -r .bad <<<"$RESULT")
+            echo "lint-test en $GITHUB_SHA: $OK en verde, $BAD fallidos (intento $i/20)"
+            if [ "$BAD" -gt 0 ]; then
+              echo "::error::lint-test falló en el commit del tag. No se publica la release."
+              exit 1
+            fi
+            if [ "$OK" -ge 1 ]; then exit 0; fi
+            sleep 30
+          done
+          echo "::error::lint-test no terminó en verde en 10 minutos. No se publica la release."
+          exit 1
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: expo/expo-github-action@v8   # confirma la versión mayor vigente en el Marketplace
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - run: npm ci
+
+      - name: Sincronizar variables de Sentry con EAS (el build corre en los servidores de Expo)
+        env:
+          SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
+          SENTRY_DSN: ${{ vars.EXPO_PUBLIC_SENTRY_DSN }}
+        run: |
+          if [ -n "$SENTRY_AUTH_TOKEN" ]; then
+            eas env:create --name SENTRY_AUTH_TOKEN --value "$SENTRY_AUTH_TOKEN" \
+              --visibility secret --scope project --environment production --force --non-interactive \
+              || echo "::warning::No se pudo sincronizar SENTRY_AUTH_TOKEN con EAS (revisa 'eas env:set --help')."
+          else
+            echo "::warning::SENTRY_AUTH_TOKEN no está configurado: esta release no subirá source maps a Sentry."
+          fi
+          if [ -n "$SENTRY_DSN" ]; then
+            eas env:create --name EXPO_PUBLIC_SENTRY_DSN --value "$SENTRY_DSN" \
+              --visibility plaintext --scope project --environment production --force --non-interactive \
+              || echo "::warning::No se pudo sincronizar EXPO_PUBLIC_SENTRY_DSN con EAS."
+          else
+            echo "::warning::La variable EXPO_PUBLIC_SENTRY_DSN no está configurada: la app irá con Sentry apagado."
+          fi
+
+      - name: EAS Build (production, APK firmado) y descarga
+        run: |
+          set -euo pipefail
+          eas build --platform android --profile production --non-interactive --wait --json > build.json \
+            || { cat build.json; exit 1; }
+          STATUS=$(jq -r '.[0].status // empty' build.json)
+          URL=$(jq -r '.[0].artifacts.buildUrl // empty' build.json)
+          if [ -n "$URL" ]; then echo "::add-mask::$URL"; fi
+          if [ "$STATUS" != "FINISHED" ] || [ -z "$URL" ]; then
+            echo "::error::El build no terminó correctamente (estado: ${STATUS:-desconocido})."
+            cat build.json
+            exit 1
+          fi
+          FILE="restaurant-management-${GITHUB_REF_NAME}.apk"
+          curl -fsSL --retry 3 "$URL" -o "$FILE"
+          sha256sum "$FILE" > "$FILE.sha256"
+          cat "$FILE.sha256"
+          echo "APK_FILE=$FILE" >> "$GITHUB_ENV"
+
+      - name: Crear el GitHub Release (en borrador)
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          FLAGS="--draft"
+          case "$GITHUB_REF_NAME" in *-rc.*) FLAGS="$FLAGS --prerelease" ;; esac
+          gh release create "$GITHUB_REF_NAME" "$APK_FILE" "$APK_FILE.sha256" \
+            --title "$GITHUB_REF_NAME" --generate-notes --verify-tag $FLAGS
