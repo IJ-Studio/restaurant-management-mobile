@@ -5,6 +5,7 @@ import { fireEvent, render, screen } from '@testing-library/react-native';
 import type { Dependencies } from '../../../../core/di/dependencies';
 import { AppError } from '../../../../core/errors/AppError';
 import { AppProviders } from '../../../../core/providers/AppProviders';
+import { useCurrentOrderStore } from '../../../orders/presentation/store/currentOrderStore';
 import type { Dish } from '../../domain/entities/Dish';
 import { MenuStack } from '../navigation/MenuStack';
 
@@ -146,5 +147,37 @@ describe('DishDetailScreen sin datos de la lista', () => {
     );
 
     expect(await screen.findByText('No se encontró el platillo.')).toBeOnTheScreen();
+  });
+});
+
+describe('DishDetailScreen: agregar al pedido en curso', () => {
+  beforeEach(() => useCurrentOrderStore.getState().reset());
+
+  it('sin mesa abierta no muestra el botón', async () => {
+    await renderMenu(jest.fn().mockResolvedValue([pozole]));
+    await fireEvent.press(await screen.findByLabelText('Pozole, $120.00'));
+    await screen.findByText('Pozole rojo con pollo y tostadas.');
+    expect(screen.queryByText(/Agregar a mesa/)).toBeNull();
+  });
+
+  it('agrega el platillo a la mesa abierta', async () => {
+    useCurrentOrderStore.getState().openTable('4');
+    await renderMenu(jest.fn().mockResolvedValue([pozole]));
+    await fireEvent.press(await screen.findByLabelText('Pozole, $120.00'));
+
+    await fireEvent.press(await screen.findByText('Agregar a mesa 4'));
+    await fireEvent.press(screen.getByText('Agregar a mesa 4'));
+
+    expect(useCurrentOrderStore.getState().orders['4'].lines).toEqual([
+      { dishId: '1', name: 'Pozole', unitPrice: 120, quantity: 2 },
+    ]);
+  });
+
+  it('un platillo agotado no se puede agregar', async () => {
+    useCurrentOrderStore.getState().openTable('4');
+    await renderMenu(jest.fn().mockResolvedValue([ceviche]), jest.fn().mockResolvedValue(ceviche));
+    await fireEvent.press(await screen.findByLabelText('Ceviche, $145.50, agotado'));
+    await screen.findByText('Ceviche de pescado.');
+    expect(screen.queryByText(/Agregar a mesa/)).toBeNull();
   });
 });

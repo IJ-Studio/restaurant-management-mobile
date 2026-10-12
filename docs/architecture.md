@@ -148,6 +148,19 @@ sequenceDiagram
 - `useReservationForm` usa `useMutation` e invalida `['reservations']` al crear, así la nueva
   reservación aparece de inmediato en el listado (`ReservationsStack`: listado → formulario).
 
+## Pedido en curso (HU-05, parte 1)
+
+- `features/orders/domain/entities/CurrentOrder.ts`: funciones puras para agregar, quitar y
+  cambiar cantidades (1 a 99), total en centavos y validación del número de mesa (1 a 999).
+  Un platillo agotado no se agrega.
+- `currentOrderStore` (Zustand) guarda un pedido por mesa y la mesa activa. Es 100% local:
+  no se persiste y se descarta al cerrar sesión (`RootNavigator`).
+- La tab Pedidos muestra `CurrentOrderScreen`; el detalle del platillo agrega a la mesa activa
+  con `useAddToOrder()` (la única dependencia de `menu` hacia `orders`).
+- El total es estimado: el monto que se cobra lo calcula el API. Enviar a cocina
+  (`POST /pedidos/mesa`), el cobro con Stripe (Adapter + `CheckoutUseCase`) y el historial
+  quedan para el resto de HU-05.
+
 ## Pruebas (TDD)
 
 - Las pruebas viven junto al código en `__tests__/` (`src/features/auth/domain/__tests__/LoginUseCase.test.ts`).

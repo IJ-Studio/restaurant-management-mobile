@@ -7,6 +7,7 @@ import { AppProviders } from '../../core/providers/AppProviders';
 import type { Session } from '../../features/auth/domain/entities/Session';
 import type { Role } from '../../features/auth/domain/entities/User';
 import { useSessionStore } from '../../features/auth/presentation/store/sessionStore';
+import { useCurrentOrderStore } from '../../features/orders/presentation/store/currentOrderStore';
 import { RootNavigator } from '../RootNavigator';
 
 /** Sin timers de recolección: evita que Jest quede esperando al terminar. */
@@ -40,7 +41,12 @@ async function setup(stored: Session | null | Error) {
   return { view, fetchFn, httpClient, dependencies };
 }
 
-const tabTitles = () => screen.getAllByRole('button').map((tab) => tab.props.accessibilityLabel ?? '');
+/** Botones de la barra de tabs (las pantallas también tienen botones propios). */
+const tabTitles = () =>
+  screen
+    .getAllByRole('button')
+    .filter((button) => button.props.accessibilityLargeContentTitle)
+    .map((tab) => tab.props.accessibilityLabel ?? '');
 
 describe('RootNavigator: sesión (HU-01)', () => {
   beforeEach(() => useSessionStore.setState({ status: 'checking', session: null }));
@@ -78,14 +84,19 @@ describe('RootNavigator: sesión (HU-01)', () => {
     expect(dependencies.logoutUseCase.execute).toHaveBeenCalledWith({ revoke: false });
   });
 
-  it('cerrar sesión desde Perfil regresa al Login', async () => {
+  it('cerrar sesión desde Perfil regresa al Login y descarta los pedidos en curso', async () => {
     const { dependencies } = await setup(sessionFor('mesero'));
+    await act(async () => {
+      useCurrentOrderStore.getState().openTable('3');
+      useCurrentOrderStore.getState().addDish({ id: '1', name: 'Tacos', price: 10, available: true });
+    });
     await fireEvent.press(await screen.findByLabelText('Perfil', { exact: false }));
     await fireEvent.press(await screen.findByText('Cerrar sesión'));
 
     expect(await screen.findByText('Iniciar sesión')).toBeOnTheScreen();
     expect(dependencies.logoutUseCase.execute).toHaveBeenCalledWith();
     expect(useSessionStore.getState().session).toBeNull();
+    expect(useCurrentOrderStore.getState().orders).toEqual({});
   });
 
   it('si leer la sesión guardada falla, muestra el Login', async () => {
