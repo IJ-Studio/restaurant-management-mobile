@@ -57,6 +57,12 @@ se descartan. Mientras `GET /menu` haga `select *`, el mapper ignora `precioCost
 | GET / PATCH | `/reservations/:id` | Admin | Detalle / actualizar |
 | GET | `/mesas` | Público | Mesas |
 
+- `POST /reservations` exige 1 hora de anticipación, horario de servicio y una mesa libre;
+  si no hay, responde `400 "No hay mesas disponibles"`. Devuelve la fila con `estatus`
+  `pendiente` o `confirmada`. La app lo manda con `canal: 'telefono'`.
+- `GET /reservations` responde ordenado por `fechaHora` descendente; la app lo reordena.
+- Estados de reservación vistos en el API: `pendiente`, `confirmada`, `cancelada`, `completada`.
+
 ## Pedidos — HU-05 / HU-06
 
 | Método | Ruta | Acceso | Notas |
@@ -86,7 +92,8 @@ Estados que se ven en el código: `pendiente`, `abierta`, `cancelada`, `completa
 
 | Historia | Falta |
 |---|---|
-| HU-04 | `GET /reservations` solo permite Admin: hay que abrirlo a Mesero (y Cajero) para el listado operativo |
+| HU-04 | `GET /reservations` solo permite Admin: hay que abrirlo a Mesero (y Cajero) para el listado operativo. Mientras tanto la app muestra "Tu rol todavía no puede ver el listado" |
+| HU-04 | `POST /reservations` exige `clienteEmail`; una reservación por teléfono a veces no tiene correo. Conviene hacerlo opcional |
 | HU-06 | No hay un endpoint para que Cocina o Mesero cambien el estado (`abierta → en preparación → lista → entregada`), ni un stream que no sea solo de Admin |
 | HU-07 | No existe el registro de tokens de dispositivo ni el envío de push |
 

@@ -4,6 +4,7 @@ import type { ComponentType } from 'react';
 import type { Role } from '../features/auth/domain/entities/User';
 import { ProfileScreen } from '../features/auth/presentation/screens/ProfileScreen';
 import { MenuStack } from '../features/menu/presentation/navigation/MenuStack';
+import { ReservationsStack } from '../features/reservations/presentation/navigation/ReservationsStack';
 import { RoleGuard } from './RoleGuard';
 import { ROLE_TABS, type TabRoute } from './roleRoutes';
 import { ComingSoonScreen } from './screens/ComingSoonScreen';
@@ -20,7 +21,7 @@ const TABS: Record<TabRoute, { title: string; component: ComponentType }> = {
   dashboard: { title: 'Dashboard', component: comingSoon('Dashboard', 'HU-08') },
   orders: { title: 'Pedidos', component: comingSoon('Pedidos', 'HU-05') },
   kitchen: { title: 'Cocina', component: comingSoon('Pedidos en cocina', 'HU-06') },
-  reservations: { title: 'Reservaciones', component: comingSoon('Reservaciones', 'HU-04') },
+  reservations: { title: 'Reservaciones', component: ReservationsStack },
   menu: { title: 'Menú', component: MenuStack },
   profile: { title: 'Perfil', component: ProfileScreen },
 };

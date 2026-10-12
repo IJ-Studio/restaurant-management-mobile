@@ -8,6 +8,10 @@ import { MenuRemoteDataSource } from '../../features/menu/data/datasources/MenuR
 import { MenuRepositoryImpl } from '../../features/menu/data/repositories/MenuRepositoryImpl';
 import { GetDishUseCase } from '../../features/menu/domain/usecases/GetDishUseCase';
 import { GetMenuUseCase } from '../../features/menu/domain/usecases/GetMenuUseCase';
+import { ReservationRemoteDataSource } from '../../features/reservations/data/datasources/ReservationRemoteDataSource';
+import { ReservationRepositoryImpl } from '../../features/reservations/data/repositories/ReservationRepositoryImpl';
+import { CreateReservationUseCase } from '../../features/reservations/domain/usecases/CreateReservationUseCase';
+import { GetActiveReservationsUseCase } from '../../features/reservations/domain/usecases/GetActiveReservationsUseCase';
 import { httpClient, type HttpClient } from '../http/httpClient';
 
 /**
@@ -24,11 +28,15 @@ export interface Dependencies {
   // HU-03
   getMenuUseCase: GetMenuUseCase;
   getDishUseCase: GetDishUseCase;
+  // HU-04
+  createReservationUseCase: CreateReservationUseCase;
+  getActiveReservationsUseCase: GetActiveReservationsUseCase;
 }
 
 export function createDependencies(): Dependencies {
   const authRepository = new AuthRepositoryImpl(new AuthRemoteDataSource(httpClient), new SecureSessionStorage());
   const menuRepository = new MenuRepositoryImpl(new MenuRemoteDataSource(httpClient));
+  const reservationRepository = new ReservationRepositoryImpl(new ReservationRemoteDataSource(httpClient));
 
   return {
     httpClient,
@@ -37,5 +45,7 @@ export function createDependencies(): Dependencies {
     restoreSessionUseCase: new RestoreSessionUseCase(authRepository),
     getMenuUseCase: new GetMenuUseCase(menuRepository),
     getDishUseCase: new GetDishUseCase(menuRepository),
+    createReservationUseCase: new CreateReservationUseCase(reservationRepository),
+    getActiveReservationsUseCase: new GetActiveReservationsUseCase(reservationRepository),
   };
 }

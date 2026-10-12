@@ -26,6 +26,8 @@ async function setup(stored: Session | null | Error) {
     logoutUseCase: { execute: jest.fn().mockResolvedValue(undefined) },
     getMenuUseCase: { execute: jest.fn().mockResolvedValue([]) },
     getDishUseCase: { execute: jest.fn() },
+    createReservationUseCase: { execute: jest.fn() },
+    getActiveReservationsUseCase: { execute: jest.fn().mockResolvedValue([]) },
     restoreSessionUseCase: {
       execute: stored instanceof Error ? jest.fn().mockRejectedValue(stored) : jest.fn().mockResolvedValue(stored),
     },
