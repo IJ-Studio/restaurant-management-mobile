@@ -1,0 +1,12 @@
+# Configuración de Gitleaks (job `security` de ci.yml). Se carga sola desde la raíz del repo.
+[extend]
+useDefault = true
+
+# Las pruebas usan JWT y tokens falsos a propósito (p. ej. authSecurity.test.ts).
+# Solo la regla genérica se ignora y solo en pruebas/fixtures: las reglas específicas
+# (AWS, Stripe, GitHub, llaves privadas, ...) siguen activas en todo el repo, pruebas incluidas.
+[[rules]]
+id = "generic-api-key"
+[[rules.allowlists]]
+description = "Valores falsos en pruebas y fixtures"
+paths = ['''(^|/)__tests__/''', '''(^|/)__fixtures__/''']

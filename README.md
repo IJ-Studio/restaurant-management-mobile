@@ -127,7 +127,7 @@ gitGraph
 
 | Workflow | Jobs | Qué bloquea |
 |---|---|---|
-| `ci.yml` | `lint-test`, `security` | Lint, tests y cobertura; npm audit High/Critical y secretos (Gitleaks) |
+| `ci.yml` | `lint-test`, `security` | Lint, tests y cobertura; npm audit High/Critical y secretos (Gitleaks, config en `.gitleaks.toml`) |
 | `static-analysis.yml` | `static-analysis` | Errores de tipos, formato, warnings de ESLint, complejidad cognitiva > 15 y duplicación > 3% |
 | `codeql.yml` | `codeql` | Alertas High/Critical de CodeQL (SAST) |
 | `cd-preview.yml` / `cd-release.yml` | `build-preview` / release | APK por tag `sprint-*` / `v*` |
