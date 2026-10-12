@@ -55,7 +55,7 @@ Clean Architecture por features + MVVM.
 
 ```text
 src/
-├── core/                            # Configuración, cliente HTTP e inyección de dependencias
+├── core/                            # Configuración, cliente HTTP (Singleton), errores e inyección de dependencias
 ├── shared/presentation/components/  # Componentes reutilizables
 └── features/<feature>/
     ├── domain/                      # Entidades, interfaces de repositorio y casos de uso
@@ -70,6 +70,9 @@ flowchart LR
 
 - Dependencias: `presentation → domain ← data`.
 - El dominio no depende de librerías de UI ni de SDKs externos.
+- Features: `auth`, `menu`, `reservations`, `orders`, `notifications`, `admin`.
+- Detalle de capas, Dependency Injection y reglas: [docs/architecture.md](docs/architecture.md).
+- Contrato del backend: [docs/api-endpoints.md](docs/api-endpoints.md).
 
 **Referencias:** [The Clean Architecture (Robert C. Martin)](https://blog.cleancoder.com/uncle-bob/2012/08/13/the-clean-architecture.html) · [Model-View-ViewModel (Microsoft Learn)](https://learn.microsoft.com/en-us/dotnet/architecture/maui/mvvm)
 
