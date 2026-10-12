@@ -23,7 +23,12 @@ Se levantó leyendo el código de `restaurant-management-api` (rama `develop`, c
 - El JWT trae `{ id: string, email, roleId, tokenId }`. Expira en `JWT_ACCESS_TOKEN_TTL` (3600 s
   por defecto) y no hay refresh token: con un 401 se cierra la sesión.
 - `user` en la respuesta de sign-in es la fila completa de `users`: `id, name, lastname, email,
-  phone, roleId, verified, ...`. El mapper de la app solo toma `id, name, lastname, email, roleId`.
+  phone, roleId, verified, ...`. El mapper de la app solo toma `id, name, lastname, email, roleId`
+  (`features/auth/data/mappers/sessionMapper.ts`) y rechaza el rol 5.
+- Mientras el API responda `400 "Correo inválido"` / `400 "Contraseña inválida"`, la app trata
+  400 y 401 de sign-in igual y muestra un mensaje genérico. Un 429 muestra "Demasiados intentos".
+- La app móvil usa `sign-in` y `sign-out`. `GET /auth/me` todavía no hace falta: la sesión
+  guardada trae el usuario y la vigencia se revisa con el `exp` del JWT.
 
 ## Menú — HU-03
 

@@ -45,6 +45,20 @@ describe('HttpClient', () => {
     expect(fetchFn.mock.calls[1][1].headers.Authorization).toBe('Bearer abc.def.ghi');
   });
 
+  it('avisa a la sesión cuando el API rechaza el token', async () => {
+    const fetchFn = jest.fn().mockImplementation(async () => jsonResponse(401, { message: 'Unauthorized' }));
+    const client = makeClient(fetchFn);
+    const onUnauthorized = jest.fn();
+    client.setUnauthorizedHandler(onUnauthorized);
+
+    await expect(client.post('auth/sign-in', {})).rejects.toMatchObject({ kind: 'unauthorized' });
+    expect(onUnauthorized).not.toHaveBeenCalled();
+
+    client.setTokenProvider(() => 'vencido');
+    await expect(client.get('auth/me')).rejects.toMatchObject({ kind: 'unauthorized' });
+    expect(onUnauthorized).toHaveBeenCalledTimes(1);
+  });
+
   it.each([
     [400, 'validation'],
     [401, 'unauthorized'],
