@@ -1,15 +1,18 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View } from 'react-native';
 import { initSentry, Sentry } from './src/core/monitoring/sentry';
+import { AppProviders } from './src/core/providers/AppProviders';
 
 initSentry();
 
 function App() {
   return (
-    <View style={styles.container}>
-      <Text>Open up App.tsx to start working on your app!</Text>
-      <StatusBar style="auto" />
-    </View>
+    <AppProviders>
+      <View style={styles.container}>
+        <Text>Restaurant Management</Text>
+        <StatusBar style="auto" />
+      </View>
+    </AppProviders>
   );
 }
 
