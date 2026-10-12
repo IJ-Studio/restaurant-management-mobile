@@ -3,6 +3,7 @@ import { AppError, kindFromStatus } from '../errors/AppError';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type TokenProvider = () => string | null;
+type UnauthorizedHandler = () => void;
 
 export interface HttpClientOptions {
   baseUrl: string;
@@ -18,6 +19,7 @@ export interface HttpClientOptions {
  */
 export class HttpClient {
   private tokenProvider: TokenProvider = () => null;
+  private onUnauthorized: UnauthorizedHandler = () => {};
   private readonly baseUrl: string;
 
   constructor(private readonly options: HttpClientOptions) {
@@ -27,6 +29,11 @@ export class HttpClient {
   /** La sesión (HU-01) registra aquí de dónde sale el token. */
   setTokenProvider(provider: TokenProvider): void {
     this.tokenProvider = provider;
+  }
+
+  /** Se llama cuando el API rechaza el token (401): no hay refresh token, la sesión se cierra. */
+  setUnauthorizedHandler(handler: UnauthorizedHandler): void {
+    this.onUnauthorized = handler;
   }
 
   get<T>(path: string): Promise<T> {
@@ -80,6 +87,7 @@ export class HttpClient {
 
     const data = await readBody(response);
     if (!response.ok) {
+      if (response.status === 401 && token) this.onUnauthorized();
       throw new AppError(kindFromStatus(response.status), errorMessage(data), response.status);
     }
     return data as T;

@@ -75,6 +75,32 @@ render(
 | React Query | Datos del servidor (caché, reintentos, invalidación) | menú, reservaciones, historial |
 | Zustand | Estado local que debe sobrevivir al caché | sesión y rol, pedido en curso, permiso de notificaciones |
 
+## Sesión (HU-01)
+
+```mermaid
+sequenceDiagram
+    participant App as AuthGate
+    participant Store as sessionStore (Zustand)
+    participant Repo as AuthRepositoryImpl
+    participant SS as expo-secure-store
+    participant HC as httpClient
+    App->>Repo: RestoreSessionUseCase (al abrir la app)
+    Repo->>SS: load()
+    SS-->>App: sesión guardada (si el JWT no ha vencido)
+    App->>Store: setSession()
+    HC->>Store: selectToken() en cada petición
+    HC-->>Store: 401 con token → setSession(null) y borra secure-store
+```
+
+- `features/auth/presentation/store/sessionStore.ts` guarda `status` (`checking`,
+  `authenticated`, `unauthenticated`) y la sesión (`token` + `user` con su `role`).
+- `useLogin` usa `useMutation` solo para la llamada; el resultado va a Zustand y a secure-store.
+- `useSessionBootstrap` (en `AuthGate`) conecta el `httpClient` con el store y lo hidrata al abrir la app.
+- No hay refresh token: un 401 en una petición con token cierra la sesión y limpia el caché de React Query.
+- Credenciales inválidas siempre muestran `Correo o contraseña incorrectos.` aunque el API
+  distinga correo y contraseña. Un usuario con rol 5 (cliente) no puede entrar.
+- `SignedInScreen` es temporal: HU-02 la reemplaza por la navegación según el rol.
+
 ## Pruebas (TDD)
 
 - Las pruebas viven junto al código en `__tests__/` (`src/features/auth/domain/__tests__/LoginUseCase.test.ts`).
@@ -85,6 +111,7 @@ render(
 ## Seguridad
 
 - `httpClient` rechaza URLs sin HTTPS fuera de desarrollo (MASVS-NETWORK).
-- El JWT vive solo en `expo-secure-store` (HU-01) y solo `httpClient` lo agrega a los headers.
+- El JWT vive solo en `expo-secure-store` con `WHEN_UNLOCKED_THIS_DEVICE_ONLY` (HU-01) y solo
+  `httpClient` lo agrega a los headers. La app no usa AsyncStorage.
 - Sentry filtra tokens, correos y datos personales (`src/core/monitoring/scrub.ts`).
 - En `EXPO_PUBLIC_*` nunca va un secreto: termina en el bundle del APK.
