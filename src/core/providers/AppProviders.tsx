@@ -2,12 +2,14 @@ import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 
 import { DependenciesProvider } from '../di/DependenciesProvider';
+import { isTransient } from '../errors/AppError';
 import type { Dependencies } from '../di/dependencies';
 
 export function createQueryClient(): QueryClient {
   return new QueryClient({
     defaultOptions: {
-      queries: { retry: 1, staleTime: 30_000 },
+      // Solo se reintentan fallas pasajeras (red, timeout, 5xx), hasta 2 veces.
+      queries: { retry: (failureCount, error) => failureCount < 2 && isTransient(error), staleTime: 30_000 },
       mutations: { retry: 0 },
     },
   });
