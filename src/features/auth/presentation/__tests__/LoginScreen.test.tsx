@@ -2,7 +2,8 @@ import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 
 import { AppError } from '../../../../core/errors/AppError';
 import { renderWithProviders } from '../../../../core/testing/renderWithProviders';
-import { makeAuthDependencies, makeSession } from '../../__fixtures__/auth';
+import { makeSession } from '../../__fixtures__/auth';
+import { makeTestDependencies } from '../../../../core/testing/makeTestDependencies';
 import { LoginScreen } from '../screens/LoginScreen';
 
 async function fillAndSubmit(email: string, password: string) {
@@ -13,7 +14,7 @@ async function fillAndSubmit(email: string, password: string) {
 
 describe('LoginScreen', () => {
   it('muestra los errores de validación sin llamar al caso de uso', async () => {
-    const deps = makeAuthDependencies();
+    const deps = makeTestDependencies();
     await renderWithProviders(<LoginScreen />, deps);
 
     await fillAndSubmit('ana', '123');
@@ -25,7 +26,7 @@ describe('LoginScreen', () => {
 
   it('con credenciales válidas inicia sesión y guarda la sesión en el store', async () => {
     const session = makeSession();
-    const deps = makeAuthDependencies({ loginUseCase: { execute: jest.fn().mockResolvedValue(session) } });
+    const deps = makeTestDependencies({ loginUseCase: { execute: jest.fn().mockResolvedValue(session) } });
     await renderWithProviders(<LoginScreen />, deps);
 
     await fillAndSubmit('ana@quijote.mx', 'Pass#2026');
@@ -38,7 +39,7 @@ describe('LoginScreen', () => {
   });
 
   it('con credenciales inválidas muestra un mensaje claro', async () => {
-    const deps = makeAuthDependencies({
+    const deps = makeTestDependencies({
       loginUseCase: {
         execute: jest
           .fn()
@@ -54,7 +55,7 @@ describe('LoginScreen', () => {
   });
 
   it('con la red caída muestra el error de conexión', async () => {
-    const deps = makeAuthDependencies({
+    const deps = makeTestDependencies({
       loginUseCase: {
         execute: jest.fn().mockRejectedValue(new AppError('network', 'No hay conexión con el servidor.')),
       },
@@ -67,7 +68,7 @@ describe('LoginScreen', () => {
   });
 
   it('usa un mensaje genérico ante errores inesperados', async () => {
-    const deps = makeAuthDependencies({
+    const deps = makeTestDependencies({
       loginUseCase: { execute: jest.fn().mockRejectedValue(new Error('boom')) },
     });
     await renderWithProviders(<LoginScreen />, deps);
@@ -78,7 +79,7 @@ describe('LoginScreen', () => {
   });
 
   it('oculta la contraseña', async () => {
-    await renderWithProviders(<LoginScreen />, makeAuthDependencies());
+    await renderWithProviders(<LoginScreen />, makeTestDependencies());
     expect(screen.getByLabelText('Contraseña')).toHaveProp('secureTextEntry', true);
   });
 });

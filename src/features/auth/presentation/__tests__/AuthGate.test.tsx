@@ -2,7 +2,8 @@ import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { Text } from 'react-native';
 
 import { renderWithProviders } from '../../../../core/testing/renderWithProviders';
-import { makeAuthDependencies, makeSession } from '../../__fixtures__/auth';
+import { makeSession } from '../../__fixtures__/auth';
+import { makeTestDependencies } from '../../../../core/testing/makeTestDependencies';
 import { AuthGate } from '../components/AuthGate';
 import { ProfileScreen } from '../screens/ProfileScreen';
 
@@ -12,7 +13,7 @@ describe('AuthGate', () => {
       <AuthGate>
         <Text>App</Text>
       </AuthGate>,
-      makeAuthDependencies(),
+      makeTestDependencies(),
     );
 
     expect(await screen.findByText('Iniciar sesión')).toBeOnTheScreen();
@@ -20,7 +21,7 @@ describe('AuthGate', () => {
   });
 
   it('con sesión guardada entra directo a la app (la sesión sobrevive a cerrar/abrir)', async () => {
-    const deps = makeAuthDependencies({
+    const deps = makeTestDependencies({
       restoreSessionUseCase: { execute: jest.fn().mockResolvedValue(makeSession()) },
     });
     await renderWithProviders(
@@ -34,7 +35,7 @@ describe('AuthGate', () => {
   });
 
   it('si falla la recuperación muestra el Login', async () => {
-    const deps = makeAuthDependencies({
+    const deps = makeTestDependencies({
       restoreSessionUseCase: { execute: jest.fn().mockRejectedValue(new Error('keystore')) },
     });
     await renderWithProviders(
@@ -48,7 +49,7 @@ describe('AuthGate', () => {
   });
 
   it('cerrar sesión regresa al Login', async () => {
-    const deps = makeAuthDependencies({
+    const deps = makeTestDependencies({
       restoreSessionUseCase: { execute: jest.fn().mockResolvedValue(makeSession()) },
     });
     await renderWithProviders(

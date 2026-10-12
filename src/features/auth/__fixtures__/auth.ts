@@ -1,9 +1,6 @@
-import type { Dependencies } from '../../../core/di/dependencies';
-import type { HttpClient } from '../../../core/http/httpClient';
 import type { Session } from '../domain/entities/Session';
 import type { AuthRepository } from '../domain/repositories/AuthRepository';
 import type { SessionStorage } from '../domain/repositories/SessionStorage';
-import { createSessionStore } from '../presentation/store/sessionStore';
 
 export function makeSession(overrides: Partial<Session> = {}): Session {
   return {
@@ -26,16 +23,5 @@ export function makeStorage(stored: Session | null = null): jest.Mocked<SessionS
     save: jest.fn().mockResolvedValue(undefined),
     load: jest.fn().mockResolvedValue(stored),
     clear: jest.fn().mockResolvedValue(undefined),
-  };
-}
-
-export function makeAuthDependencies(overrides: Partial<Dependencies> = {}): Dependencies {
-  return {
-    httpClient: {} as HttpClient,
-    sessionStore: createSessionStore(),
-    loginUseCase: { execute: jest.fn().mockResolvedValue(makeSession()) },
-    logoutUseCase: { execute: jest.fn().mockResolvedValue(undefined) },
-    restoreSessionUseCase: { execute: jest.fn().mockResolvedValue(null) },
-    ...overrides,
   };
 }

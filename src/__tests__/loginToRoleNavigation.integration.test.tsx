@@ -7,13 +7,14 @@ import { fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { AppNavigator } from '../core/navigation/AppNavigator';
 import { renderWithProviders } from '../core/testing/renderWithProviders';
 import type { Role } from '../features/auth/domain/entities/Role';
-import { makeAuthDependencies, makeSession } from '../features/auth/__fixtures__/auth';
+import { makeSession } from '../features/auth/__fixtures__/auth';
+import { makeTestDependencies } from '../core/testing/makeTestDependencies';
 import { AuthGate } from '../features/auth/presentation/components/AuthGate';
 
 function appWithLoginAs(role: Role) {
   const session = makeSession();
   session.user.role = role;
-  const deps = makeAuthDependencies({ loginUseCase: { execute: jest.fn().mockResolvedValue(session) } });
+  const deps = makeTestDependencies({ loginUseCase: { execute: jest.fn().mockResolvedValue(session) } });
   return {
     deps,
     render: () =>
