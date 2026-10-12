@@ -30,3 +30,8 @@ export function kindFromStatus(status: number): AppErrorKind {
   if (status >= 500) return 'server';
   return 'unknown';
 }
+
+/** Fallas pasajeras: vale la pena reintentar. Un 4xx no cambia por reintentar. */
+export function isTransient(error: unknown): boolean {
+  return error instanceof AppError && (error.kind === 'network' || error.kind === 'timeout' || error.kind === 'server');
+}

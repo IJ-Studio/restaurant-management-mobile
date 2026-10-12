@@ -60,15 +60,49 @@ describe('HttpClient', () => {
   });
 
   it.each([
-    [400, 'validation'],
-    [401, 'unauthorized'],
-    [403, 'forbidden'],
-    [404, 'not-found'],
-    [429, 'rate-limit'],
-    [500, 'server'],
-  ])('convierte HTTP %i en AppError "%s"', async (status, kind) => {
+    [400, 'validation', 'falló'],
+    [401, 'unauthorized', 'falló'],
+    [403, 'forbidden', 'No tienes permiso para hacer esto.'],
+    [404, 'not-found', 'falló'],
+    [429, 'rate-limit', 'Demasiadas peticiones. Espera un momento e inténtalo de nuevo.'],
+    [500, 'server', 'El servidor tuvo un problema. Inténtalo de nuevo en un momento.'],
+  ])('convierte HTTP %i en AppError "%s" con un mensaje para el personal', async (status, kind, message) => {
     const fetchFn = jest.fn().mockImplementation(async () => jsonResponse(status, { message: 'falló' }));
-    await expect(makeClient(fetchFn).get('x')).rejects.toMatchObject({ kind, status, message: 'falló' });
+    await expect(makeClient(fetchFn).get('x')).rejects.toMatchObject({ kind, status, message });
+  });
+
+  it('no muestra detalles internos de un 5xx', async () => {
+    const fetchFn = jest
+      .fn()
+      .mockResolvedValue(jsonResponse(500, { message: 'relation "users" does not exist at /app/dist/main.js:10' }));
+    await expect(makeClient(fetchFn).get('x')).rejects.toThrow('El servidor tuvo un problema.');
+  });
+
+  it('reporta los 5xx a monitoreo sin la query string', async () => {
+    const fetchFn = jest.fn().mockImplementation(async () => jsonResponse(503, {}));
+    const client = makeClient(fetchFn);
+    const reporter = jest.fn();
+    client.setErrorReporter(reporter);
+
+    await expect(client.get('reservations?clienteNombre=Ana')).rejects.toMatchObject({ kind: 'server' });
+    expect(reporter).toHaveBeenCalledWith(expect.objectContaining({ kind: 'server' }), {
+      method: 'GET',
+      path: 'reservations',
+      status: 503,
+    });
+  });
+
+  it('no reporta errores 4xx ni de red', async () => {
+    const reporter = jest.fn();
+    const notFound = makeClient(jest.fn().mockImplementation(async () => jsonResponse(404, {})));
+    notFound.setErrorReporter(reporter);
+    await expect(notFound.get('x')).rejects.toBeInstanceOf(AppError);
+
+    const offline = makeClient(jest.fn().mockRejectedValue(new TypeError('Network request failed')));
+    offline.setErrorReporter(reporter);
+    await expect(offline.get('x')).rejects.toBeInstanceOf(AppError);
+
+    expect(reporter).not.toHaveBeenCalled();
   });
 
   it('une los mensajes de validación de NestJS', async () => {
@@ -79,7 +113,7 @@ describe('HttpClient', () => {
   });
 
   it('usa un mensaje genérico cuando la respuesta no trae uno', async () => {
-    const fetchFn = jest.fn().mockResolvedValue(new Response('<html>error</html>', { status: 502 }));
+    const fetchFn = jest.fn().mockResolvedValue(new Response('<html>error</html>', { status: 418 }));
     await expect(makeClient(fetchFn).get('x')).rejects.toThrow('Ocurrió un error inesperado.');
   });
 

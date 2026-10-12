@@ -43,6 +43,21 @@ flowchart LR
 - Los errores llegan a dominio y presentación como `AppError` (`kind`: `unauthorized`,
   `validation`, `network`, ...), nunca como `Response` ni como códigos HTTP sueltos.
 
+## Manejo global de errores HTTP
+
+Todo vive en `httpClient`; ni las pantallas ni los hooks repiten este manejo:
+
+| Caso | Qué pasa |
+|---|---|
+| 401 con token | Se cierra la sesión (`setUnauthorizedHandler`) y se limpia el caché |
+| 403 | "No tienes permiso para hacer esto." (un repositorio puede dar un mensaje más preciso) |
+| 429 | "Demasiadas peticiones. Espera un momento…" |
+| 5xx | Mensaje genérico (no se muestran detalles internos) y se reporta a Sentry con método, ruta sin query y status (`setErrorReporter`) |
+| Sin red / timeout | "No hay conexión con el servidor." / "El servidor tardó demasiado…" |
+| 400 / 404 | El mensaje del API (los DTOs de NestJS ya vienen en español) |
+
+React Query reintenta hasta 2 veces solo fallas pasajeras (red, timeout, 5xx); un 4xx no se reintenta.
+
 ## Dependency Injection
 
 `src/core/di/dependencies.ts` arma el grafo real de la app. Cada feature agrega ahí sus casos de uso:

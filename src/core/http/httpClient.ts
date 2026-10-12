@@ -1,9 +1,16 @@
 import { env } from '../config/env';
-import { AppError, kindFromStatus } from '../errors/AppError';
+import { AppError, kindFromStatus, type AppErrorKind } from '../errors/AppError';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type TokenProvider = () => string | null;
 type UnauthorizedHandler = () => void;
+export interface HttpErrorContext {
+  method: Method;
+  /** Ruta sin query string (ahí pueden ir datos personales). */
+  path: string;
+  status: number;
+}
+type ErrorReporter = (error: AppError, context: HttpErrorContext) => void;
 
 export interface HttpClientOptions {
   baseUrl: string;
@@ -20,6 +27,7 @@ export interface HttpClientOptions {
 export class HttpClient {
   private tokenProvider: TokenProvider = () => null;
   private onUnauthorized: UnauthorizedHandler = () => {};
+  private reportError: ErrorReporter = () => {};
   private readonly baseUrl: string;
 
   constructor(private readonly options: HttpClientOptions) {
@@ -34,6 +42,11 @@ export class HttpClient {
   /** Se llama cuando el API rechaza el token (401): no hay refresh token, la sesión se cierra. */
   setUnauthorizedHandler(handler: UnauthorizedHandler): void {
     this.onUnauthorized = handler;
+  }
+
+  /** Errores 5xx: se reportan a monitoreo (Sentry) desde aquí, no en cada pantalla. */
+  setErrorReporter(reporter: ErrorReporter): void {
+    this.reportError = reporter;
   }
 
   get<T>(path: string): Promise<T> {
@@ -87,8 +100,13 @@ export class HttpClient {
 
     const data = await readBody(response);
     if (!response.ok) {
+      const kind = kindFromStatus(response.status);
+      const error = new AppError(kind, errorMessage(kind, data), response.status);
       if (response.status === 401 && token) this.onUnauthorized();
-      throw new AppError(kindFromStatus(response.status), errorMessage(data), response.status);
+      if (kind === 'server') {
+        this.reportError(error, { method, path: path.split('?')[0], status: response.status });
+      }
+      throw error;
     }
     return data as T;
   }
@@ -114,8 +132,17 @@ async function readBody(response: Response): Promise<unknown> {
   }
 }
 
+// Mensajes propios para errores donde el del API no le sirve al personal (o puede filtrar detalles internos).
+const MESSAGE_BY_KIND: Partial<Record<AppErrorKind, string>> = {
+  forbidden: 'No tienes permiso para hacer esto.',
+  'rate-limit': 'Demasiadas peticiones. Espera un momento e inténtalo de nuevo.',
+  server: 'El servidor tuvo un problema. Inténtalo de nuevo en un momento.',
+};
+
 /** NestJS responde `{ message: string | string[] }`; se usa solo si es texto legible. */
-function errorMessage(data: unknown): string {
+function errorMessage(kind: AppErrorKind, data: unknown): string {
+  const fixed = MESSAGE_BY_KIND[kind];
+  if (fixed) return fixed;
   if (data && typeof data === 'object' && 'message' in data) {
     const { message } = data as { message: unknown };
     if (typeof message === 'string') return message;

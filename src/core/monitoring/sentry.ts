@@ -17,4 +17,12 @@ export function initSentry(): void {
   });
 }
 
+/** Reporta un 5xx del API con método, ruta (sin query) y status como tags. */
+export function reportHttpError(error: Error, context: { method: string; path: string; status: number }): void {
+  if (!dsn) return;
+  Sentry.captureException(error, {
+    tags: { 'http.method': context.method, 'http.path': context.path, 'http.status': String(context.status) },
+  });
+}
+
 export { Sentry };
