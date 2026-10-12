@@ -1,0 +1,33 @@
+# Quality gate del código: tipos, formato y ESLint (incluye eslint-plugin-security) sin warnings.
+name: Static analysis
+
+on:
+  push:
+    branches: [main, develop, 'release/**']
+  pull_request:
+    branches: [main, develop, 'release/**']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: static-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  static-analysis:
+    name: static-analysis
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: TypeScript
+        run: npm run typecheck
+      - name: Prettier
+        run: npm run format:check
+      - name: ESLint (0 errores, 0 warnings)
+        run: npm run lint

@@ -38,8 +38,11 @@ Escanea el código QR con Expo Go, o presiona `a` (Android) / `i` (iOS) en la te
 Scripts de calidad:
 
 ```bash
-npm run lint   # análisis estático
-npm test       # pruebas con Jest + React Native Testing Library
+npm run lint          # ESLint + eslint-plugin-security (0 warnings)
+npm run typecheck     # tsc --noEmit
+npm run format:check  # Prettier (npm run format para corregir)
+npm run audit         # npm audit High/Critical (excepciones en audit-ci.jsonc)
+npm test              # pruebas con Jest + React Native Testing Library
 ```
 
 > [!NOTE]
@@ -119,3 +122,13 @@ gitGraph
 
 > [!IMPORTANT]
 > `main` y `develop` están protegidas: no hay push directo, todo entra por Pull Request con CI en verde. `main` solo recibe merges desde `release/*` y `hotfix/*`.
+## Pipelines de CI
+
+| Workflow | Jobs | Qué bloquea |
+|---|---|---|
+| `ci.yml` | `lint-test`, `security` | Lint, tests y cobertura; npm audit High/Critical y secretos (Gitleaks) |
+| `static-analysis.yml` | `static-analysis` | Errores de tipos, formato y warnings de ESLint |
+| `codeql.yml` | `codeql` | Alertas High/Critical de CodeQL (SAST) |
+| `cd-preview.yml` / `cd-release.yml` | `build-preview` / release | APK por tag `sprint-*` / `v*` |
+
+Dependabot (`.github/dependabot.yml`) abre PRs semanales a `develop` para npm y GitHub Actions.
