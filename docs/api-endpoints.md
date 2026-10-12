@@ -97,3 +97,6 @@ Estados que se ven en el código: `pendiente`, `abierta`, `cancelada`, `completa
 6. **`GET /users/:id` y `PATCH /users/:id`** solo exigen JWT, sin validar que sea el mismo usuario o Admin (BOLA).
 7. **`GET /menu` hace `select *`**: expone `precioCosto` en un endpoint público.
 8. No hay `helmet` (cabeceras de seguridad) ni `/db-metrics` protegido (`@Public()`).
+9. **`ReservationsService.findAll` aplica solo el último filtro**: cada `.where()` de Drizzle reemplaza al anterior
+   (`fechaDesde` + `estatus` → solo `estatus`). Hay que combinarlos con `and(...)`. La app manda solo `fechaDesde`
+   y filtra los estados activos del lado del cliente.
