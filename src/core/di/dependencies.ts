@@ -9,6 +9,10 @@ import { MenuRemoteDataSource } from '../../features/menu/data/datasources/MenuR
 import { MenuRepositoryImpl } from '../../features/menu/data/repositories/MenuRepositoryImpl';
 import { GetDishUseCase } from '../../features/menu/domain/usecases/GetDishUseCase';
 import { GetMenuUseCase } from '../../features/menu/domain/usecases/GetMenuUseCase';
+import { ReservationRemoteDataSource } from '../../features/reservations/data/datasources/ReservationRemoteDataSource';
+import { ReservationRepositoryImpl } from '../../features/reservations/data/repositories/ReservationRepositoryImpl';
+import { CreateReservationUseCase } from '../../features/reservations/domain/usecases/CreateReservationUseCase';
+import { ListActiveReservationsUseCase } from '../../features/reservations/domain/usecases/ListActiveReservationsUseCase';
 import { httpClient, type HttpClient } from '../http/httpClient';
 
 /**
@@ -24,6 +28,8 @@ export interface Dependencies {
   restoreSessionUseCase: Pick<RestoreSessionUseCase, 'execute'>;
   getMenuUseCase: Pick<GetMenuUseCase, 'execute'>;
   getDishUseCase: Pick<GetDishUseCase, 'execute'>;
+  createReservationUseCase: Pick<CreateReservationUseCase, 'execute'>;
+  listActiveReservationsUseCase: Pick<ListActiveReservationsUseCase, 'execute'>;
 }
 
 export function createDependencies(): Dependencies {
@@ -33,6 +39,7 @@ export function createDependencies(): Dependencies {
   const sessionStorage = new SecureSessionStorage();
   const authRepository = new AuthRepositoryImpl(new AuthRemoteDataSource(httpClient));
   const menuRepository = new MenuRepositoryImpl(new MenuRemoteDataSource(httpClient));
+  const reservationRepository = new ReservationRepositoryImpl(new ReservationRemoteDataSource(httpClient));
 
   return {
     httpClient,
@@ -42,5 +49,7 @@ export function createDependencies(): Dependencies {
     restoreSessionUseCase: new RestoreSessionUseCase(sessionStorage),
     getMenuUseCase: new GetMenuUseCase(menuRepository),
     getDishUseCase: new GetDishUseCase(menuRepository),
+    createReservationUseCase: new CreateReservationUseCase(reservationRepository),
+    listActiveReservationsUseCase: new ListActiveReservationsUseCase(reservationRepository),
   };
 }
