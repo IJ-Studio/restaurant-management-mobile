@@ -41,7 +41,7 @@ function renderReservations(deps = makeTestDependencies()) {
 async function pickDateTime(date: Date) {
   await fireEvent.press(screen.getByRole('button', { name: 'Elegir fecha' }));
   await fireEvent.changeText(screen.getByTestId('picker-date'), date.toISOString());
-  await fireEvent.press(screen.getByRole('button', { name: /^Hora|Elegir hora/ }));
+  await fireEvent.press(screen.getByRole('button', { name: /^(Hora|Elegir hora)/ }));
   await fireEvent.changeText(screen.getByTestId('picker-time'), date.toISOString());
 }
 
