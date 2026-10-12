@@ -13,6 +13,7 @@ src/
 │   ├── di/                       # Dependency Injection: grafo de dependencias + Context/Provider
 │   ├── providers/AppProviders.tsx# QueryClientProvider + DependenciesProvider
 │   └── monitoring/               # Sentry con filtrado de datos sensibles
+├── navigation/                   # Navegador raíz, tabs por rol y RoleGuard (HU-02)
 ├── shared/presentation/components/   # Componentes reutilizables (Card, ListItem, ...)
 └── features/
     └── <feature>/                # auth, menu, reservations, orders, notifications, admin
@@ -79,7 +80,7 @@ render(
 
 ```mermaid
 sequenceDiagram
-    participant App as AuthGate
+    participant App as RootNavigator
     participant Store as sessionStore (Zustand)
     participant Repo as AuthRepositoryImpl
     participant SS as expo-secure-store
@@ -95,11 +96,31 @@ sequenceDiagram
 - `features/auth/presentation/store/sessionStore.ts` guarda `status` (`checking`,
   `authenticated`, `unauthenticated`) y la sesión (`token` + `user` con su `role`).
 - `useLogin` usa `useMutation` solo para la llamada; el resultado va a Zustand y a secure-store.
-- `useSessionBootstrap` (en `AuthGate`) conecta el `httpClient` con el store y lo hidrata al abrir la app.
+- `useSessionBootstrap` (en `RootNavigator`) conecta el `httpClient` con el store y lo hidrata al abrir la app.
 - No hay refresh token: un 401 en una petición con token cierra la sesión y limpia el caché de React Query.
 - Credenciales inválidas siempre muestran `Correo o contraseña incorrectos.` aunque el API
   distinga correo y contraseña. Un usuario con rol 5 (cliente) no puede entrar.
-- `SignedInScreen` es temporal: HU-02 la reemplaza por la navegación según el rol.
+
+## Navegación por rol (HU-02)
+
+`src/navigation/roleRoutes.ts` mapea cada rol a sus tabs (un objeto, sin patrón extra para 4 roles):
+
+| Rol | Tabs (la primera es su inicio) |
+|---|---|
+| Administrador | Dashboard · Pedidos · Reservaciones · Menú · Perfil |
+| Cajero | Pedidos · Reservaciones · Menú · Perfil |
+| Mesero | Menú · Pedidos · Reservaciones · Perfil |
+| Cocina | Cocina · Perfil |
+
+- `RootNavigator` lee el rol del mismo `sessionStore` de HU-01 (no se duplica) y monta `RoleTabs`.
+  Con `key={role}`, un cambio de rol reinicia la navegación.
+- Solo se registran las tabs del rol: las de otro rol no existen en su navegador.
+- `RoleGuard` envuelve cada pantalla como segunda barrera: si se llega a una ruta no permitida
+  (deep link, error de registro), no la renderiza y lleva al inicio del rol.
+- Es control de UI. La autorización real la hace el API con el rol del JWT: cambiar el rol
+  guardado en el dispositivo no da acceso a datos.
+- Cada historia reemplaza su `ComingSoonScreen` en `RoleTabs.tsx` y, si lo necesita, agrega un
+  stack dentro de su tab (p. ej. Menú → detalle del platillo en HU-03).
 
 ## Pruebas (TDD)
 

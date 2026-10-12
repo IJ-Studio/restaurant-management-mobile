@@ -20,3 +20,10 @@ export interface User {
   email: string;
   role: Role;
 }
+
+export const ROLE_LABEL: Record<Role, string> = {
+  admin: 'Administrador',
+  cajero: 'Cajero',
+  mesero: 'Mesero',
+  cocina: 'Cocina',
+};
