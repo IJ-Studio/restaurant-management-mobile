@@ -9,6 +9,14 @@ import { MenuRemoteDataSource } from '../../features/menu/data/datasources/MenuR
 import { MenuRepositoryImpl } from '../../features/menu/data/repositories/MenuRepositoryImpl';
 import { GetDishUseCase } from '../../features/menu/domain/usecases/GetDishUseCase';
 import { GetMenuUseCase } from '../../features/menu/domain/usecases/GetMenuUseCase';
+import { OrderRemoteDataSource } from '../../features/orders/data/datasources/OrderRemoteDataSource';
+import { OrderRepositoryImpl } from '../../features/orders/data/repositories/OrderRepositoryImpl';
+import { ListTablesUseCase } from '../../features/orders/domain/usecases/ListTablesUseCase';
+import { SendOrderToKitchenUseCase } from '../../features/orders/domain/usecases/SendOrderToKitchenUseCase';
+import {
+  createCurrentOrderStore,
+  type CurrentOrderStore,
+} from '../../features/orders/presentation/store/currentOrderStore';
 import { ReservationRemoteDataSource } from '../../features/reservations/data/datasources/ReservationRemoteDataSource';
 import { ReservationRepositoryImpl } from '../../features/reservations/data/repositories/ReservationRepositoryImpl';
 import { CreateReservationUseCase } from '../../features/reservations/domain/usecases/CreateReservationUseCase';
@@ -30,16 +38,26 @@ export interface Dependencies {
   getDishUseCase: Pick<GetDishUseCase, 'execute'>;
   createReservationUseCase: Pick<CreateReservationUseCase, 'execute'>;
   listActiveReservationsUseCase: Pick<ListActiveReservationsUseCase, 'execute'>;
+  currentOrderStore: CurrentOrderStore;
+  listTablesUseCase: Pick<ListTablesUseCase, 'execute'>;
+  sendOrderToKitchenUseCase: Pick<SendOrderToKitchenUseCase, 'execute'>;
 }
 
 export function createDependencies(): Dependencies {
   const sessionStore = createSessionStore();
   httpClient.setTokenProvider(() => sessionStore.getState().session?.token ?? null);
 
+  // Al cerrar sesión no queda el pedido a medias de otro mesero.
+  const currentOrderStore = createCurrentOrderStore();
+  sessionStore.subscribe((state) => {
+    if (state.status === 'unauthenticated') currentOrderStore.getState().clear();
+  });
+
   const sessionStorage = new SecureSessionStorage();
   const authRepository = new AuthRepositoryImpl(new AuthRemoteDataSource(httpClient));
   const menuRepository = new MenuRepositoryImpl(new MenuRemoteDataSource(httpClient));
   const reservationRepository = new ReservationRepositoryImpl(new ReservationRemoteDataSource(httpClient));
+  const orderRepository = new OrderRepositoryImpl(new OrderRemoteDataSource(httpClient));
 
   return {
     httpClient,
@@ -51,5 +69,8 @@ export function createDependencies(): Dependencies {
     getDishUseCase: new GetDishUseCase(menuRepository),
     createReservationUseCase: new CreateReservationUseCase(reservationRepository),
     listActiveReservationsUseCase: new ListActiveReservationsUseCase(reservationRepository),
+    currentOrderStore,
+    listTablesUseCase: new ListTablesUseCase(orderRepository),
+    sendOrderToKitchenUseCase: new SendOrderToKitchenUseCase(orderRepository),
   };
 }
