@@ -52,8 +52,8 @@ describe('DashboardScreen', () => {
     await renderDashboard(jest.fn().mockResolvedValue(dashboard));
 
     expect(await screen.findByLabelText('Ventas por hora. Hora con más ventas: 20:00, $1,080.50.')).toBeOnTheScreen();
-    const peakBar = screen.getByTestId('bar-20').children[0] as { props: { style: unknown } };
-    const otherBar = screen.getByTestId('bar-13').children[0] as { props: { style: unknown } };
+    const peakBar = screen.getByTestId('bar-20').children[0] as unknown as { props: { style: unknown } };
+    const otherBar = screen.getByTestId('bar-13').children[0] as unknown as { props: { style: unknown } };
     expect(peakBar.props.style).toEqual(expect.arrayContaining([expect.objectContaining({ height: 140 })]));
     expect(otherBar.props.style).toEqual(
       expect.arrayContaining([expect.objectContaining({ height: (450 / 1080.5) * 140 })]),

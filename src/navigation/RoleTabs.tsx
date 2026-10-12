@@ -7,6 +7,7 @@ import { ProfileScreen } from '../features/auth/presentation/screens/ProfileScre
 import { MenuStack } from '../features/menu/presentation/navigation/MenuStack';
 import { CurrentOrderScreen } from '../features/orders/presentation/screens/CurrentOrderScreen';
 import { ReservationsStack } from '../features/reservations/presentation/navigation/ReservationsStack';
+import { useNotificationPermission } from '../features/notifications/presentation/viewmodels/useNotificationPermission';
 import { RoleGuard } from './RoleGuard';
 import { ROLE_TABS, type TabRoute } from './roleRoutes';
 import { ComingSoonScreen } from './screens/ComingSoonScreen';
@@ -45,6 +46,8 @@ const GUARDED = Object.fromEntries(
 
 /** Solo se registran las tabs del rol: las de otros roles no existen en su navegador. */
 export function RoleTabs({ role }: { role: Role }) {
+  // Al entrar con sesión se pide el permiso de notificaciones (una sola vez; HU-07).
+  useNotificationPermission({ askOnMount: true });
   return (
     <Tab.Navigator>
       {ROLE_TABS[role].map((route) => (

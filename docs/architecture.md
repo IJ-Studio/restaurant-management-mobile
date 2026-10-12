@@ -176,6 +176,19 @@ sequenceDiagram
   (`POST /pedidos/mesa`), el cobro con Stripe (Adapter + `CheckoutUseCase`) y el historial
   quedan para el resto de HU-05.
 
+## Notificaciones: permisos (HU-07, parte 1)
+
+- Puerto `PushNotifications` en `domain/ports`; el Adapter `ExpoPushNotifications`
+  (`data/gateways`) es lo único que importa `expo-notifications`. `onNotification()` es el
+  Observer para reaccionar a lo que llega con la app abierta.
+- `EnableNotificationsUseCase` pide el permiso solo si nunca se ha preguntado; si se negó no
+  insiste. El estado del permiso vive en Zustand (`notificationStore`).
+- Se pide al entrar con sesión (`RoleTabs`) y en Perfil se ve el estado, con "Activar" o
+  "Abrir Ajustes".
+- Android usa el canal `operacion` con contenido oculto en pantalla bloqueada.
+- Falta para cerrar HU-07: registrar el token del dispositivo en el API (#346) y el envío
+  desde el backend al cambiar el estado de un pedido.
+
 ## Dashboard del Administrador (HU-08)
 
 - `GetDashboardUseCase` pide en paralelo `GET /dashboard/admin/stats` y
