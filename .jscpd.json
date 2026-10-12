@@ -1,0 +1,21 @@
+{
+  "path": [
+    "src",
+    "App.tsx"
+  ],
+  "format": [
+    "typescript",
+    "tsx"
+  ],
+  "ignore": [
+    "**/__tests__/**",
+    "**/__fixtures__/**"
+  ],
+  "threshold": 3,
+  "minTokens": 50,
+  "reporters": [
+    "console"
+  ],
+  "absolute": false,
+  "gitignore": true
+}
