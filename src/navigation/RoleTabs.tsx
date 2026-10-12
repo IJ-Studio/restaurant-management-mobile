@@ -2,6 +2,7 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import type { ComponentType } from 'react';
 
 import type { Role } from '../features/auth/domain/entities/User';
+import { DashboardScreen } from '../features/admin/presentation/screens/DashboardScreen';
 import { ProfileScreen } from '../features/auth/presentation/screens/ProfileScreen';
 import { MenuStack } from '../features/menu/presentation/navigation/MenuStack';
 import { CurrentOrderScreen } from '../features/orders/presentation/screens/CurrentOrderScreen';
@@ -19,7 +20,7 @@ function comingSoon(title: string, story: string): ComponentType {
 }
 
 const TABS: Record<TabRoute, { title: string; component: ComponentType }> = {
-  dashboard: { title: 'Dashboard', component: comingSoon('Dashboard', 'HU-08') },
+  dashboard: { title: 'Dashboard', component: DashboardScreen },
   orders: { title: 'Pedidos', component: CurrentOrderScreen },
   kitchen: { title: 'Cocina', component: comingSoon('Pedidos en cocina', 'HU-06') },
   reservations: { title: 'Reservaciones', component: ReservationsStack },
