@@ -135,6 +135,19 @@ sequenceDiagram
 - `shared/presentation/components` (`Card`, `ListItem`, `Badge`, `QueryState`) son los
   componentes que reutilizan reservaciones (HU-04) y pedidos (HU-05).
 
+## Reservaciones (HU-04)
+
+- `reservationRules.validateReservation` repite las reglas del API (`CreateReservationDto` y
+  `ReservationsService`): nombre 2–150, teléfono `^[0-9+\-\s()]{8,20}$`, correo, fecha futura con
+  al menos 1 hora de anticipación, 1–50 personas, notas ≤ 500. La fecha y la hora se capturan
+  como `AAAA-MM-DD` y `HH:MM` en la hora local del dispositivo y se envían en ISO (UTC).
+- `CreateReservationUseCase` vuelve a validar: una reservación inválida nunca llega al API.
+  Se envía con `canal: 'telefono'`.
+- `GetActiveReservationsUseCase` pide desde el inicio de hoy y deja solo `pendiente` y
+  `confirmada`, de la más próxima a la más lejana.
+- `useReservationForm` usa `useMutation` e invalida `['reservations']` al crear, así la nueva
+  reservación aparece de inmediato en el listado (`ReservationsStack`: listado → formulario).
+
 ## Pruebas (TDD)
 
 - Las pruebas viven junto al código en `__tests__/` (`src/features/auth/domain/__tests__/LoginUseCase.test.ts`).
