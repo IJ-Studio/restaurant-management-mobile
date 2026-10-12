@@ -30,6 +30,9 @@ async function setup(stored: Session | null | Error) {
     createReservationUseCase: { execute: jest.fn() },
     getActiveReservationsUseCase: { execute: jest.fn().mockResolvedValue([]) },
     getDashboardUseCase: { execute: jest.fn(() => new Promise(() => {})) },
+    enableNotificationsUseCase: {
+      execute: jest.fn().mockResolvedValue({ status: 'granted', canAskAgain: true }),
+    },
     restoreSessionUseCase: {
       execute: stored instanceof Error ? jest.fn().mockRejectedValue(stored) : jest.fn().mockResolvedValue(stored),
     },
@@ -134,6 +137,12 @@ describe('RootNavigator: tabs por rol (HU-02)', () => {
     await setup(sessionFor('admin'));
     await screen.findByLabelText('Perfil', { exact: false });
     expect(screen.queryByLabelText('Cocina', { exact: false })).toBeNull();
+  });
+
+  it('al entrar pide el permiso de notificaciones (HU-07)', async () => {
+    const { dependencies } = await setup(sessionFor('mesero'));
+    await screen.findByLabelText('Perfil', { exact: false });
+    expect(dependencies.enableNotificationsUseCase.execute).toHaveBeenCalledWith({ ask: true });
   });
 
   it('cada rol abre en su pantalla de inicio', async () => {

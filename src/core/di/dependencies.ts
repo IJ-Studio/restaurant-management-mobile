@@ -11,6 +11,8 @@ import { MenuRemoteDataSource } from '../../features/menu/data/datasources/MenuR
 import { MenuRepositoryImpl } from '../../features/menu/data/repositories/MenuRepositoryImpl';
 import { GetDishUseCase } from '../../features/menu/domain/usecases/GetDishUseCase';
 import { GetMenuUseCase } from '../../features/menu/domain/usecases/GetMenuUseCase';
+import { ExpoPushNotifications } from '../../features/notifications/data/gateways/ExpoPushNotifications';
+import { EnableNotificationsUseCase } from '../../features/notifications/domain/usecases/EnableNotificationsUseCase';
 import { ReservationRemoteDataSource } from '../../features/reservations/data/datasources/ReservationRemoteDataSource';
 import { ReservationRepositoryImpl } from '../../features/reservations/data/repositories/ReservationRepositoryImpl';
 import { CreateReservationUseCase } from '../../features/reservations/domain/usecases/CreateReservationUseCase';
@@ -34,6 +36,8 @@ export interface Dependencies {
   // HU-04
   createReservationUseCase: CreateReservationUseCase;
   getActiveReservationsUseCase: GetActiveReservationsUseCase;
+  // HU-07
+  enableNotificationsUseCase: EnableNotificationsUseCase;
   // HU-08
   getDashboardUseCase: GetDashboardUseCase;
 }
@@ -52,6 +56,7 @@ export function createDependencies(): Dependencies {
     getDishUseCase: new GetDishUseCase(menuRepository),
     createReservationUseCase: new CreateReservationUseCase(reservationRepository),
     getActiveReservationsUseCase: new GetActiveReservationsUseCase(reservationRepository),
+    enableNotificationsUseCase: new EnableNotificationsUseCase(new ExpoPushNotifications()),
     getDashboardUseCase: new GetDashboardUseCase(new DashboardRepositoryImpl(new DashboardRemoteDataSource(httpClient))),
   };
 }

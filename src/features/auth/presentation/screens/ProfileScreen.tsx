@@ -1,5 +1,6 @@
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
+import { NotificationSettings } from '../../../notifications/presentation/components/NotificationSettings';
 import { ROLE_LABEL } from '../../domain/entities/User';
 import { useSessionStore } from '../store/sessionStore';
 import { useLogout } from '../viewmodels/useLogout';
@@ -17,6 +18,7 @@ export function ProfileScreen() {
       </Text>
       <Text style={styles.role}>{ROLE_LABEL[user.role]}</Text>
       <Text style={styles.email}>{user.email}</Text>
+      <NotificationSettings />
       <Pressable style={styles.button} onPress={logout} disabled={isLoading} accessibilityRole="button">
         <Text style={styles.buttonText}>Cerrar sesión</Text>
       </Pressable>
