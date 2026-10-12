@@ -24,6 +24,8 @@ async function setup(stored: Session | null | Error) {
     httpClient,
     loginUseCase: { execute: jest.fn() },
     logoutUseCase: { execute: jest.fn().mockResolvedValue(undefined) },
+    getMenuUseCase: { execute: jest.fn().mockResolvedValue([]) },
+    getDishUseCase: { execute: jest.fn() },
     restoreSessionUseCase: {
       execute: stored instanceof Error ? jest.fn().mockRejectedValue(stored) : jest.fn().mockResolvedValue(stored),
     },

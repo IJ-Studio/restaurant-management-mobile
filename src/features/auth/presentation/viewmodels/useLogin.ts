@@ -5,7 +5,7 @@ import { useDependencies } from '../../../../core/di/DependenciesProvider';
 import type { Credentials } from '../../domain/repositories/AuthRepository';
 import { validateCredentials } from '../../domain/usecases/LoginUseCase';
 import { useSessionStore } from '../store/sessionStore';
-import { errorMessage } from './errorMessage';
+import { errorMessage } from '../../../../shared/presentation/errorMessage';
 
 /** ViewModel de la pantalla de Login: estado del formulario + llamada al caso de uso. */
 export function useLogin() {
