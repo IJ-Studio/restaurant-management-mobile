@@ -29,6 +29,7 @@ async function setup(stored: Session | null | Error) {
     getDishUseCase: { execute: jest.fn() },
     createReservationUseCase: { execute: jest.fn() },
     getActiveReservationsUseCase: { execute: jest.fn().mockResolvedValue([]) },
+    getDashboardUseCase: { execute: jest.fn(() => new Promise(() => {})) },
     restoreSessionUseCase: {
       execute: stored instanceof Error ? jest.fn().mockRejectedValue(stored) : jest.fn().mockResolvedValue(stored),
     },
@@ -125,7 +126,7 @@ describe('RootNavigator: tabs por rol (HU-02)', () => {
   it('un Mesero no tiene acceso al Dashboard del Administrador', async () => {
     await setup(sessionFor('mesero'));
     await screen.findByLabelText('Perfil', { exact: false });
-    expect(screen.queryByLabelText('Dashboard', { exact: false })).toBeNull();
+    expect(screen.queryByLabelText(/^Dashboard,/)).toBeNull();
     expect(screen.queryByText('Dashboard')).toBeNull();
   });
 
@@ -142,11 +143,11 @@ describe('RootNavigator: tabs por rol (HU-02)', () => {
 
   it('si cambia el rol, las tabs se reconstruyen para el nuevo rol', async () => {
     await setup(sessionFor('admin'));
-    await screen.findByLabelText('Dashboard', { exact: false });
+    await screen.findByLabelText(/^Dashboard,/);
 
     await act(async () => useSessionStore.getState().setSession(sessionFor('cocina')));
 
     expect(await screen.findByText('Pedidos en cocina')).toBeOnTheScreen();
-    expect(screen.queryByLabelText('Dashboard', { exact: false })).toBeNull();
+    expect(screen.queryByLabelText(/^Dashboard,/)).toBeNull();
   });
 });

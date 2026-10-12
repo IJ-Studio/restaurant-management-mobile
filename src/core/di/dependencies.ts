@@ -1,3 +1,6 @@
+import { DashboardRemoteDataSource } from '../../features/admin/data/datasources/DashboardRemoteDataSource';
+import { DashboardRepositoryImpl } from '../../features/admin/data/repositories/DashboardRepositoryImpl';
+import { GetDashboardUseCase } from '../../features/admin/domain/usecases/GetDashboardUseCase';
 import { AuthRemoteDataSource } from '../../features/auth/data/datasources/AuthRemoteDataSource';
 import { AuthRepositoryImpl } from '../../features/auth/data/repositories/AuthRepositoryImpl';
 import { SecureSessionStorage } from '../../features/auth/data/storage/SessionStorage';
@@ -31,6 +34,8 @@ export interface Dependencies {
   // HU-04
   createReservationUseCase: CreateReservationUseCase;
   getActiveReservationsUseCase: GetActiveReservationsUseCase;
+  // HU-08
+  getDashboardUseCase: GetDashboardUseCase;
 }
 
 export function createDependencies(): Dependencies {
@@ -47,5 +52,6 @@ export function createDependencies(): Dependencies {
     getDishUseCase: new GetDishUseCase(menuRepository),
     createReservationUseCase: new CreateReservationUseCase(reservationRepository),
     getActiveReservationsUseCase: new GetActiveReservationsUseCase(reservationRepository),
+    getDashboardUseCase: new GetDashboardUseCase(new DashboardRepositoryImpl(new DashboardRemoteDataSource(httpClient))),
   };
 }

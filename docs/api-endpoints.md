@@ -81,12 +81,12 @@ Estados que se ven en el código: `pendiente`, `abierta`, `cancelada`, `completa
 
 ## Admin — HU-08
 
-| Método | Ruta | Acceso |
-|---|---|---|
-| GET | `/dashboard/admin/stats` | Admin |
-| GET | `/dashboard/admin/ventas-por-hora` | Admin |
-| GET | `/dashboard/{admin,cajero,mesero,cocina}` | Solo el rol correspondiente (útil para probar RBAC en HU-02) |
-| GET/POST/PATCH/DELETE | `/users` | Admin (alta de personal) |
+| Método | Ruta | Acceso | Respuesta |
+|---|---|---|---|
+| GET | `/dashboard/admin/stats` | Admin | `{ totalVentas, pedidosPendientes, pedidosEnPreparacion, mesasOcupadas, mesasLibres, totalMesas }` |
+| GET | `/dashboard/admin/ventas-por-hora` | Admin | `{ ventas: number[24], totalDia }` (hora según la zona de la base de datos) |
+| GET | `/dashboard/{admin,cajero,mesero,cocina}` | Solo el rol correspondiente | Útil para probar RBAC en HU-02 |
+| GET/POST/PATCH/DELETE | `/users` | Admin | Alta de personal |
 
 ## Qué falta en el API (para José / Irving)
 

@@ -176,6 +176,16 @@ sequenceDiagram
   (`POST /pedidos/mesa`), el cobro con Stripe (Adapter + `CheckoutUseCase`) y el historial
   quedan para el resto de HU-05.
 
+## Dashboard del Administrador (HU-08)
+
+- `GetDashboardUseCase` pide en paralelo `GET /dashboard/admin/stats` y
+  `GET /dashboard/admin/ventas-por-hora` (solo Admin).
+- `useDashboard` usa React Query con `refetchInterval` de 30 s. Si un refresco falla, se
+  siguen mostrando los últimos datos con un aviso.
+- La gráfica de ventas por hora son barras hechas con `View` (sin librería), con la hora pico
+  resaltada y un resumen para lector de pantalla.
+- Las horas las calcula el API con la zona horaria de la base de datos.
+
 ## Pruebas (TDD)
 
 - Las pruebas viven junto al código en `__tests__/` (`src/features/auth/domain/__tests__/LoginUseCase.test.ts`).
