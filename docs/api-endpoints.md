@@ -43,6 +43,9 @@ precio, tiempoPreparacion, disponible, esVegetariano, esVegano, esSinGluten, esP
 esPopular, esNuevo, esDelChef`. **`precio` llega como string** (es `numeric` en Postgres): el mapper
 lo convierte a número.
 
+La app usa `GET /menu` (lista) y `GET /menu/items/:id` (detalle). Imágenes que no sean `https://`
+se descartan. Mientras `GET /menu` haga `select *`, el mapper ignora `precioCosto`.
+
 ## Reservaciones — HU-04
 
 | Método | Ruta | Acceso | Notas |

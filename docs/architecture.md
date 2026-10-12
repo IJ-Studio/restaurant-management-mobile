@@ -14,7 +14,7 @@ src/
 │   ├── providers/AppProviders.tsx# QueryClientProvider + DependenciesProvider
 │   └── monitoring/               # Sentry con filtrado de datos sensibles
 ├── navigation/                   # Navegador raíz, tabs por rol y RoleGuard (HU-02)
-├── shared/presentation/components/   # Componentes reutilizables (Card, ListItem, ...)
+├── shared/presentation/          # Card, ListItem, Badge, QueryState, formatPrice, errorMessage
 └── features/
     └── <feature>/                # auth, menu, reservations, orders, notifications, admin
         ├── domain/               # entities/, repositories/ (interfaces), usecases/
@@ -121,6 +121,19 @@ sequenceDiagram
   guardado en el dispositivo no da acceso a datos.
 - Cada historia reemplaza su `ComingSoonScreen` en `RoleTabs.tsx` y, si lo necesita, agrega un
   stack dentro de su tab (p. ej. Menú → detalle del platillo en HU-03).
+
+## Menú (HU-03)
+
+- `GetMenuUseCase` (lista: primero lo disponible, luego por nombre) y `GetDishUseCase` sobre
+  `MenuRepository`; sin Facade ni Adapter, es un solo GET.
+- `useMenu` y `useDish` usan React Query con `staleTime` de 5 minutos. El detalle muestra al
+  instante el platillo que ya está en la lista y lo confirma con `GET /menu/items/:id`; si esa
+  llamada falla, se queda con el de la lista.
+- La tab Menú es un stack (`MenuStack`): lista → detalle.
+- `dishMapper` convierte `precio` (string) a número, descarta `precioCosto` y solo acepta
+  imágenes `https://`.
+- `shared/presentation/components` (`Card`, `ListItem`, `Badge`, `QueryState`) son los
+  componentes que reutilizan reservaciones (HU-04) y pedidos (HU-05).
 
 ## Pruebas (TDD)
 
