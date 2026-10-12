@@ -17,5 +17,9 @@ module.exports = {
       lines: 70,
       statements: 70,
     },
+    // Casos de uso, datos y ViewModels de cada historia: ≥ 80% de líneas por archivo.
+    './src/features/**/domain/usecases/**': { lines: 80 },
+    './src/features/**/data/**': { lines: 80 },
+    './src/features/**/presentation/viewmodels/**': { lines: 80 },
   },
 };
