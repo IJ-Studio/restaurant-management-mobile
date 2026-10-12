@@ -2,12 +2,13 @@ import { screen } from '@testing-library/react-native';
 import { Text } from 'react-native';
 
 import { renderWithProviders } from '../../../../core/testing/renderWithProviders';
-import { makeAuthDependencies, makeSession } from '../../__fixtures__/auth';
+import { makeSession } from '../../__fixtures__/auth';
+import { makeTestDependencies } from '../../../../core/testing/makeTestDependencies';
 import { RequireSection } from '../components/RequireSection';
 
 describe('RequireSection', () => {
   it('muestra la sección si el rol la tiene', async () => {
-    const deps = makeAuthDependencies();
+    const deps = makeTestDependencies();
     deps.sessionStore.getState().setSession(makeSession());
 
     await renderWithProviders(
@@ -23,7 +24,7 @@ describe('RequireSection', () => {
     ['un mesero', 'mesero'],
     ['un rol alterado en el cliente', 'superadmin'],
   ])('bloquea el dashboard para %s', async (_label, role) => {
-    const deps = makeAuthDependencies();
+    const deps = makeTestDependencies();
     const session = makeSession();
     session.user.role = role as never;
     deps.sessionStore.getState().setSession(session);
@@ -43,7 +44,7 @@ describe('RequireSection', () => {
       <RequireSection section="profile">
         <Text>Perfil</Text>
       </RequireSection>,
-      makeAuthDependencies(),
+      makeTestDependencies(),
     );
     expect(screen.queryByText('Perfil')).toBeNull();
   });

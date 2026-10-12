@@ -5,6 +5,10 @@ import { LoginUseCase } from '../../features/auth/domain/usecases/LoginUseCase';
 import { LogoutUseCase } from '../../features/auth/domain/usecases/LogoutUseCase';
 import { RestoreSessionUseCase } from '../../features/auth/domain/usecases/RestoreSessionUseCase';
 import { createSessionStore, type SessionStore } from '../../features/auth/presentation/store/sessionStore';
+import { MenuRemoteDataSource } from '../../features/menu/data/datasources/MenuRemoteDataSource';
+import { MenuRepositoryImpl } from '../../features/menu/data/repositories/MenuRepositoryImpl';
+import { GetDishUseCase } from '../../features/menu/domain/usecases/GetDishUseCase';
+import { GetMenuUseCase } from '../../features/menu/domain/usecases/GetMenuUseCase';
 import { httpClient, type HttpClient } from '../http/httpClient';
 
 /**
@@ -18,6 +22,8 @@ export interface Dependencies {
   loginUseCase: Pick<LoginUseCase, 'execute'>;
   logoutUseCase: Pick<LogoutUseCase, 'execute'>;
   restoreSessionUseCase: Pick<RestoreSessionUseCase, 'execute'>;
+  getMenuUseCase: Pick<GetMenuUseCase, 'execute'>;
+  getDishUseCase: Pick<GetDishUseCase, 'execute'>;
 }
 
 export function createDependencies(): Dependencies {
@@ -26,6 +32,7 @@ export function createDependencies(): Dependencies {
 
   const sessionStorage = new SecureSessionStorage();
   const authRepository = new AuthRepositoryImpl(new AuthRemoteDataSource(httpClient));
+  const menuRepository = new MenuRepositoryImpl(new MenuRemoteDataSource(httpClient));
 
   return {
     httpClient,
@@ -33,5 +40,7 @@ export function createDependencies(): Dependencies {
     loginUseCase: new LoginUseCase(authRepository, sessionStorage),
     logoutUseCase: new LogoutUseCase(authRepository, sessionStorage),
     restoreSessionUseCase: new RestoreSessionUseCase(sessionStorage),
+    getMenuUseCase: new GetMenuUseCase(menuRepository),
+    getDishUseCase: new GetDishUseCase(menuRepository),
   };
 }

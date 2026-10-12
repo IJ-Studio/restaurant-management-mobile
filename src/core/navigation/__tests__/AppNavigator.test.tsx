@@ -2,7 +2,8 @@ import { createNavigationContainerRef } from '@react-navigation/native';
 import { act, screen } from '@testing-library/react-native';
 
 import type { Role } from '../../../features/auth/domain/entities/Role';
-import { makeAuthDependencies, makeSession } from '../../../features/auth/__fixtures__/auth';
+import { makeSession } from '../../../features/auth/__fixtures__/auth';
+import { makeTestDependencies } from '../../testing/makeTestDependencies';
 import { renderWithProviders } from '../../testing/renderWithProviders';
 import { AppNavigator, type TabParamList } from '../AppNavigator';
 
@@ -16,7 +17,7 @@ const EXPECTED_TABS: Record<Exclude<Role, 'cliente'>, string[]> = {
 };
 
 async function renderAs(role: Role) {
-  const deps = makeAuthDependencies();
+  const deps = makeTestDependencies();
   const session = makeSession();
   session.user.role = role;
   deps.sessionStore.getState().setSession(session);
@@ -43,7 +44,8 @@ describe('AppNavigator', () => {
 
     await act(() => navigationRef.navigate('dashboard'));
 
-    expect(navigationRef.getCurrentRoute()?.name).toBe('menu');
+    const root = navigationRef.getRootState()!;
+    expect(root.routes[root.index].name).toBe('menu');
     expect(screen.queryByText('Indicadores del día (HU-08).')).toBeNull();
   });
 

@@ -47,7 +47,10 @@ export function AppNavigator({ navigationRef }: Props) {
             key={section}
             name={section}
             component={GUARDED_SCREENS[section]}
-            options={{ title: SECTION_CONFIG[section].title }}
+            options={{
+              title: SECTION_CONFIG[section].title,
+              headerShown: SECTION_CONFIG[section].headerShown ?? true,
+            }}
           />
         ))}
       </Tab.Navigator>
