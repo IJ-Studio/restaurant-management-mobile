@@ -4,7 +4,7 @@ import { Text } from 'react-native';
 import { renderWithProviders } from '../../../../core/testing/renderWithProviders';
 import { makeAuthDependencies, makeSession } from '../../__fixtures__/auth';
 import { AuthGate } from '../components/AuthGate';
-import { WelcomeScreen } from '../screens/WelcomeScreen';
+import { ProfileScreen } from '../screens/ProfileScreen';
 
 describe('AuthGate', () => {
   it('sin sesión guardada muestra el Login', async () => {
@@ -53,12 +53,12 @@ describe('AuthGate', () => {
     });
     await renderWithProviders(
       <AuthGate>
-        <WelcomeScreen />
+        <ProfileScreen />
       </AuthGate>,
       deps,
     );
 
-    expect(await screen.findByText('Hola, Ana')).toBeOnTheScreen();
+    expect(await screen.findByText('Ana López')).toBeOnTheScreen();
     expect(screen.getByText('Mesero')).toBeOnTheScreen();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Cerrar sesión' }));
