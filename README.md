@@ -42,6 +42,7 @@ npm run lint          # ESLint + eslint-plugin-security (0 warnings)
 npm run typecheck     # tsc --noEmit
 npm run format:check  # Prettier (npm run format para corregir)
 npm run audit         # npm audit High/Critical (excepciones en audit-ci.jsonc)
+npm run duplication   # código duplicado ≤ 3% (jscpd)
 npm test              # pruebas con Jest + React Native Testing Library
 ```
 
@@ -130,7 +131,8 @@ gitGraph
 | Workflow | Jobs | Qué bloquea |
 |---|---|---|
 | `ci.yml` | `lint-test`, `security` | Lint, tests y cobertura; npm audit High/Critical y secretos (Gitleaks, config en `.gitleaks.toml`) |
-| `static-analysis.yml` | `static-analysis` | Errores de tipos, formato y warnings de ESLint |
+| `static-analysis.yml` | `static-analysis` | Errores de tipos, formato, warnings de ESLint, complejidad cognitiva > 15 y duplicación > 3% |
+| `unit-tests.yml` | `unit-tests` | Cobertura < 70% global o < 80% en casos de uso, datos y ViewModels; publica el artefacto `coverage` |
 | `codeql.yml` | `codeql` | Alertas High/Critical de CodeQL (SAST) |
 | `cd-preview.yml` / `cd-release.yml` | `build-preview` / release | APK por tag `sprint-*` / `v*` |
 
