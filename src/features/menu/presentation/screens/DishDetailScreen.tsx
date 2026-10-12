@@ -2,6 +2,7 @@ import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Card } from '../../../../shared/presentation/components/Card';
+import { AddToOrderButton } from '../../../orders/presentation/components/AddToOrderButton';
 import { ScreenState } from '../../../../shared/presentation/components/ScreenState';
 import { colors, spacing } from '../../../../shared/presentation/theme';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
@@ -48,6 +49,10 @@ export function DishDetailScreen({ route }: Props) {
           </View>
         )}
       </Card>
+      <AddToOrderButton
+        dish={{ dishId: dish.id, name: dish.name, unitPrice: dish.price }}
+        disabled={!dish.available}
+      />
     </ScrollView>
   );
 }

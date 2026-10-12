@@ -82,6 +82,17 @@ Estados que se ven en el código: `pendiente`, `abierta`, `cancelada`, `completa
 | HU-06 | No hay un endpoint para que Cocina o Mesero cambien el estado (`abierta → en preparación → lista → entregada`), ni un stream que no sea solo de Admin |
 | HU-07 | No existe el registro de tokens de dispositivo ni el envío de push |
 
+## Cobro en caja (HU-05): bloqueo de diseño
+
+El flujo de pagos del API está pensado para el **cliente web** y no sirve tal cual para el Cajero:
+
+- `POST /pagos/crear-intento` exige que la orden siga en **`pendiente`** y que su `clienteId` sea el del usuario que paga.
+- Cuando el mesero manda el pedido a cocina (`POST /pedidos/confirmar/:id`), la orden pasa a **`abierta`**, así que
+  el Cajero ya no podría cobrarla, y además la orden queda a nombre del mesero, no del cajero.
+
+Hace falta un endpoint para el personal (p. ej. `POST /pagos/cobrar-orden/:ordenId`, solo rol Cajero) que cree el
+PaymentIntent de una orden `abierta` con el total calculado en el servidor, y que el webhook la marque como pagada.
+
 ## Hallazgos de seguridad del API (revisar antes de HU-01/HU-02)
 
 1. **Sign-in devuelve el hash de la contraseña.** `AuthService.SignIn` regresa la fila completa de

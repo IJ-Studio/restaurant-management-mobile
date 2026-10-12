@@ -1,5 +1,6 @@
 import { makeSession } from '../../features/auth/__fixtures__/auth';
 import { createSessionStore } from '../../features/auth/presentation/store/sessionStore';
+import { createCurrentOrderStore } from '../../features/orders/presentation/store/currentOrderStore';
 import type { Dependencies } from '../di/dependencies';
 import type { HttpClient } from '../http/httpClient';
 
@@ -18,6 +19,9 @@ export function makeTestDependencies(overrides: Partial<Dependencies> = {}): Dep
     getDishUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
     createReservationUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
     listActiveReservationsUseCase: { execute: pending() },
+    currentOrderStore: createCurrentOrderStore(),
+    listTablesUseCase: { execute: pending() },
+    sendOrderToKitchenUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
     ...overrides,
   };
 }
