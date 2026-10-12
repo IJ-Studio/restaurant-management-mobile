@@ -2,14 +2,20 @@
 module.exports = {
   preset: 'jest-expo',
 
-  collectCoverageFrom: ['src/**/*.{ts,tsx}', '!src/**/__tests__/**', '!**/*.d.ts'],
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/__tests__/**',
+    '!src/**/__fixtures__/**',
+    '!src/core/testing/**',
+    '!**/*.d.ts',
+  ],
 
   coverageThreshold: {
     global: {
-      branches: 0,
-      functions: 0,
-      lines: 0,
-      statements: 0,
+      branches: 70,
+      functions: 70,
+      lines: 70,
+      statements: 70,
     },
   },
 };
