@@ -60,7 +60,9 @@ describe('HttpClient', () => {
   it('une los mensajes de validación de NestJS', async () => {
     const fetchFn = jest
       .fn()
-      .mockImplementation(async () => jsonResponse(400, { message: ['email must be an email', 'password too short'] }));
+      .mockImplementation(async () =>
+        jsonResponse(400, { message: ['email must be an email', 'password too short'] }),
+      );
     await expect(makeClient(fetchFn).get('x')).rejects.toThrow('email must be an email\npassword too short');
   });
 
