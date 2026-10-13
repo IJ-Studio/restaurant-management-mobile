@@ -19,6 +19,27 @@ updates:
         update-types: ['version-update:semver-major', 'version-update:semver-minor']
       - dependency-name: 'react-native'
         update-types: ['version-update:semver-major', 'version-update:semver-minor']
+      # También los fija el SDK (node_modules/expo/bundledNativeModules.json).
+      - dependency-name: 'react-native-*'
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
+      - dependency-name: '@react-native-community/*'
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
+      - dependency-name: '@sentry/react-native'
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
+      - dependency-name: 'jest-expo'
+        update-types: ['version-update:semver-major']
+      # react-test-renderer y @types/react deben ir a la par de react.
+      - dependency-name: 'react-test-renderer'
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
+      - dependency-name: '@types/react'
+        update-types: ['version-update:semver-major', 'version-update:semver-minor']
+      # jest-expo 57 usa Jest 29: Jest 30 llega con el siguiente SDK.
+      - dependency-name: 'jest'
+        update-types: ['version-update:semver-major']
+      - dependency-name: '@types/jest'
+        update-types: ['version-update:semver-major']
+      - dependency-name: 'typescript'
+        update-types: ['version-update:semver-major']
     groups:
       dev-tools:
         dependency-type: development
