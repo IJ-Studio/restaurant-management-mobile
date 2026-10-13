@@ -72,7 +72,7 @@ jobs:
           echo "::error::lint-test no terminó en verde en 10 minutos. No se publica la release."
           exit 1
 
-      - uses: actions/setup-node@v4
+      - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
