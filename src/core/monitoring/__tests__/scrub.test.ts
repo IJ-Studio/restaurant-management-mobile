@@ -93,7 +93,10 @@ describe('scrubEvent', () => {
   });
 
   it('conserva un evento sin datos sensibles', () => {
-    const event: ErrorEvent = { type: undefined, exception: { values: [{ type: 'TypeError', value: 'x is undefined' }] } };
+    const event: ErrorEvent = {
+      type: undefined,
+      exception: { values: [{ type: 'TypeError', value: 'x is undefined' }] },
+    };
 
     expect(scrubEvent(event)).toEqual(event);
   });

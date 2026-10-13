@@ -9,7 +9,8 @@ const SENSITIVE_KEY =
 // Valores sensibles que pueden venir dentro de un texto libre (mensajes de error, logs).
 const JWT = /eyJ[\w-]+\.[\w-]+\.[\w-]+/g;
 const BEARER = /Bearer\s+[\w.~+/-]+=*/gi;
-const EMAIL = /[\w.+-]+@[\w-]+(\.[\w-]+)+/g;
+// Sin cuantificadores anidados (evita backtracking catastrófico).
+const EMAIL = /[\w.+-]+@[\w-]+\.[\w.-]+/g;
 
 export function scrubString(value: string): string {
   return value.replace(JWT, FILTERED).replace(BEARER, `Bearer ${FILTERED}`).replace(EMAIL, FILTERED);
@@ -26,11 +27,11 @@ export function scrubData<T>(value: T, depth = 0): T {
   if (depth > 6) return FILTERED as T;
   if (Array.isArray(value)) return value.map((item) => scrubData(item, depth + 1)) as T;
 
-  const clean: Record<string, unknown> = {};
-  for (const [key, item] of Object.entries(value)) {
-    clean[key] = SENSITIVE_KEY.test(key) ? FILTERED : scrubData(item, depth + 1);
-  }
-  return clean as T;
+  const entries = Object.entries(value).map(([key, item]) => [
+    key,
+    SENSITIVE_KEY.test(key) ? FILTERED : scrubData(item, depth + 1),
+  ]);
+  return Object.fromEntries(entries) as T;
 }
 
 export function scrubBreadcrumb(breadcrumb: Breadcrumb): Breadcrumb {
