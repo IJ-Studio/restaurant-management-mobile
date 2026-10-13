@@ -1,0 +1,14 @@
+{
+  "$schema": "https://github.com/IBM/audit-ci/raw/main/docs/schema.json",
+  // Falla el CI con vulnerabilidades High o Critical (equivale a npm audit --audit-level=high).
+  "high": true,
+  // Excepciones revisadas el 2026-10-12. Cada una necesita motivo y se revisa al actualizar Expo/Jest.
+  "allowlist": [
+    // braces <=3.0.3 (DoS por patrones anidados). Sin versión corregida publicada.
+    // Solo lo usan micromatch/jest en desarrollo y CI; no entra al bundle del APK.
+    "GHSA-vfj7-8cjw-p6xm",
+    // node-forge <=1.4.0 (verificación de firma RSA). Sin versión corregida publicada.
+    // Solo lo usa @expo/cli para firmar código en desarrollo; no entra al bundle del APK.
+    "GHSA-86w9-cpqp-85rv"
+  ]
+}

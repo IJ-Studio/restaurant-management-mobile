@@ -26,3 +26,29 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm test -- --ci --coverage
+  # SCA + detección de secretos. Debe ser check obligatorio en main y develop.
+  security:
+    name: security
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0   # Gitleaks revisa todo el historial, no solo el último commit
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: npm audit (High/Critical bloquea; excepciones en audit-ci.jsonc)
+        run: npm run audit
+      - name: Gitleaks
+        env:
+          GITLEAKS_VERSION: 8.28.0
+          GITLEAKS_SHA256: a65b5253807a68ac0cafa4414031fd740aeb55f54fb7e55f386acb52e6a840eb
+        run: |
+          set -euo pipefail
+          FILE="gitleaks_${GITLEAKS_VERSION}_linux_x64.tar.gz"
+          curl -sSfLO "https://github.com/gitleaks/gitleaks/releases/download/v${GITLEAKS_VERSION}/${FILE}"
+          echo "${GITLEAKS_SHA256}  ${FILE}" | sha256sum -c -
+          tar -xzf "$FILE" gitleaks
+          ./gitleaks git --redact --verbose --no-banner .
