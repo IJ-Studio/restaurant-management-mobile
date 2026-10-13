@@ -59,7 +59,7 @@ jobs:
           node-version: 22
           cache: npm
 
-      - uses: expo/expo-github-action@v8   # confirma la versión mayor vigente en el Marketplace
+      - uses: expo/expo-github-action@v9   # confirma la versión mayor vigente en el Marketplace
         with:
           eas-version: latest
           token: ${{ secrets.EXPO_TOKEN }}
