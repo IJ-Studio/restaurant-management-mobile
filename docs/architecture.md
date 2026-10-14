@@ -75,6 +75,16 @@ render(
 | React Query | Datos del servidor (caché, reintentos, invalidación) | menú, reservaciones, historial |
 | Zustand | Estado local que debe sobrevivir al caché | sesión y rol, pedido en curso, permiso de notificaciones |
 
+## Navegación por rol (HU-02)
+
+- `features/auth/domain/entities/permissions.ts` define `SECTIONS_BY_ROLE`, la única tabla rol → secciones.
+  Su matriz completa está probada en `permissions.test.ts`.
+- `core/navigation/AppNavigator.tsx` lee el rol de `sessionStore` y **solo registra los tabs del rol**:
+  una ruta de otro rol no existe en el navegador. El navegador se reconstruye (`key={role}`) si cambia el rol.
+- Cada pantalla además va envuelta en `RequireSection` (segunda barrera).
+- Es control de la **vista**: el API valida el rol del JWT en cada endpoint (matriz RBAC en el repo del API).
+- Para agregar una pantalla real, reemplaza su `placeholder` en `core/navigation/sections.tsx`.
+
 ## Pruebas (TDD)
 
 - Las pruebas viven junto al código en `__tests__/` (`src/features/auth/domain/__tests__/LoginUseCase.test.ts`).
