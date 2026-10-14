@@ -1,28 +1,23 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View } from 'react-native';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { initSentry, Sentry } from './src/core/monitoring/sentry';
+import { AppNavigator } from './src/core/navigation/AppNavigator';
 import { AppProviders } from './src/core/providers/AppProviders';
+import { AuthGate } from './src/features/auth/presentation/components/AuthGate';
 
 initSentry();
 
 function App() {
   return (
-    <AppProviders>
-      <View style={styles.container}>
-        <Text>Restaurant Management</Text>
+    <SafeAreaProvider>
+      <AppProviders>
         <StatusBar style="auto" />
-      </View>
-    </AppProviders>
+        <AuthGate>
+          <AppNavigator />
+        </AuthGate>
+      </AppProviders>
+    </SafeAreaProvider>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#fff',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-});
 
 export default Sentry.wrap(App);
