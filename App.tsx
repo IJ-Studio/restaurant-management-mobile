@@ -1,19 +1,22 @@
 import { StatusBar } from 'expo-status-bar';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { initSentry, Sentry } from './src/core/monitoring/sentry';
+import { AppNavigator } from './src/core/navigation/AppNavigator';
 import { AppProviders } from './src/core/providers/AppProviders';
 import { AuthGate } from './src/features/auth/presentation/components/AuthGate';
-import { WelcomeScreen } from './src/features/auth/presentation/screens/WelcomeScreen';
 
 initSentry();
 
 function App() {
   return (
-    <AppProviders>
-      <StatusBar style="auto" />
-      <AuthGate>
-        <WelcomeScreen />
-      </AuthGate>
-    </AppProviders>
+    <SafeAreaProvider>
+      <AppProviders>
+        <StatusBar style="auto" />
+        <AuthGate>
+          <AppNavigator />
+        </AuthGate>
+      </AppProviders>
+    </SafeAreaProvider>
   );
 }
 
