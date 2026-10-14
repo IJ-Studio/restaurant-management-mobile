@@ -1,3 +1,10 @@
+import { AuthRemoteDataSource } from '../../features/auth/data/datasources/AuthRemoteDataSource';
+import { AuthRepositoryImpl } from '../../features/auth/data/repositories/AuthRepositoryImpl';
+import { SecureSessionStorage } from '../../features/auth/data/storage/SecureSessionStorage';
+import { LoginUseCase } from '../../features/auth/domain/usecases/LoginUseCase';
+import { LogoutUseCase } from '../../features/auth/domain/usecases/LogoutUseCase';
+import { RestoreSessionUseCase } from '../../features/auth/domain/usecases/RestoreSessionUseCase';
+import { createSessionStore, type SessionStore } from '../../features/auth/presentation/store/sessionStore';
 import { httpClient, type HttpClient } from '../http/httpClient';
 
 /**
@@ -7,10 +14,24 @@ import { httpClient, type HttpClient } from '../http/httpClient';
  */
 export interface Dependencies {
   httpClient: HttpClient;
+  sessionStore: SessionStore;
+  loginUseCase: Pick<LoginUseCase, 'execute'>;
+  logoutUseCase: Pick<LogoutUseCase, 'execute'>;
+  restoreSessionUseCase: Pick<RestoreSessionUseCase, 'execute'>;
 }
 
 export function createDependencies(): Dependencies {
+  const sessionStore = createSessionStore();
+  httpClient.setTokenProvider(() => sessionStore.getState().session?.token ?? null);
+
+  const sessionStorage = new SecureSessionStorage();
+  const authRepository = new AuthRepositoryImpl(new AuthRemoteDataSource(httpClient));
+
   return {
     httpClient,
+    sessionStore,
+    loginUseCase: new LoginUseCase(authRepository, sessionStorage),
+    logoutUseCase: new LogoutUseCase(authRepository, sessionStorage),
+    restoreSessionUseCase: new RestoreSessionUseCase(sessionStorage),
   };
 }
