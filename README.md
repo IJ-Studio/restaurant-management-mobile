@@ -126,14 +126,19 @@ gitGraph
 
 > [!IMPORTANT]
 > `main` y `develop` están protegidas: no hay push directo, todo entra por Pull Request con CI en verde. `main` solo recibe merges desde `release/*` y `hotfix/*`.
-## Pipelines de CI
+## Pipelines de CI/CD
+
+`ci.yml` es un solo pipeline por etapas: el análisis estático y el de seguridad corren en paralelo; las
+pruebas unitarias, las de integración y el build corren en secuencia y solo si la etapa anterior pasó.
+`quality-gate` reúne el resultado y es el check obligatorio. Detalle en [`docs/ci-cd.md`](docs/ci-cd.md).
 
 | Workflow | Jobs | Qué bloquea |
 |---|---|---|
-| `ci.yml` | `lint-test`, `security` | Lint, tests y cobertura; npm audit High/Critical y secretos (Gitleaks, config en `.gitleaks.toml`) |
-| `static-analysis.yml` | `static-analysis` | Errores de tipos, formato, warnings de ESLint, complejidad cognitiva > 15 y duplicación > 3% |
-| `unit-tests.yml` | `unit-tests` | Cobertura < 70% global o < 80% en casos de uso, datos y ViewModels; publica el artefacto `coverage` |
+| `ci.yml` | `static-analysis` → `unit-tests` → `integration-tests` → `build`, `security` en paralelo, `quality-gate` al final | Tipos, formato, warnings de ESLint, complejidad > 15, duplicación > 3%; pruebas fallidas o cobertura < 70% global / < 80% en casos de uso, datos y ViewModels; bundle que no compila; npm audit High/Critical y secretos (Gitleaks) |
 | `codeql.yml` | `codeql` | Alertas High/Critical de CodeQL (SAST) |
-| `cd-preview.yml` / `cd-release.yml` | `build-preview` / release | APK por tag `sprint-*` / `v*` |
+| `cd-preview.yml` / `cd-release.yml` | `build-preview` / `release` | APK por tag `sprint-*` / `v*`, solo si `quality-gate` está en verde |
+| `cd-play-store.yml` | `play-store` | AAB a Google Play (pruebas internas) por tag `vX.Y.Z` en `main` ([`docs/deployment-google-play.md`](docs/deployment-google-play.md)) |
+
+Enfoque de pruebas y datos de prueba: [`docs/testing-strategy.md`](docs/testing-strategy.md).
 
 Dependabot (`.github/dependabot.yml`) abre PRs semanales a `develop` para npm y GitHub Actions.

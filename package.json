@@ -38,6 +38,8 @@
   "scripts": {
     "lint": "expo lint --max-warnings 0",
     "test": "jest",
+    "test:unit": "jest --testPathIgnorePatterns /node_modules/ \"\\.integration\\.test\\.\"",
+    "test:integration": "jest --testPathPattern \"\\.integration\\.test\\.\" --coverage=false",
     "start": "expo start",
     "android": "expo start --android",
     "ios": "expo start --ios",
