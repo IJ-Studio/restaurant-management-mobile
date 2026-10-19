@@ -91,6 +91,8 @@ render(
 - Orden: caso de uso → repositorio/mapper → ViewModel → Screen.
 - `httpClient` se prueba con un `fetch` falso (`fetchFn`). Los datasources se prueban con un
   `HttpClient` falso, y los casos de uso con un repositorio falso.
+- Las pruebas de integración (`src/__tests__/integration/`) usan `createDependencies()` real contra un
+  API falso con datos de prueba (`src/core/testing/`). Enfoque completo en [`testing-strategy.md`](testing-strategy.md).
 
 ## Seguridad
 
