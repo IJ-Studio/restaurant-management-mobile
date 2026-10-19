@@ -21,6 +21,7 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 60
     steps:
+      # Sin EXPO_TOKEN no se puede hablar con EAS: se falla de inmediato con un mensaje claro.
       - name: Comprobar que EXPO_TOKEN existe
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
@@ -32,26 +33,29 @@ jobs:
 
       - uses: actions/checkout@v7
 
+      # Gate de calidad: no se compila nada si el commit no pasó el pipeline de CI (ci.yml).
+      # Consulta el check `quality-gate` del commit; espera hasta 15 min si todavía está corriendo
+      # y aborta si terminó en rojo.
       - name: Esperar y verificar que el commit tiene CI en verde
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          for i in $(seq 1 20); do
+          for i in $(seq 1 30); do
             RESULT=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs?per_page=100" \
-              --jq '[.check_runs[] | select(.name=="lint-test")]
+              --jq '[.check_runs[] | select(.name=="quality-gate")]
                     | {ok: (map(select(.conclusion=="success")) | length),
                        bad: (map(select(.conclusion=="failure" or .conclusion=="timed_out")) | length)}')
             OK=$(jq -r .ok <<<"$RESULT"); BAD=$(jq -r .bad <<<"$RESULT")
-            echo "lint-test en $GITHUB_SHA: $OK en verde, $BAD fallidos (intento $i/20)"
+            echo "quality-gate en $GITHUB_SHA: $OK en verde, $BAD fallidos (intento $i/30)"
             if [ "$BAD" -gt 0 ]; then
-              echo "::error::lint-test falló en el commit etiquetado. No se genera el APK."
+              echo "::error::quality-gate falló en el commit etiquetado. No se genera el APK."
               exit 1
             fi
             if [ "$OK" -ge 1 ]; then exit 0; fi
             sleep 30
           done
-          echo "::error::lint-test no terminó en verde en 10 minutos. No se genera el APK."
+          echo "::error::quality-gate no terminó en verde en 15 minutos. No se genera el APK."
           exit 1
 
       - uses: actions/setup-node@v7
@@ -59,6 +63,7 @@ jobs:
           node-version: 22
           cache: npm
 
+      # Instala eas-cli y deja la sesión de Expo iniciada con EXPO_TOKEN.
       - uses: expo/expo-github-action@v9   # confirma la versión mayor vigente en el Marketplace
         with:
           eas-version: latest
@@ -66,6 +71,8 @@ jobs:
 
       - run: npm ci
 
+      # El build corre en los servidores de Expo, no en este runner: las variables de Sentry se copian
+      # a EAS para que el APK reporte errores y suba los source maps. Si faltan, solo se avisa.
       - name: Sincronizar variables de Sentry con EAS (el build corre en los servidores de Expo)
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -86,6 +93,8 @@ jobs:
             echo "::warning::La variable EXPO_PUBLIC_SENTRY_DSN no está configurada: la app irá con Sentry apagado."
           fi
 
+      # Compila el APK de prueba (perfil `preview` de eas.json) y espera a que termine.
+      # El enlace de descarga se oculta en el log (::add-mask::) porque el repo es público.
       - name: EAS Build (preview, Android)
         run: |
           set -euo pipefail

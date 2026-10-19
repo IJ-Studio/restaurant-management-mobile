@@ -1,0 +1,151 @@
+# .github/workflows/cd-play-store.yml
+# =====================================================================================================
+# Publicación en Google Play (pista de pruebas internas).
+#
+# Al crear un tag de versión final (vX.Y.Z, sin -rc) en main:
+#   1. Verifica que el tag esté en main y que el commit tenga el quality-gate de CI en verde.
+#   2. Compila el Android App Bundle (.aab) firmado con el perfil `store` de eas.json
+#      (Google Play solo acepta AAB; el APK de cd-release es para instalar a mano).
+#   3. Lo sube a Google Play, pista "internal", como borrador (eas submit, perfil `production`).
+#
+# Mientras no exista el secreto GOOGLE_SERVICE_ACCOUNT_KEY, el workflow se salta la publicación
+# con un aviso en vez de fallar. Pasos para configurar Google Play: docs/deployment-google-play.md.
+# =====================================================================================================
+name: CD Play Store (AAB a pruebas internas)
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:   # también se puede lanzar a mano desde la pestaña Actions sobre un tag
+
+permissions:
+  contents: read
+  checks: read
+
+concurrency:
+  group: cd-play-store-${{ github.ref }}
+  cancel-in-progress: false   # una subida a Play en curso no se interrumpe
+
+jobs:
+  play-store:
+    # Los candidatos (vX.Y.Z-rc.N) se prueban con el APK de cd-release; a Play solo van versiones finales.
+    if: ${{ !contains(github.ref_name, '-rc.') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    environment: production   # con Required reviewers: espera la aprobación antes de publicar
+    steps:
+      # Sin EXPO_TOKEN no hay build; sin la llave de Google la publicación se salta con un aviso.
+      - name: Comprobar secretos
+        id: secrets
+        env:
+          EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
+          GOOGLE_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+        run: |
+          if [ -z "$EXPO_TOKEN" ]; then
+            echo "::error::Falta el secreto EXPO_TOKEN."
+            exit 1
+          fi
+          if [ -z "$GOOGLE_KEY" ]; then
+            echo "::warning::Falta GOOGLE_SERVICE_ACCOUNT_KEY: no se publica en Google Play (ver docs/deployment-google-play.md)."
+            echo "enabled=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "enabled=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - uses: actions/checkout@v7
+        if: steps.secrets.outputs.enabled == 'true'
+        with:
+          fetch-depth: 0
+
+      # Gitflow: solo se publica lo que ya está en main.
+      - name: Verificar que el tag está en main
+        if: steps.secrets.outputs.enabled == 'true'
+        run: |
+          if ! git merge-base --is-ancestor "$GITHUB_SHA" origin/main; then
+            echo "::error::El commit de $GITHUB_REF_NAME no está en main. No se publica en Google Play."
+            exit 1
+          fi
+
+      # Mismo gate que cd-preview y cd-release: el commit debe tener `quality-gate` en verde.
+      - name: Esperar y verificar que el commit tiene CI en verde
+        if: steps.secrets.outputs.enabled == 'true'
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for i in $(seq 1 30); do
+            RESULT=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs?per_page=100" \
+              --jq '[.check_runs[] | select(.name=="quality-gate")]
+                    | {ok: (map(select(.conclusion=="success")) | length),
+                       bad: (map(select(.conclusion=="failure" or .conclusion=="timed_out")) | length)}')
+            OK=$(jq -r .ok <<<"$RESULT"); BAD=$(jq -r .bad <<<"$RESULT")
+            echo "quality-gate en $GITHUB_SHA: $OK en verde, $BAD fallidos (intento $i/30)"
+            if [ "$BAD" -gt 0 ]; then
+              echo "::error::quality-gate falló en el commit del tag. No se publica en Google Play."
+              exit 1
+            fi
+            if [ "$OK" -ge 1 ]; then exit 0; fi
+            sleep 30
+          done
+          echo "::error::quality-gate no terminó en verde en 15 minutos. No se publica en Google Play."
+          exit 1
+
+      - uses: actions/setup-node@v7
+        if: steps.secrets.outputs.enabled == 'true'
+        with:
+          node-version: 22
+          cache: npm
+
+      # Instala eas-cli y deja la sesión de Expo iniciada con EXPO_TOKEN.
+      - uses: expo/expo-github-action@v9
+        if: steps.secrets.outputs.enabled == 'true'
+        with:
+          eas-version: latest
+          token: ${{ secrets.EXPO_TOKEN }}
+
+      - run: npm ci
+        if: steps.secrets.outputs.enabled == 'true'
+
+      # AAB firmado con el keystore que guarda EAS. versionCode se incrementa solo
+      # (appVersionSource: remote + autoIncrement en eas.json), así Play nunca rechaza una versión repetida.
+      - name: EAS Build (store, Android App Bundle)
+        id: build
+        if: steps.secrets.outputs.enabled == 'true'
+        run: |
+          set -euo pipefail
+          eas build --platform android --profile store --non-interactive --wait --json > build.json \
+            || { cat build.json; exit 1; }
+          STATUS=$(jq -r '.[0].status // empty' build.json)
+          ID=$(jq -r '.[0].id // empty' build.json)
+          URL=$(jq -r '.[0].artifacts.buildUrl // empty' build.json)
+          if [ -n "$URL" ]; then echo "::add-mask::$URL"; fi
+          if [ -z "$ID" ] || [ "$STATUS" != "FINISHED" ]; then
+            echo "::error::El build no terminó correctamente (estado: ${STATUS:-desconocido})."
+            cat build.json
+            exit 1
+          fi
+          echo "id=$ID" >> "$GITHUB_OUTPUT"
+
+      # La llave JSON de la cuenta de servicio se escribe solo durante la subida (permisos 600)
+      # y se borra en el paso siguiente aunque la subida falle. Está en .gitignore.
+      - name: Subir a Google Play (pista internal, borrador)
+        if: steps.secrets.outputs.enabled == 'true'
+        env:
+          GOOGLE_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          BUILD_ID: ${{ steps.build.outputs.id }}
+        run: |
+          set -euo pipefail
+          umask 077
+          printf '%s' "$GOOGLE_KEY" > google-service-account.json
+          eas submit --platform android --profile production --id "$BUILD_ID" --non-interactive --wait
+          {
+            echo "### Google Play"
+            echo
+            echo "- Versión: \`$GITHUB_REF_NAME\`"
+            echo "- Build en EAS: \`$BUILD_ID\`"
+            echo "- Pista: internal (borrador). Se revisa y publica desde Play Console."
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Borrar la llave de Google
+        if: always()
+        run: rm -f google-service-account.json
