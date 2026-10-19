@@ -1,3 +1,26 @@
+# .github/workflows/ci.yml
+# =====================================================================================================
+# Pipeline de calidad (CI) de la app móvil.
+#
+# Corre en cada push y en cada PR hacia main, develop y release/**. Está organizado por ETAPAS:
+#
+#   Etapa 1 (en paralelo)  static-analysis ─┐   security ─┐
+#   Etapa 2 (secuencial)   unit-tests ◄─────┘             │
+#   Etapa 3 (secuencial)   integration-tests              │
+#   Etapa 4 (secuencial)   build                          │
+#   Resultado              quality-gate ◄──────────────────┘ (lee el resultado de todas las etapas)
+#
+# - Etapa 1 corre en paralelo porque son revisiones independientes y rápidas.
+# - Las etapas 2 a 4 usan `needs:`: cada una SOLO arranca si la anterior terminó en verde
+#   (fail fast). Si el análisis estático falla, las pruebas ni siquiera se ejecutan y el
+#   resultado queda en rojo.
+# - `quality-gate` es el único check que hay que marcar como obligatorio en main y develop.
+#   Falla si cualquier etapa falló, se canceló o se saltó, así que un PR en rojo no se puede mergear.
+# - Los workflows de CD (cd-preview, cd-release, cd-play-store) esperan a que `quality-gate` esté en
+#   verde en el commit etiquetado antes de generar un APK o AAB.
+#
+# Detalle y evidencia de cómo reacciona a una falla: docs/ci-cd.md.
+# =====================================================================================================
 name: CI
 
 on:
@@ -6,30 +29,52 @@ on:
   pull_request:
     branches: [main, develop, 'release/**']
 
+# Mínimo privilegio: el pipeline solo lee el código.
 permissions:
   contents: read
 
+# Si llega un push nuevo a la misma rama/PR, se cancela la corrida anterior (ya no sirve).
 concurrency:
-  group: ci-${{ github.workflow }}-${{ github.ref }}
+  group: ci-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  lint-test:
-    name: lint-test
+  # ---------------------------------------------------------------------------------------------------
+  # ETAPA 1 · Análisis estático (prueba automatizada estática): revisa el código sin ejecutarlo.
+  # Cualquier error o warning detiene el pipeline: las etapas 2-4 se marcan como "skipped".
+  # ---------------------------------------------------------------------------------------------------
+  static-analysis:
+    name: static-analysis
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
+      # Node 22 con caché de npm para no descargar las dependencias en cada corrida.
       - uses: actions/setup-node@v7
         with:
           node-version: 22
           cache: npm
+      # Instala exactamente lo que dice package-lock.json (falla si no coincide con package.json).
       - run: npm ci
-      - run: npm run lint
-      - run: npm test -- --ci --coverage
-  # SCA + detección de secretos. Debe ser check obligatorio en main y develop.
+      - name: TypeScript (errores de tipos)
+        run: npm run typecheck
+      - name: Prettier (formato)
+        run: npm run format:check
+      # ESLint con --max-warnings 0. Incluye eslint-plugin-security (patrones inseguros) y
+      # sonarjs/cognitive-complexity ≤ 15 por función (eslint.config.js).
+      - name: ESLint (0 errores, 0 warnings, complejidad cognitiva ≤ 15)
+        run: npm run lint
+      # jscpd: falla si más del 3% del código está duplicado (.jscpd.json).
+      - name: Duplicación de código (≤ 3%)
+        run: npm run duplication
+
+  # ---------------------------------------------------------------------------------------------------
+  # ETAPA 1 · Seguridad (SCA + secretos). Corre en paralelo con el análisis estático.
+  # ---------------------------------------------------------------------------------------------------
   security:
     name: security
     runs-on: ubuntu-latest
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v7
         with:
@@ -39,8 +84,12 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci
+      # SCA: falla con cualquier vulnerabilidad High o Critical en las dependencias.
+      # Las únicas excepciones están justificadas en audit-ci.jsonc.
       - name: npm audit (High/Critical bloquea; excepciones en audit-ci.jsonc)
         run: npm run audit
+      # Busca llaves, tokens y contraseñas en el código y en el historial de git.
+      # El binario se descarga de la release oficial y se verifica su SHA-256 antes de usarlo.
       - name: Gitleaks
         env:
           GITLEAKS_VERSION: 8.28.0
@@ -52,3 +101,154 @@ jobs:
           echo "${GITLEAKS_SHA256}  ${FILE}" | sha256sum -c -
           tar -xzf "$FILE" gitleaks
           ./gitleaks git --redact --verbose --no-banner .
+
+  # ---------------------------------------------------------------------------------------------------
+  # ETAPA 2 · Pruebas unitarias. Solo corre si el análisis estático pasó.
+  # Excluye las pruebas *.integration.test.* (van en la etapa 3) y mide cobertura.
+  # Umbrales en jest.config.js: ≥ 70% global y ≥ 80% de líneas en casos de uso, data/ y ViewModels.
+  # Si una prueba falla o la cobertura queda debajo del umbral, Jest sale con error y el job falla.
+  # ---------------------------------------------------------------------------------------------------
+  unit-tests:
+    name: unit-tests
+    needs: static-analysis
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Jest (unitarias) con cobertura
+        run: >
+          npm run test:unit -- --ci --coverage
+          --coverageReporters=text --coverageReporters=lcov --coverageReporters=json-summary
+          --json --outputFile=jest-unit.json
+      # Tabla de resultados y cobertura en la página del run (pestaña Summary).
+      # `if: always()` hace que el resumen se publique también cuando las pruebas fallan.
+      - name: Resumen de pruebas y cobertura
+        if: always()
+        run: |
+          node -e '
+            const fs = require("fs");
+            const out = ["### Pruebas unitarias", ""];
+            if (fs.existsSync("jest-unit.json")) {
+              const r = require("./jest-unit.json");
+              out.push(`- Suites: ${r.numPassedTestSuites}/${r.numTotalTestSuites} en verde`,
+                       `- Pruebas: ${r.numPassedTests} en verde, ${r.numFailedTests} fallidas, ${r.numTotalTests} en total`, "");
+            }
+            if (fs.existsSync("coverage/coverage-summary.json")) {
+              const t = require("./coverage/coverage-summary.json").total;
+              out.push("| Cobertura | % | Cubierto |", "|---|---|---|",
+                ...["lines", "statements", "functions", "branches"].map((k) => `| ${k} | ${t[k].pct}% | ${t[k].covered}/${t[k].total} |`));
+            }
+            console.log(out.join("\n"));
+          ' >> "$GITHUB_STEP_SUMMARY"
+      # Evidencia descargable: reporte de cobertura (lcov) y resultados de Jest en JSON (30 días).
+      - name: Subir reportes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: unit-tests-report
+          path: |
+            coverage/
+            jest-unit.json
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------------------------------
+  # ETAPA 3 · Pruebas de integración con datos de prueba. Solo corre si las unitarias pasaron.
+  # Levantan la app completa con el grafo de dependencias real contra un API falso que responde con
+  # los datos de src/core/testing/data/testData.ts (usuarios por rol, menú, mesas, reservaciones).
+  # ---------------------------------------------------------------------------------------------------
+  integration-tests:
+    name: integration-tests
+    needs: unit-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Jest (integración)
+        run: npm run test:integration -- --ci --json --outputFile=jest-integration.json
+      - name: Resumen de pruebas
+        if: always()
+        run: |
+          node -e '
+            const fs = require("fs");
+            if (!fs.existsSync("jest-integration.json")) process.exit(0);
+            const r = require("./jest-integration.json");
+            console.log(["### Pruebas de integración", "",
+              `- Suites: ${r.numPassedTestSuites}/${r.numTotalTestSuites} en verde`,
+              `- Pruebas: ${r.numPassedTests} en verde, ${r.numFailedTests} fallidas, ${r.numTotalTests} en total`].join("\n"));
+          ' >> "$GITHUB_STEP_SUMMARY"
+      - name: Subir resultados
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: integration-tests-report
+          path: jest-integration.json
+          retention-days: 30
+
+  # ---------------------------------------------------------------------------------------------------
+  # ETAPA 4 · Build. Comprueba que el bundle de Android compila (lo mismo que empaqueta EAS).
+  # No genera el APK: eso lo hacen los workflows de CD con un tag.
+  # ---------------------------------------------------------------------------------------------------
+  build:
+    name: build
+    needs: integration-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      - name: Bundle de Android (expo export)
+        run: npx expo export --platform android --output-dir dist
+
+  # ---------------------------------------------------------------------------------------------------
+  # RESULTADO · Quality gate. Siempre corre (`if: always()`), aunque una etapa haya fallado, para
+  # dejar el veredicto y una tabla con el estado de cada etapa. Es el check obligatorio del repo.
+  # ---------------------------------------------------------------------------------------------------
+  quality-gate:
+    name: quality-gate
+    if: always()
+    needs: [static-analysis, security, unit-tests, integration-tests, build]
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Veredicto
+        env:
+          STATIC: ${{ needs.static-analysis.result }}
+          SECURITY: ${{ needs.security.result }}
+          UNIT: ${{ needs.unit-tests.result }}
+          INTEGRATION: ${{ needs.integration-tests.result }}
+          BUILD: ${{ needs.build.result }}
+        run: |
+          {
+            echo "### Quality gate"
+            echo
+            echo "| Etapa | Job | Resultado |"
+            echo "|---|---|---|"
+            echo "| 1 | static-analysis | $STATIC |"
+            echo "| 1 | security | $SECURITY |"
+            echo "| 2 | unit-tests | $UNIT |"
+            echo "| 3 | integration-tests | $INTEGRATION |"
+            echo "| 4 | build | $BUILD |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          # "skipped" también reprueba: significa que una etapa anterior falló.
+          for result in "$STATIC" "$SECURITY" "$UNIT" "$INTEGRATION" "$BUILD"; do
+            if [ "$result" != "success" ]; then
+              echo "**Reprobado:** al menos una etapa no terminó en verde. El PR no se puede mergear." >> "$GITHUB_STEP_SUMMARY"
+              echo "::error::Quality gate reprobado (static=$STATIC, security=$SECURITY, unit=$UNIT, integration=$INTEGRATION, build=$BUILD)."
+              exit 1
+            fi
+          done
+          echo "**Aprobado:** todas las etapas terminaron en verde." >> "$GITHUB_STEP_SUMMARY"

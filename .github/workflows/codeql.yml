@@ -1,4 +1,7 @@
-# SAST de JS/TS. Las alertas High/Critical bloquean el merge mediante la regla
+# .github/workflows/codeql.yml
+# SAST (análisis estático de seguridad) de JS/TS con CodeQL de GitHub.
+# Corre aparte de ci.yml porque lo administra GitHub: sube sus alertas a la pestaña Security y
+# publica su propio check "CodeQL". Las alertas High/Critical bloquean el merge mediante la regla
 # "Code scanning results" de la protección de ramas (Settings > Rules).
 name: CodeQL
 
@@ -21,12 +24,15 @@ jobs:
   codeql:
     name: codeql
     runs-on: ubuntu-latest
+    # security-events: write es lo mínimo para subir las alertas a la pestaña Security.
     permissions:
       contents: read
       security-events: write
       actions: read
     steps:
       - uses: actions/checkout@v7
+      # build-mode none: JS/TS no necesita compilarse para analizarse.
+      # security-extended: además de las consultas por defecto, incluye las de seguridad más estrictas.
       - uses: github/codeql-action/init@v4
         with:
           languages: javascript-typescript
