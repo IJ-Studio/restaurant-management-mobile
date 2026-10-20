@@ -4,6 +4,9 @@ import { createCurrentOrderStore } from '../../features/orders/presentation/stor
 import type { Dependencies } from '../di/dependencies';
 import type { HttpClient } from '../http/httpClient';
 
+/** Resuelve de inmediato con un permiso ya concedido: no bloquea pantallas que no prueban HU-07. */
+const grantedPermission = () => jest.fn().mockResolvedValue({ status: 'granted' as const, canAskAgain: true });
+
 /** Consulta que nunca responde: la pantalla se queda cargando y no actualiza estado fuera de la prueba. */
 const pending = () => jest.fn(() => new Promise<never>(() => {}));
 
@@ -22,6 +25,7 @@ export function makeTestDependencies(overrides: Partial<Dependencies> = {}): Dep
     currentOrderStore: createCurrentOrderStore(),
     listTablesUseCase: { execute: pending() },
     sendOrderToKitchenUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
+    enableNotificationsUseCase: { execute: grantedPermission() },
     ...overrides,
   };
 }
