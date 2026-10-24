@@ -21,6 +21,9 @@ import { ReservationRemoteDataSource } from '../../features/reservations/data/da
 import { ReservationRepositoryImpl } from '../../features/reservations/data/repositories/ReservationRepositoryImpl';
 import { CreateReservationUseCase } from '../../features/reservations/domain/usecases/CreateReservationUseCase';
 import { ListActiveReservationsUseCase } from '../../features/reservations/domain/usecases/ListActiveReservationsUseCase';
+import { DashboardRemoteDataSource } from '../../features/admin/data/datasources/DashboardRemoteDataSource';
+import { DashboardRepositoryImpl } from '../../features/admin/data/repositories/DashboardRepositoryImpl';
+import { GetDashboardUseCase } from '../../features/admin/domain/usecases/GetDashboardUseCase';
 import { httpClient, type HttpClient } from '../http/httpClient';
 
 /**
@@ -41,6 +44,7 @@ export interface Dependencies {
   currentOrderStore: CurrentOrderStore;
   listTablesUseCase: Pick<ListTablesUseCase, 'execute'>;
   sendOrderToKitchenUseCase: Pick<SendOrderToKitchenUseCase, 'execute'>;
+  getDashboardUseCase: Pick<GetDashboardUseCase, 'execute'>;
 }
 
 export function createDependencies(): Dependencies {
@@ -58,6 +62,7 @@ export function createDependencies(): Dependencies {
   const menuRepository = new MenuRepositoryImpl(new MenuRemoteDataSource(httpClient));
   const reservationRepository = new ReservationRepositoryImpl(new ReservationRemoteDataSource(httpClient));
   const orderRepository = new OrderRepositoryImpl(new OrderRemoteDataSource(httpClient));
+  const dashboardRepository = new DashboardRepositoryImpl(new DashboardRemoteDataSource(httpClient));
 
   return {
     httpClient,
@@ -72,5 +77,6 @@ export function createDependencies(): Dependencies {
     currentOrderStore,
     listTablesUseCase: new ListTablesUseCase(orderRepository),
     sendOrderToKitchenUseCase: new SendOrderToKitchenUseCase(orderRepository),
+    getDashboardUseCase: new GetDashboardUseCase(dashboardRepository),
   };
 }
