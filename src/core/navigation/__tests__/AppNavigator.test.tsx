@@ -59,6 +59,11 @@ describe('AppNavigator', () => {
     expect(screen.getByText('Indicadores del día (HU-08).')).toBeOnTheScreen();
   });
 
+  it('al entrar pide el permiso de notificaciones (HU-07)', async () => {
+    const { deps } = await renderAs('mesero');
+    expect(deps.enableNotificationsUseCase.execute).toHaveBeenCalledWith({ ask: true });
+  });
+
   it('si cambia el rol en la sesión, se reconstruyen los tabs sin historial del rol anterior', async () => {
     const { deps, navigationRef } = await renderAs('admin');
     expect(tabButton('Dashboard')).toBeOnTheScreen();
