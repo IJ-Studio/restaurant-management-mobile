@@ -22,6 +22,7 @@ export function makeTestDependencies(overrides: Partial<Dependencies> = {}): Dep
     currentOrderStore: createCurrentOrderStore(),
     listTablesUseCase: { execute: pending() },
     sendOrderToKitchenUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
+    getDashboardUseCase: { execute: pending() },
     ...overrides,
   };
 }
