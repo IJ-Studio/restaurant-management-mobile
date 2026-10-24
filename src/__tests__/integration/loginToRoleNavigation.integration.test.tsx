@@ -42,7 +42,7 @@ describe('Login → sesión → navegación por rol', () => {
     await login();
 
     await waitFor(() => expect(tab('Dashboard')).toBeOnTheScreen());
-    expect(screen.getByText('Indicadores del día (HU-08).')).toBeOnTheScreen();
+    expect(screen.getByText('Cargando dashboard…')).toBeOnTheScreen();
   });
 
   it('un mesero entra al menú y no ve el dashboard ni cobros', async () => {

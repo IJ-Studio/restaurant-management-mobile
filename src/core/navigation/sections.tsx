@@ -2,6 +2,7 @@ import type { ComponentType } from 'react';
 
 import type { Section } from '../../features/auth/domain/entities/permissions';
 import { ProfileScreen } from '../../features/auth/presentation/screens/ProfileScreen';
+import { DashboardScreen } from '../../features/admin/presentation/screens/DashboardScreen';
 import { MenuNavigator } from '../../features/menu/presentation/navigation/MenuNavigator';
 import { ReservationsNavigator } from '../../features/reservations/presentation/navigation/ReservationsNavigator';
 import { PlaceholderScreen } from '../../shared/presentation/components/PlaceholderScreen';
@@ -19,7 +20,7 @@ const placeholder = (title: string, description: string) =>
 
 /** Pantalla de cada sección. Las provisionales se reemplazan en su historia. */
 export const SECTION_CONFIG: Record<Section, SectionConfig> = {
-  dashboard: { title: 'Dashboard', component: placeholder('Dashboard', 'Indicadores del día (HU-08).') },
+  dashboard: { title: 'Dashboard', component: DashboardScreen },
   // Menú y Reservaciones tienen su propio stack con su encabezado.
   menu: { title: 'Menú', component: MenuNavigator, headerShown: false },
   orders: { title: 'Pedidos', component: placeholder('Pedidos', 'Pedidos activos en tiempo real (HU-06).') },
