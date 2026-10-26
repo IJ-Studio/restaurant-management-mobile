@@ -42,6 +42,26 @@ flowchart LR
 - Los errores llegan a dominio y presentación como `AppError` (`kind`: `unauthorized`,
   `validation`, `network`, ...), nunca como `Response` ni como códigos HTTP sueltos.
 
+## Manejo global de errores HTTP
+
+`httpClient` es el único lugar que traduce errores HTTP. Los datasources, hooks y pantallas no
+revisan códigos de estado: reciben un `AppError` con un mensaje listo para mostrar.
+
+| Respuesta | Qué hace la app |
+|---|---|
+| 401 en una petición **con** token | La sesión venció o se revocó: llama al manejador que registra `createDependencies()`, que borra la sesión de SecureStore, limpia el pedido en curso y la caché de React Query, y vuelve al Login con el aviso "Tu sesión expiró". |
+| 401 **sin** token | Es el login con credenciales malas; `AuthRepositoryImpl` pone el mensaje genérico. |
+| 403 | Respeta el mensaje propio del API; el "Forbidden resource" del `RolesGuard` se cambia por "No tienes permiso para realizar esta acción". |
+| 5xx | Mensaje genérico: nunca se muestran detalles internos del servidor. |
+| Red caída / tiempo límite | `AppError` `network` / `timeout`. |
+
+- React Query reintenta una vez solo lo pasajero (`network`, `timeout`, `server`); un 4xx no se
+  repite (`isRetryable`).
+- En los ViewModels el texto se obtiene con `userMessage(error, 'mensaje de la feature')`: si el
+  error no es un `AppError` (un bug), se muestra el mensaje de la feature y no el del error.
+- Un repositorio puede dar un mensaje más específico para su caso (p. ej. el 403 de
+  reservaciones o el 404 de un platillo).
+
 ## Dependency Injection
 
 `src/core/di/dependencies.ts` arma el grafo real de la app. Cada feature agrega ahí sus casos de uso:

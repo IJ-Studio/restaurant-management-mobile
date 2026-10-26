@@ -1,4 +1,5 @@
-import type { ReactNode } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
+import { useEffect, type ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { LoginScreen } from '../screens/LoginScreen';
@@ -9,6 +10,12 @@ import { useSessionBootstrap } from '../viewmodels/useSessionBootstrap';
 export function AuthGate({ children }: { children: ReactNode }) {
   useSessionBootstrap();
   const status = useSession((state) => state.status);
+  const queryClient = useQueryClient();
+
+  // Al salir (logout o sesión vencida) no quedan en caché datos que vio el usuario anterior.
+  useEffect(() => {
+    if (status === 'unauthenticated') queryClient.clear();
+  }, [status, queryClient]);
 
   if (status === 'restoring') {
     return (

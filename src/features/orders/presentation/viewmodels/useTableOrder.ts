@@ -1,7 +1,7 @@
 import { useMutation, useQuery } from '@tanstack/react-query';
 
 import { useDependencies } from '../../../../core/di/DependenciesProvider';
-import { AppError } from '../../../../core/errors/AppError';
+import { userMessage } from '../../../../core/errors/AppError';
 import { estimatedTotal, itemCount } from '../../domain/entities/TableOrder';
 import { useCurrentOrder } from './useCurrentOrder';
 
@@ -43,5 +43,5 @@ export function useTableOrder() {
 }
 
 function toMessage(error: Error): string {
-  return error instanceof AppError ? error.message : 'No se pudo enviar el pedido.';
+  return userMessage(error, 'No se pudo enviar el pedido.');
 }

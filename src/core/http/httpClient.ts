@@ -1,8 +1,16 @@
 import { env } from '../config/env';
-import { AppError, kindFromStatus } from '../errors/AppError';
+import {
+  AppError,
+  FORBIDDEN_MESSAGE,
+  kindFromStatus,
+  SERVER_ERROR_MESSAGE,
+  SESSION_EXPIRED_MESSAGE,
+  UNEXPECTED_MESSAGE,
+} from '../errors/AppError';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type TokenProvider = () => string | null;
+type UnauthorizedHandler = () => void;
 
 export interface HttpClientOptions {
   baseUrl: string;
@@ -15,9 +23,12 @@ export interface HttpClientOptions {
 /**
  * Cliente HTTP de la app. Se usa una sola instancia (`httpClient`) que todos los
  * datasources reciben por inyección; el token JWT lo pone aquí y en ningún otro lugar.
+ * También es el único lugar que traduce errores HTTP: los services y hooks reciben un
+ * AppError con un mensaje listo para mostrar y no revisan códigos de estado.
  */
 export class HttpClient {
   private tokenProvider: TokenProvider = () => null;
+  private unauthorizedHandler: UnauthorizedHandler = () => undefined;
   private readonly baseUrl: string;
 
   constructor(private readonly options: HttpClientOptions) {
@@ -27,6 +38,11 @@ export class HttpClient {
   /** La sesión (HU-01) registra aquí de dónde sale el token. */
   setTokenProvider(provider: TokenProvider): void {
     this.tokenProvider = provider;
+  }
+
+  /** Se llama cuando el API rechaza el token (vencido o revocado); la sesión decide qué hacer. */
+  setUnauthorizedHandler(handler: UnauthorizedHandler): void {
+    this.unauthorizedHandler = handler;
   }
 
   get<T>(path: string): Promise<T> {
@@ -79,10 +95,26 @@ export class HttpClient {
     }
 
     const data = await readBody(response);
-    if (!response.ok) {
-      throw new AppError(kindFromStatus(response.status), errorMessage(data), response.status);
-    }
+    if (!response.ok) throw this.toAppError(response.status, data, token !== null && token !== '');
     return data as T;
+  }
+
+  private toAppError(status: number, data: unknown, sentToken: boolean): AppError {
+    const kind = kindFromStatus(status);
+    const serverMessage = errorMessage(data);
+
+    // Un 401 sin token es el login con credenciales malas; con token, la sesión ya no sirve.
+    if (kind === 'unauthorized' && sentToken) {
+      this.unauthorizedHandler();
+      return new AppError(kind, SESSION_EXPIRED_MESSAGE, status);
+    }
+    // El RolesGuard de NestJS responde "Forbidden resource" en inglés; los mensajes propios se respetan.
+    if (kind === 'forbidden' && (!serverMessage || serverMessage === 'Forbidden resource')) {
+      return new AppError(kind, FORBIDDEN_MESSAGE, status);
+    }
+    // Un 5xx puede traer detalles internos (stack, SQL): nunca se muestran.
+    if (kind === 'server') return new AppError(kind, SERVER_ERROR_MESSAGE, status);
+    return new AppError(kind, serverMessage ?? UNEXPECTED_MESSAGE, status);
   }
 
   private buildUrl(path: string): string {
@@ -107,13 +139,13 @@ async function readBody(response: Response): Promise<unknown> {
 }
 
 /** NestJS responde `{ message: string | string[] }`; se usa solo si es texto legible. */
-function errorMessage(data: unknown): string {
+function errorMessage(data: unknown): string | null {
   if (data && typeof data === 'object' && 'message' in data) {
     const { message } = data as { message: unknown };
-    if (typeof message === 'string') return message;
-    if (Array.isArray(message)) return message.filter((m) => typeof m === 'string').join('\n');
+    if (typeof message === 'string') return message || null;
+    if (Array.isArray(message)) return message.filter((m) => typeof m === 'string').join('\n') || null;
   }
-  return 'Ocurrió un error inesperado.';
+  return null;
 }
 
 export const httpClient = new HttpClient({

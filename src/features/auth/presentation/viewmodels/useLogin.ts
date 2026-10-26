@@ -2,8 +2,9 @@ import { useMutation } from '@tanstack/react-query';
 import { useState } from 'react';
 
 import { useDependencies } from '../../../../core/di/DependenciesProvider';
-import { AppError } from '../../../../core/errors/AppError';
+import { userMessage } from '../../../../core/errors/AppError';
 import { validateCredentials, type CredentialsErrors } from '../../domain/entities/credentials';
+import { useSession } from './useSession';
 
 /** ViewModel de la pantalla de Login: estado del formulario, validación y llamada al caso de uso. */
 export function useLogin() {
@@ -11,6 +12,7 @@ export function useLogin() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<CredentialsErrors>({});
+  const notice = useSession((state) => state.notice);
 
   const mutation = useMutation({
     mutationFn: () => loginUseCase.execute({ email, password }),
@@ -35,10 +37,8 @@ export function useLogin() {
     fieldErrors,
     submit,
     isSubmitting: mutation.isPending,
-    errorMessage: mutation.error ? loginErrorMessage(mutation.error) : null,
+    errorMessage: mutation.error ? userMessage(mutation.error, LOGIN_FAILED) : notice,
   };
 }
 
-function loginErrorMessage(error: Error): string {
-  return error instanceof AppError ? error.message : 'No se pudo iniciar sesión. Inténtalo de nuevo.';
-}
+const LOGIN_FAILED = 'No se pudo iniciar sesión. Inténtalo de nuevo.';
