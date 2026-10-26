@@ -82,4 +82,12 @@ describe('LoginScreen', () => {
     await renderWithProviders(<LoginScreen />, makeTestDependencies());
     expect(screen.getByLabelText('Contraseña')).toHaveProp('secureTextEntry', true);
   });
+
+  it('si la sesión venció muestra el aviso', async () => {
+    const deps = makeTestDependencies();
+    deps.sessionStore.getState().expireSession('Tu sesión expiró. Vuelve a iniciar sesión.');
+    await renderWithProviders(<LoginScreen />, deps);
+
+    expect(screen.getByRole('alert')).toHaveTextContent('Tu sesión expiró. Vuelve a iniciar sesión.');
+  });
 });

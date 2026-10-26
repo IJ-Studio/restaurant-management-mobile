@@ -1,7 +1,7 @@
 import { useQuery } from '@tanstack/react-query';
 
 import { useDependencies } from '../../../../core/di/DependenciesProvider';
-import { AppError } from '../../../../core/errors/AppError';
+import { userMessage } from '../../../../core/errors/AppError';
 import { reservationQueryKeys } from './reservationQueryKeys';
 
 /** ViewModel del listado operativo de reservaciones activas del restaurante. */
@@ -25,5 +25,5 @@ export function useActiveReservations() {
 }
 
 export function reservationErrorMessage(error: Error): string {
-  return error instanceof AppError ? error.message : 'Ocurrió un error con las reservaciones.';
+  return userMessage(error, 'Ocurrió un error con las reservaciones.');
 }

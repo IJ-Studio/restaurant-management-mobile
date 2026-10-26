@@ -1,13 +1,16 @@
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState, type ReactNode } from 'react';
 
+import { isRetryable } from '../errors/AppError';
+
 import { DependenciesProvider } from '../di/DependenciesProvider';
 import type { Dependencies } from '../di/dependencies';
 
 export function createQueryClient(): QueryClient {
   return new QueryClient({
     defaultOptions: {
-      queries: { retry: 1, staleTime: 30_000 },
+      // Un reintento para fallas pasajeras (red, 5xx); un 401/403/404 no mejora al repetirse.
+      queries: { retry: (failureCount, error) => failureCount < 1 && isRetryable(error), staleTime: 30_000 },
       mutations: { retry: 0 },
     },
   });

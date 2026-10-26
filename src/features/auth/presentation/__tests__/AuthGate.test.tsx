@@ -1,4 +1,4 @@
-import { fireEvent, screen, waitFor } from '@testing-library/react-native';
+import { act, fireEvent, screen, waitFor } from '@testing-library/react-native';
 import { Text } from 'react-native';
 
 import { renderWithProviders } from '../../../../core/testing/renderWithProviders';
@@ -66,5 +66,24 @@ describe('AuthGate', () => {
 
     await waitFor(() => expect(screen.getByText('Iniciar sesión')).toBeOnTheScreen());
     expect(deps.logoutUseCase.execute).toHaveBeenCalled();
+  });
+
+  it('cuando la sesión vence vuelve al Login con el aviso y vacía la caché', async () => {
+    const deps = makeTestDependencies({
+      restoreSessionUseCase: { execute: jest.fn().mockResolvedValue(makeSession()) },
+    });
+    const { queryClient } = await renderWithProviders(
+      <AuthGate>
+        <Text>App</Text>
+      </AuthGate>,
+      deps,
+    );
+    await screen.findByText('App');
+    queryClient.setQueryData(['reservations', 'active'], [{ id: 1 }]);
+
+    await act(() => deps.sessionStore.getState().expireSession('Tu sesión expiró. Vuelve a iniciar sesión.'));
+
+    expect(await screen.findByText('Tu sesión expiró. Vuelve a iniciar sesión.')).toBeOnTheScreen();
+    expect(queryClient.getQueryData(['reservations', 'active'])).toBeUndefined();
   });
 });
