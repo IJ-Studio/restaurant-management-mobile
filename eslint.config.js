@@ -23,6 +23,23 @@ module.exports = defineConfig([
     rules: { 'security/detect-non-literal-regexp': 'off' },
   },
   {
+    // Herramientas de CI en Node (scripts/ y configuración de Jest): leen y escriben los reportes en
+    // rutas que reciben por argumentos del propio pipeline, no datos de usuarios.
+    files: ['scripts/**/*.js', '*.config.js'],
+    languageOptions: {
+      sourceType: 'commonjs',
+      globals: {
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        require: 'readonly',
+        module: 'writable',
+        process: 'readonly',
+        console: 'readonly',
+      },
+    },
+    rules: { 'security/detect-non-literal-fs-filename': 'off', 'security/detect-object-injection': 'off' },
+  },
+  {
     // La infraestructura de pruebas escribe sus reportes en reports/ con rutas armadas en el código,
     // no con datos de usuarios.
     files: ['src/core/testing/**'],

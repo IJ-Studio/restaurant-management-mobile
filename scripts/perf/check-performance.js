@@ -120,8 +120,12 @@ function toMarkdown({ escenarios, nuevos, bundle, aprobado }) {
 async function main() {
   const args = parseArgs(process.argv.slice(2));
   const outDir = args.out ?? 'reports/performance';
+  // Sin --baseline se pasa una ruta inexistente: Reassure marca todo como "Added" en lugar de usar el
+  // .reassure/baseline.perf que haya quedado en la carpeta (sería la rama comparada contra sí misma).
+  const baselineFile = args.baseline ?? path.join(outDir, 'sin-linea-base.perf');
+  fs.mkdirSync('.reassure', { recursive: true });
   await compare({
-    baselineFile: args.baseline,
+    baselineFile,
     currentFile: args.current,
     outputFile: '.reassure/output.json',
     outputFormat: 'all',

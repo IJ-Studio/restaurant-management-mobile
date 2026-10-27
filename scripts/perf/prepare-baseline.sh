@@ -7,8 +7,8 @@
 # Uso: scripts/perf/prepare-baseline.sh <dir-rama> <dir-base>
 set -euo pipefail
 
-HEAD_DIR=$1
-BASE_DIR=$2
+HEAD_DIR=$(cd "$1" && pwd)
+BASE_DIR=$(cd "$2" && pwd)
 
 rm -rf "$BASE_DIR/src/__perf__"
 cp -R "$HEAD_DIR/src/__perf__" "$BASE_DIR/src/__perf__"

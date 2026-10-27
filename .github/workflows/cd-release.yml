@@ -18,7 +18,7 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     environment: production   # con Required reviewers: espera la aprobación de José
     steps:
       # Sin EXPO_TOKEN no se puede hablar con EAS: se falla de inmediato con un mensaje claro.
@@ -53,20 +53,20 @@ jobs:
           exit 1
 
       # Gate de calidad: no se compila nada si el commit no pasó el pipeline de CI (ci.yml).
-      # Consulta el check `quality-gate` del commit; espera hasta 15 min si todavía está corriendo
+      # Consulta el check `quality-gate` del commit; espera hasta 40 min si todavía está corriendo (el CI completo, con rendimiento, tarda ~20 min)
       # y aborta si terminó en rojo.
       - name: Esperar y verificar que el commit tiene CI en verde
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          for i in $(seq 1 30); do
+          for i in $(seq 1 80); do
             RESULT=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs?per_page=100" \
               --jq '[.check_runs[] | select(.name=="quality-gate")]
                     | {ok: (map(select(.conclusion=="success")) | length),
                        bad: (map(select(.conclusion=="failure" or .conclusion=="timed_out")) | length)}')
             OK=$(jq -r .ok <<<"$RESULT"); BAD=$(jq -r .bad <<<"$RESULT")
-            echo "quality-gate en $GITHUB_SHA: $OK en verde, $BAD fallidos (intento $i/30)"
+            echo "quality-gate en $GITHUB_SHA: $OK en verde, $BAD fallidos (intento $i/80)"
             if [ "$BAD" -gt 0 ]; then
               echo "::error::quality-gate falló en el commit del tag. No se publica la release."
               exit 1
@@ -74,7 +74,7 @@ jobs:
             if [ "$OK" -ge 1 ]; then exit 0; fi
             sleep 30
           done
-          echo "::error::quality-gate no terminó en verde en 15 minutos. No se publica la release."
+          echo "::error::quality-gate no terminó en verde en 40 minutos. No se publica la release."
           exit 1
 
       - uses: actions/setup-node@v7
