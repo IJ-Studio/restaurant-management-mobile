@@ -18,9 +18,10 @@ concurrency:
 jobs:
   release:
     runs-on: ubuntu-latest
-    timeout-minutes: 60
+    timeout-minutes: 90
     environment: production   # con Required reviewers: espera la aprobación de José
     steps:
+      # Sin EXPO_TOKEN no se puede hablar con EAS: se falla de inmediato con un mensaje claro.
       - name: Comprobar que EXPO_TOKEN existe
         env:
           EXPO_TOKEN: ${{ secrets.EXPO_TOKEN }}
@@ -34,6 +35,7 @@ jobs:
         with:
           fetch-depth: 0
 
+      # Gitflow: una versión final (vX.Y.Z) solo sale de main; un candidato (-rc.N) también de release/*.
       - name: Verificar que el tag está donde Gitflow lo permite
         run: |
           set -euo pipefail
@@ -50,26 +52,29 @@ jobs:
           echo "::error::El tag $GITHUB_REF_NAME no apunta a un commit de main (los candidatos -rc.N también pueden salir de release/*)."
           exit 1
 
+      # Gate de calidad: no se compila nada si el commit no pasó el pipeline de CI (ci.yml).
+      # Consulta el check `quality-gate` del commit; espera hasta 40 min si todavía está corriendo (el CI completo, con rendimiento, tarda ~20 min)
+      # y aborta si terminó en rojo.
       - name: Esperar y verificar que el commit tiene CI en verde
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          for i in $(seq 1 20); do
+          for i in $(seq 1 80); do
             RESULT=$(gh api "repos/$GITHUB_REPOSITORY/commits/$GITHUB_SHA/check-runs?per_page=100" \
-              --jq '[.check_runs[] | select(.name=="lint-test")]
+              --jq '[.check_runs[] | select(.name=="quality-gate")]
                     | {ok: (map(select(.conclusion=="success")) | length),
                        bad: (map(select(.conclusion=="failure" or .conclusion=="timed_out")) | length)}')
             OK=$(jq -r .ok <<<"$RESULT"); BAD=$(jq -r .bad <<<"$RESULT")
-            echo "lint-test en $GITHUB_SHA: $OK en verde, $BAD fallidos (intento $i/20)"
+            echo "quality-gate en $GITHUB_SHA: $OK en verde, $BAD fallidos (intento $i/80)"
             if [ "$BAD" -gt 0 ]; then
-              echo "::error::lint-test falló en el commit del tag. No se publica la release."
+              echo "::error::quality-gate falló en el commit del tag. No se publica la release."
               exit 1
             fi
             if [ "$OK" -ge 1 ]; then exit 0; fi
             sleep 30
           done
-          echo "::error::lint-test no terminó en verde en 10 minutos. No se publica la release."
+          echo "::error::quality-gate no terminó en verde en 40 minutos. No se publica la release."
           exit 1
 
       - uses: actions/setup-node@v7
@@ -77,6 +82,7 @@ jobs:
           node-version: 22
           cache: npm
 
+      # Instala eas-cli y deja la sesión de Expo iniciada con EXPO_TOKEN.
       - uses: expo/expo-github-action@v9   # confirma la versión mayor vigente en el Marketplace
         with:
           eas-version: latest
@@ -84,6 +90,8 @@ jobs:
 
       - run: npm ci
 
+      # El build corre en los servidores de Expo, no en este runner: las variables de Sentry se copian
+      # a EAS para que el APK reporte errores y suba los source maps. Si faltan, solo se avisa.
       - name: Sincronizar variables de Sentry con EAS (el build corre en los servidores de Expo)
         env:
           SENTRY_AUTH_TOKEN: ${{ secrets.SENTRY_AUTH_TOKEN }}
@@ -104,6 +112,8 @@ jobs:
             echo "::warning::La variable EXPO_PUBLIC_SENTRY_DSN no está configurada: la app irá con Sentry apagado."
           fi
 
+      # APK firmado con el keystore que guarda EAS (perfil `production`, versionCode autoincremental).
+      # Se descarga y se calcula su SHA-256 para adjuntarlo al GitHub Release.
       - name: EAS Build (production, APK firmado) y descarga
         run: |
           set -euo pipefail
@@ -123,6 +133,7 @@ jobs:
           cat "$FILE.sha256"
           echo "APK_FILE=$FILE" >> "$GITHUB_ENV"
 
+      # Release en borrador con el APK y su checksum. José la revisa y la publica a mano.
       - name: Crear el GitHub Release (en borrador)
         env:
           GH_TOKEN: ${{ github.token }}

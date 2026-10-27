@@ -414,3 +414,7 @@ GEMINI.md
 AGENTS.md
 
 # End of https://www.toptal.com/developers/gitignore/api/visualstudiocode,node,reactnative,macos,windows,linux
+
+# Reportes de pruebas generados en local y en CI
+reports/
+.reassure/

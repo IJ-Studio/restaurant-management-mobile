@@ -1,0 +1,70 @@
+# .github/workflows/stress-tests.yml
+# =====================================================================================================
+# Pruebas de esfuerzo de la app móvil (criterio 10).
+#
+# Corren en un entorno aislado: Jest + el API falso en memoria (src/core/testing/fakeApi.ts), sin red
+# real y sin tocar staging. Cargan la app con volumen alto (2 000 platillos, pedido de 200 líneas,
+# 500 reservaciones, ráfagas de 100 peticiones simultáneas), inyectan fallas (latencia alta, 5xx y
+# timeouts) y verifican que la app se recupere sin perder el pedido armado.
+# Carga, ciclos y límites: src/core/testing/stress/config.ts.
+#
+# Cuándo corre:
+#   - A mano (workflow_dispatch).
+#   - Cada noche a las 03:17 hora de México (09:17 UTC), sobre develop.
+#   - En cada PR hacia main y release/**: lo que llega a producción debe pasar el esfuerzo.
+# No corre en cada PR hacia develop para no alargar el ciclo diario: ahí ya corre ci.yml.
+#
+# Las pruebas de carga del servidor (k6) pertenecen al repo restaurant-management-api.
+# =====================================================================================================
+name: Stress tests
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 9 * * *'
+  pull_request:
+    branches: [main, 'release/**']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: stress-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  stress-tests:
+    name: stress-tests
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+      # node --expose-gc + --runInBand: mide la memoria con GC forzado y sin pruebas en paralelo.
+      # Si una operación rebasa su p95, el heap crece más del límite o la app no se recupera de una
+      # falla, Jest termina con error y el job falla.
+      - name: Pruebas de esfuerzo
+        run: npm run test:stress -- --ci
+      # El reporte se publica también cuando las pruebas fallan, para ver qué límite se rebasó.
+      - name: Resumen
+        if: always()
+        run: |
+          if [ -f reports/stress/stress-report.md ]; then
+            cat reports/stress/stress-report.md >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "No se generó el reporte de esfuerzo: revisa el paso anterior." >> "$GITHUB_STEP_SUMMARY"
+          fi
+      - name: Subir reporte
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: stress-report
+          path: |
+            reports/stress/stress-report.json
+            reports/stress/stress-report.md
+            reports/stress/parts/
+          retention-days: 30
