@@ -1,0 +1,78 @@
+{
+  "$comment": "Criterios de aceptación de cada historia, tomados del texto de su issue. Cada prueba de src/__tests__/acceptance lleva el ID (HU-0X CA-N) al inicio de su nombre.",
+  "historias": [
+    {
+      "id": "HU-01",
+      "issue": 318,
+      "titulo": "Inicio de sesión del personal",
+      "criterios": [
+        { "id": "CA-1", "texto": "Un miembro del personal con credenciales válidas queda autenticado." },
+        { "id": "CA-2", "texto": "Su sesión sobrevive a cerrar y abrir la app." },
+        { "id": "CA-3", "texto": "Credenciales inválidas muestran un mensaje de error claro." }
+      ]
+    },
+    {
+      "id": "HU-02",
+      "issue": 323,
+      "titulo": "Navegación según rol",
+      "criterios": [
+        {
+          "id": "CA-1",
+          "texto": "Un rol operativo (ej. Mesero) no puede ver las pantallas exclusivas del Administrador."
+        },
+        {
+          "id": "CA-2",
+          "texto": "Y viceversa: el Administrador no ve las pantallas exclusivas de un rol operativo."
+        }
+      ]
+    },
+    {
+      "id": "HU-03",
+      "issue": 327,
+      "titulo": "Consultar el menú",
+      "criterios": [
+        { "id": "CA-1", "texto": "La lista de platillos carga imágenes y disponibilidad reales de la API." },
+        { "id": "CA-2", "texto": "El detalle muestra la información completa de un platillo." }
+      ]
+    },
+    {
+      "id": "HU-04",
+      "issue": 331,
+      "titulo": "Registrar reservación de mesa",
+      "criterios": [
+        {
+          "id": "CA-1",
+          "texto": "Al crear una reservación válida, aparece de inmediato en el listado de activas."
+        },
+        { "id": "CA-2", "texto": "Una reservación inválida no se envía y muestra el motivo." }
+      ]
+    },
+    {
+      "id": "HU-05",
+      "issue": 336,
+      "titulo": "Tomar pedido y cobrar",
+      "criterios": [
+        {
+          "id": "CA-1",
+          "texto": "Un pedido pagado exitosamente aparece en el historial.",
+          "nota": "Pendiente: cobro con Stripe (#338–#341)"
+        },
+        {
+          "id": "CA-2",
+          "texto": "Un pago rechazado no crea un pedido confirmado y muestra el motivo al Cajero.",
+          "nota": "Pendiente: cobro con Stripe (#338–#341)"
+        },
+        {
+          "id": "CA-3",
+          "texto": "El Mesero levanta el pedido de una mesa y lo envía a cocina; el total lo calcula el servidor.",
+          "nota": "Subtarea #337"
+        },
+        {
+          "id": "CA-4",
+          "texto": "Un platillo agotado no se puede agregar al pedido.",
+          "nota": "Subtarea #337"
+        }
+      ]
+    }
+  ]
+}

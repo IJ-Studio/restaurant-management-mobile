@@ -128,12 +128,20 @@ gitGraph
 > `main` y `develop` están protegidas: no hay push directo, todo entra por Pull Request con CI en verde. `main` solo recibe merges desde `release/*` y `hotfix/*`.
 ## Pipelines de CI
 
-| Workflow | Jobs | Qué bloquea |
-|---|---|---|
-| `ci.yml` | `lint-test`, `security` | Lint, tests y cobertura; npm audit High/Critical y secretos (Gitleaks, config en `.gitleaks.toml`) |
-| `static-analysis.yml` | `static-analysis` | Errores de tipos, formato, warnings de ESLint, complejidad cognitiva > 15 y duplicación > 3% |
-| `unit-tests.yml` | `unit-tests` | Cobertura < 70% global o < 80% en casos de uso, datos y ViewModels; publica el artefacto `coverage` |
-| `codeql.yml` | `codeql` | Alertas High/Critical de CodeQL (SAST) |
-| `cd-preview.yml` / `cd-release.yml` | `build-preview` / release | APK por tag `sprint-*` / `v*` |
+| Workflow | Jobs | Qué bloquea | Reporte |
+|---|---|---|---|
+| `ci.yml` · etapa 1 | `static-analysis` | Errores de tipos, formato, warnings de ESLint, complejidad cognitiva > 15, duplicación > 3% | `static-analysis-report` + SARIF en Code scanning |
+| `ci.yml` · etapa 1 | `security` | npm audit High/Critical y secretos (Gitleaks, config en `.gitleaks.toml`) | Log del job |
+| `ci.yml` · etapa 2 | `unit-tests` | Pruebas unitarias; cobertura < 70% global o < 80% en casos de uso, datos y ViewModels | `unit-tests-report` |
+| `ci.yml` · etapa 3 | `integration-tests` | Pruebas de integración con el API falso y datos de prueba | `integration-tests-report` |
+| `ci.yml` · etapa 4 | `acceptance-tests` | Un criterio de aceptación de HU-01..HU-05 que falle o quede sin prueba | `acceptance-report` (JUnit + trazabilidad) |
+| `ci.yml` · etapa 5 | `performance-tests` | Render +10 % más lento (p10) o con más renders que `develop`; bundle de Android +5 % | `performance-report` (Reassure + bundle) |
+| `ci.yml` | `quality-gate` | Cualquier etapa que no termine en verde. **Check obligatorio** | Tabla en el Summary |
+| `stress-tests.yml` | `stress-tests` | p95 o memoria fuera de límite, o la app no se recupera de 5xx/timeouts. Nocturno, manual y PRs a `main`/`release/**` | `stress-report` |
+| `codeql.yml` | `codeql` | Alertas High/Critical de CodeQL (SAST) | Security → Code scanning |
+| `cd-preview.yml` / `cd-release.yml` | `build-preview` / release | APK por tag `sprint-*` / `v*`; esperan `quality-gate` en verde | — |
+
+Cada etapa de `ci.yml` solo corre si la anterior pasó (`needs:`). Detalle de etapas, umbrales y
+reportes: [docs/ci-cd.md](docs/ci-cd.md) y [docs/testing-strategy.md](docs/testing-strategy.md).
 
 Dependabot (`.github/dependabot.yml`) abre PRs semanales a `develop` para npm y GitHub Actions.
