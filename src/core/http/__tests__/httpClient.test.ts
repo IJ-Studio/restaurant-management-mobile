@@ -1,4 +1,9 @@
-import { AppError } from '../../errors/AppError';
+import {
+  AppError,
+  FORBIDDEN_MESSAGE,
+  SERVER_ERROR_MESSAGE,
+  SESSION_EXPIRED_MESSAGE,
+} from '../../errors/AppError';
 import { HttpClient, type HttpClientOptions } from '../httpClient';
 
 function jsonResponse(status: number, body?: unknown): Response {
@@ -51,10 +56,72 @@ describe('HttpClient', () => {
     [403, 'forbidden'],
     [404, 'not-found'],
     [429, 'rate-limit'],
-    [500, 'server'],
-  ])('convierte HTTP %i en AppError "%s"', async (status, kind) => {
+  ])('convierte HTTP %i en AppError "%s" con el mensaje del API', async (status, kind) => {
     const fetchFn = jest.fn().mockImplementation(async () => jsonResponse(status, { message: 'falló' }));
     await expect(makeClient(fetchFn).get('x')).rejects.toMatchObject({ kind, status, message: 'falló' });
+  });
+
+  describe('manejo global de errores', () => {
+    it('un 401 con token avisa que la sesión venció y llama al manejador una vez por petición', async () => {
+      const fetchFn = jest
+        .fn()
+        .mockImplementation(async () => jsonResponse(401, { message: 'Token revocado' }));
+      const onUnauthorized = jest.fn();
+      const client = makeClient(fetchFn);
+      client.setTokenProvider(() => 'vencido');
+      client.setUnauthorizedHandler(onUnauthorized);
+
+      await expect(client.get('reservations')).rejects.toMatchObject({
+        kind: 'unauthorized',
+        status: 401,
+        message: SESSION_EXPIRED_MESSAGE,
+      });
+      expect(onUnauthorized).toHaveBeenCalledTimes(1);
+    });
+
+    it('un 401 sin token (credenciales malas) no toca la sesión', async () => {
+      const fetchFn = jest
+        .fn()
+        .mockImplementation(async () => jsonResponse(401, { message: 'Credenciales inválidas' }));
+      const onUnauthorized = jest.fn();
+      const client = makeClient(fetchFn);
+      client.setUnauthorizedHandler(onUnauthorized);
+
+      await expect(client.post('auth/sign-in', {})).rejects.toThrow('Credenciales inválidas');
+      expect(onUnauthorized).not.toHaveBeenCalled();
+    });
+
+    it('traduce el 403 genérico del RolesGuard', async () => {
+      const fetchFn = jest
+        .fn()
+        .mockImplementation(async () =>
+          jsonResponse(403, { message: 'Forbidden resource', statusCode: 403 }),
+        );
+      await expect(makeClient(fetchFn).get('x')).rejects.toMatchObject({
+        kind: 'forbidden',
+        message: FORBIDDEN_MESSAGE,
+      });
+    });
+
+    it('respeta el mensaje propio de un 403', async () => {
+      const fetchFn = jest
+        .fn()
+        .mockImplementation(async () =>
+          jsonResponse(403, { message: 'Solo administradores pueden ver usuarios' }),
+        );
+      await expect(makeClient(fetchFn).get('x')).rejects.toThrow('Solo administradores pueden ver usuarios');
+    });
+
+    it.each([500, 502, 503])('un %i no muestra detalles internos del servidor', async (status) => {
+      const fetchFn = jest
+        .fn()
+        .mockImplementation(async () => jsonResponse(status, { message: 'relation "orden" does not exist' }));
+      await expect(makeClient(fetchFn).get('x')).rejects.toMatchObject({
+        kind: 'server',
+        status,
+        message: SERVER_ERROR_MESSAGE,
+      });
+    });
   });
 
   it('une los mensajes de validación de NestJS', async () => {
@@ -67,7 +134,7 @@ describe('HttpClient', () => {
   });
 
   it('usa un mensaje genérico cuando la respuesta no trae uno', async () => {
-    const fetchFn = jest.fn().mockResolvedValue(new Response('<html>error</html>', { status: 502 }));
+    const fetchFn = jest.fn().mockResolvedValue(new Response('<html>error</html>', { status: 409 }));
     await expect(makeClient(fetchFn).get('x')).rejects.toThrow('Ocurrió un error inesperado.');
   });
 

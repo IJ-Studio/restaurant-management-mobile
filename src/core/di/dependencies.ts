@@ -22,6 +22,7 @@ import { ReservationRemoteDataSource } from '../../features/reservations/data/da
 import { ReservationRepositoryImpl } from '../../features/reservations/data/repositories/ReservationRepositoryImpl';
 import { CreateReservationUseCase } from '../../features/reservations/domain/usecases/CreateReservationUseCase';
 import { ListActiveReservationsUseCase } from '../../features/reservations/domain/usecases/ListActiveReservationsUseCase';
+import { SESSION_EXPIRED_MESSAGE } from '../errors/AppError';
 import { httpClient, type HttpClient } from '../http/httpClient';
 
 /**
@@ -59,6 +60,14 @@ export function createDependencies({
 }: Infrastructure = {}): Dependencies {
   const sessionStore = createSessionStore();
   http.setTokenProvider(() => sessionStore.getState().session?.token ?? null);
+
+  // Token vencido o revocado: se borra la sesión guardada y se vuelve al Login con el aviso.
+  // Solo la primera petición rechazada lo hace; las demás ya no llevan token.
+  http.setUnauthorizedHandler(() => {
+    if (sessionStore.getState().status !== 'authenticated') return;
+    sessionStore.getState().expireSession(SESSION_EXPIRED_MESSAGE);
+    sessionStorage.clear().catch(() => undefined);
+  });
 
   // Al cerrar sesión no queda el pedido a medias de otro mesero.
   const currentOrderStore = createCurrentOrderStore();

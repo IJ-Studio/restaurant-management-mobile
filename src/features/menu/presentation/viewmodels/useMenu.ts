@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query';
 import { useMemo, useState } from 'react';
 
 import { useDependencies } from '../../../../core/di/DependenciesProvider';
-import { AppError } from '../../../../core/errors/AppError';
+import { userMessage } from '../../../../core/errors/AppError';
 import { filterMenu } from '../../domain/entities/menuFilters';
 import { MENU_STALE_TIME, menuQueryKeys } from './menuQueryKeys';
 
@@ -32,5 +32,5 @@ export function useMenu() {
 }
 
 export function errorMessage(error: Error): string {
-  return error instanceof AppError ? error.message : 'No se pudo cargar el menú.';
+  return userMessage(error, 'No se pudo cargar el menú.');
 }
