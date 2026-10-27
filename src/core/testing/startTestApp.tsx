@@ -7,21 +7,29 @@ import { TEST_PASSWORD } from './data/testData';
 import { createFakeApi, createMemorySessionStorage } from './fakeApi';
 import { renderWithProviders } from './renderWithProviders';
 
+interface StartOptions {
+  /** API ya creado: simula que el servidor sigue vivo entre dos aperturas de la app. */
+  api?: ReturnType<typeof createFakeApi>;
+  /** Almacenamiento ya usado: simula cerrar y volver a abrir la app en el mismo celular. */
+  storage?: ReturnType<typeof createMemorySessionStorage>;
+}
+
 /**
  * Arranca la app completa (AuthGate + navegación por rol) con el grafo de dependencias real,
  * conectado al API falso con los datos de prueba. Solo se sustituyen la red y el almacenamiento seguro.
  */
-export async function startTestApp() {
-  const api = createFakeApi();
-  const storage = createMemorySessionStorage();
+export async function startTestApp({
+  api = createFakeApi(),
+  storage = createMemorySessionStorage(),
+}: StartOptions = {}) {
   const deps = createDependencies({ httpClient: api.httpClient, sessionStorage: storage });
-  await renderWithProviders(
+  const view = await renderWithProviders(
     <AuthGate>
       <AppNavigator />
     </AuthGate>,
     deps,
   );
-  return { api, storage, deps };
+  return { api, storage, deps, unmount: view.unmount };
 }
 
 /** Llena el formulario de Login y lo envía. */
