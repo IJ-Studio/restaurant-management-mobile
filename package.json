@@ -53,7 +53,7 @@
     "test:integration": "jest --testPathPattern \"\\.integration\\.test\\.\" --coverage=false",
     "test:acceptance": "jest --config jest.acceptance.config.js",
     "test:perf": "reassure",
-    "test:stress": "jest --testPathPattern \"\\.stress\\.test\\.\" --testPathIgnorePatterns /node_modules/ --coverage=false --runInBand"
+    "test:stress": "node --expose-gc node_modules/jest/bin/jest.js --config jest.stress.config.js --runInBand"
   },
   "private": true
 }
