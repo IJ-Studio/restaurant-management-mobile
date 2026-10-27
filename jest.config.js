@@ -2,10 +2,15 @@
 module.exports = {
   preset: 'jest-expo',
 
+  // `npm test` corre unitarias e integración. Aceptación y esfuerzo tienen su propio script
+  // (test:acceptance, test:stress) y su etapa en CI; las de rendimiento (src/__perf__) las corre Reassure.
+  testPathIgnorePatterns: ['/node_modules/', '\\.acceptance\\.test\\.', '\\.stress\\.test\\.'],
+
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',
     '!src/**/__tests__/**',
     '!src/**/__fixtures__/**',
+    '!src/__perf__/**',
     '!src/core/testing/**',
     '!**/*.d.ts',
   ],
