@@ -3,6 +3,7 @@ import { AuthRepositoryImpl } from '../../features/auth/data/repositories/AuthRe
 import { SecureSessionStorage } from '../../features/auth/data/storage/SecureSessionStorage';
 import { LoginUseCase } from '../../features/auth/domain/usecases/LoginUseCase';
 import { LogoutUseCase } from '../../features/auth/domain/usecases/LogoutUseCase';
+import type { SessionStorage } from '../../features/auth/domain/repositories/SessionStorage';
 import { RestoreSessionUseCase } from '../../features/auth/domain/usecases/RestoreSessionUseCase';
 import { createSessionStore, type SessionStore } from '../../features/auth/presentation/store/sessionStore';
 import { MenuRemoteDataSource } from '../../features/menu/data/datasources/MenuRemoteDataSource';
@@ -43,9 +44,21 @@ export interface Dependencies {
   sendOrderToKitchenUseCase: Pick<SendOrderToKitchenUseCase, 'execute'>;
 }
 
-export function createDependencies(): Dependencies {
+/**
+ * Infraestructura que se puede sustituir. La app usa los valores por defecto; las pruebas de
+ * integración pasan un `HttpClient` contra el API falso con datos de prueba y un almacenamiento en memoria.
+ */
+export interface Infrastructure {
+  httpClient?: HttpClient;
+  sessionStorage?: SessionStorage;
+}
+
+export function createDependencies({
+  httpClient: http = httpClient,
+  sessionStorage = new SecureSessionStorage(),
+}: Infrastructure = {}): Dependencies {
   const sessionStore = createSessionStore();
-  httpClient.setTokenProvider(() => sessionStore.getState().session?.token ?? null);
+  http.setTokenProvider(() => sessionStore.getState().session?.token ?? null);
 
   // Al cerrar sesión no queda el pedido a medias de otro mesero.
   const currentOrderStore = createCurrentOrderStore();
@@ -53,14 +66,13 @@ export function createDependencies(): Dependencies {
     if (state.status === 'unauthenticated') currentOrderStore.getState().clear();
   });
 
-  const sessionStorage = new SecureSessionStorage();
-  const authRepository = new AuthRepositoryImpl(new AuthRemoteDataSource(httpClient));
-  const menuRepository = new MenuRepositoryImpl(new MenuRemoteDataSource(httpClient));
-  const reservationRepository = new ReservationRepositoryImpl(new ReservationRemoteDataSource(httpClient));
-  const orderRepository = new OrderRepositoryImpl(new OrderRemoteDataSource(httpClient));
+  const authRepository = new AuthRepositoryImpl(new AuthRemoteDataSource(http));
+  const menuRepository = new MenuRepositoryImpl(new MenuRemoteDataSource(http));
+  const reservationRepository = new ReservationRepositoryImpl(new ReservationRemoteDataSource(http));
+  const orderRepository = new OrderRepositoryImpl(new OrderRemoteDataSource(http));
 
   return {
-    httpClient,
+    httpClient: http,
     sessionStore,
     loginUseCase: new LoginUseCase(authRepository, sessionStorage),
     logoutUseCase: new LogoutUseCase(authRepository, sessionStorage),

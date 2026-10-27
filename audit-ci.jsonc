@@ -9,6 +9,10 @@
     "GHSA-vfj7-8cjw-p6xm",
     // node-forge <=1.4.0 (verificación de firma RSA). Sin versión corregida publicada.
     // Solo lo usa @expo/cli para firmar código en desarrollo; no entra al bundle del APK.
-    "GHSA-86w9-cpqp-85rv"
+    "GHSA-86w9-cpqp-85rv",
+    // zod <4.6.6 (memoria al validar colecciones enormes). Revisado el 2026-10-26.
+    // Lo traen @expo/cli y eslint-plugin-react-hooks, que usan zod 3 (sin parche 3.x) y solo
+    // validan la config local del proyecto; no entra al bundle del APK. Quitar al subir Expo.
+    "GHSA-mrhx-c7xc-m3w5"
   ]
 }
