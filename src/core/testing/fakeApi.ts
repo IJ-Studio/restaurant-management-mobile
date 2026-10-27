@@ -8,6 +8,8 @@
  */
 import type { Session } from '../../features/auth/domain/entities/Session';
 import type { SessionStorage } from '../../features/auth/domain/repositories/SessionStorage';
+import type { CategoryWithDishesDto } from '../../features/menu/data/dtos/MenuDto';
+import type { TableDto } from '../../features/orders/data/dtos/OrderDto';
 import type { ReservationDto } from '../../features/reservations/data/dtos/ReservationDto';
 import { HttpClient } from '../http/httpClient';
 import { makeTestReservations, TEST_PASSWORD, testMenu, testTables, testUsers } from './data/testData';
@@ -40,13 +42,88 @@ function makeToken(userId: number): string {
   return `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode({ id: String(userId), exp })}.firma-de-prueba`;
 }
 
-export function createFakeApi() {
+export interface FakeApiOptions {
+  /** Datos de volumen para las pruebas de esfuerzo; por defecto, los de testData.ts. */
+  menu?: CategoryWithDishesDto[];
+  tables?: TableDto[];
+  reservations?: ReservationDto[];
+  /** Tiempo límite del HttpClient (ms). */
+  timeoutMs?: number;
+}
+
+/**
+ * Fallas que se pueden inyectar en el API falso (pruebas de esfuerzo): latencia en cada respuesta,
+ * N respuestas con error del servidor y N peticiones que nunca responden (el HttpClient las corta
+ * por tiempo límite).
+ */
+export interface FaultInjector {
+  latencyMs: number;
+  /** Las siguientes `count` peticiones (opcionalmente solo las que coinciden con `match`) fallan con `status`. */
+  failNext: (count: number, status?: number, match?: RegExp) => void;
+  /** Las siguientes `count` peticiones nunca responden: el HttpClient las corta por tiempo límite. */
+  hangNext: (count: number, match?: RegExp) => void;
+  reset: () => void;
+}
+
+function createFaults(): FaultInjector & { take: (path: string) => 'ok' | 'hang' | number } {
+  let failures = 0;
+  let failStatus = 503;
+  let failMatch: RegExp | undefined;
+  let hangs = 0;
+  let hangMatch: RegExp | undefined;
+  return {
+    latencyMs: 0,
+    failNext(count, status = 503, match) {
+      failures = count;
+      failStatus = status;
+      failMatch = match;
+    },
+    hangNext(count, match) {
+      hangs = count;
+      hangMatch = match;
+    },
+    reset() {
+      this.latencyMs = 0;
+      failures = 0;
+      hangs = 0;
+    },
+    take(path) {
+      if (hangs > 0 && (!hangMatch || hangMatch.test(path))) {
+        hangs -= 1;
+        return 'hang';
+      }
+      if (failures > 0 && (!failMatch || failMatch.test(path))) {
+        failures -= 1;
+        return failStatus;
+      }
+      return 'ok';
+    },
+  };
+}
+
+/** Espera `ms` o hasta que se cancele la petición (como un socket real). */
+function wait(ms: number, signal?: AbortSignal | null): Promise<void> {
+  return new Promise((resolve, reject) => {
+    const abort = () => reject(new Error('aborted'));
+    if (signal?.aborted) return abort();
+    const timer = ms === Infinity ? undefined : setTimeout(resolve, ms);
+    signal?.addEventListener('abort', () => {
+      clearTimeout(timer);
+      abort();
+    });
+  });
+}
+
+export function createFakeApi(options: FakeApiOptions = {}) {
+  const menu = options.menu ?? testMenu;
+  const tables = options.tables ?? testTables;
   const requests: RecordedRequest[] = [];
   const orders = new Map<string, StoredOrder>();
-  const reservations: ReservationDto[] = makeTestReservations();
+  const reservations: ReservationDto[] = options.reservations ?? makeTestReservations();
   const tokens = new Set<string>();
   const users = Object.values(testUsers);
-  const dishes = testMenu.flatMap((category) => category.platillos);
+  const dishes = menu.flatMap((category) => category.platillos);
+  const faults = createFaults();
 
   const signIn: Handler = (body) => {
     const { email, password } = body as { email?: string; password?: string };
@@ -100,9 +177,9 @@ export function createFakeApi() {
   const routes: [string, RegExp, boolean, Handler][] = [
     ['POST', /^auth\/sign-in$/, false, signIn],
     ['POST', /^auth\/sign-out$/, true, () => [200, { message: 'Sesión cerrada' }]],
-    ['GET', /^menu\/categories\/with-products$/, false, () => [200, testMenu]],
+    ['GET', /^menu\/categories\/with-products$/, false, () => [200, menu]],
     ['GET', /^menu\/items\/([^/]+)$/, false, dishById],
-    ['GET', /^mesas$/, false, () => [200, testTables]],
+    ['GET', /^mesas$/, false, () => [200, tables]],
     ['POST', /^pedidos\/mesa$/, true, createOrder],
     ['POST', /^pedidos\/confirmar\/([^/]+)$/, true, confirmOrder],
     ['GET', /^reservations$/, true, () => [200, reservations]],
@@ -118,6 +195,11 @@ export function createFakeApi() {
     const body = init.body ? JSON.parse(String(init.body)) : undefined;
     requests.push({ method, path, body, authorization });
 
+    const fault = faults.take(path);
+    if (fault === 'hang') await wait(Infinity, init.signal);
+    if (faults.latencyMs > 0) await wait(faults.latencyMs, init.signal);
+    if (typeof fault === 'number') return json(fault, { message: 'Service Unavailable', statusCode: fault });
+
     for (const [routeMethod, pattern, needsToken, handler] of routes) {
       const match = pattern.exec(path);
       if (routeMethod !== method || !match) continue;
@@ -132,12 +214,12 @@ export function createFakeApi() {
 
   const httpClient = new HttpClient({
     baseUrl: 'https://api.pruebas.quijote.mx',
-    timeoutMs: 1000,
+    timeoutMs: options.timeoutMs ?? 1000,
     allowInsecure: false,
     fetchFn: fetchFn as typeof fetch,
   });
 
-  return { httpClient, requests, orders, reservations };
+  return { httpClient, requests, orders, reservations, faults: faults as FaultInjector };
 }
 
 /** Sustituto de SecureSessionStorage: guarda la sesión en memoria y permite revisar qué se guardó. */

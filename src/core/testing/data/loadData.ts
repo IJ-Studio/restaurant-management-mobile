@@ -66,12 +66,18 @@ export function makeReservations(count: number, now: Date = new Date()): Reserva
   });
 }
 
-/** Pedido de la mesa con `count` platillos distintos tomados del menú de carga. */
+/** Pedido de la mesa con `count` platillos distintos y disponibles del menú de carga. */
 export function makeOrderLines(count: number): OrderLine[] {
-  return Array.from({ length: count }, (_, i) => ({
-    dishId: 10_000 + i,
-    name: `Platillo ${i + 1}`,
-    unitPrice: 50 + (i % 200),
-    quantity: 1 + (i % 3),
-  }));
+  const lines: OrderLine[] = [];
+  // En makeMenu uno de cada 10 platillos está agotado (n % 10 === 9): esos no se piden.
+  for (let n = 0; lines.length < count; n++) {
+    if (n % 10 === 9) continue;
+    lines.push({
+      dishId: 10_000 + n,
+      name: `Platillo ${n + 1}`,
+      unitPrice: 50 + (n % 200),
+      quantity: 1 + (n % 3),
+    });
+  }
+  return lines;
 }

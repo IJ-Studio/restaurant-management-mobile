@@ -23,6 +23,12 @@ module.exports = defineConfig([
     rules: { 'security/detect-non-literal-regexp': 'off' },
   },
   {
-    ignores: ['dist/*', 'coverage/*'],
+    // La infraestructura de pruebas escribe sus reportes en reports/ con rutas armadas en el código,
+    // no con datos de usuarios.
+    files: ['src/core/testing/**'],
+    rules: { 'security/detect-non-literal-fs-filename': 'off' },
+  },
+  {
+    ignores: ['dist/*', 'coverage/*', 'reports/*', '.reassure/*'],
   },
 ]);
