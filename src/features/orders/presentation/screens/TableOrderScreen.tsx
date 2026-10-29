@@ -1,32 +1,42 @@
-import { ActivityIndicator, FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { Button } from '../../../../shared/presentation/components/Button';
 import { Card } from '../../../../shared/presentation/components/Card';
+import { Chip } from '../../../../shared/presentation/components/Chip';
+import { Notice } from '../../../../shared/presentation/components/Notice';
 import { ScreenState } from '../../../../shared/presentation/components/ScreenState';
-import { colors, spacing } from '../../../../shared/presentation/theme';
+import { colors, radius, sizes, spacing, typography } from '../../../../shared/presentation/theme';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import type { OrderLine } from '../../domain/entities/TableOrder';
 import { useTableOrder } from '../viewmodels/useTableOrder';
 
+function StepButton({ symbol, label, onPress }: { symbol: string; label: string; onPress: () => void }) {
+  return (
+    <Pressable
+      style={({ pressed }) => [styles.step, pressed && styles.stepPressed]}
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+    >
+      <Text style={styles.stepText}>{symbol}</Text>
+    </Pressable>
+  );
+}
+
 function QuantityStepper({ line, onChange }: { line: OrderLine; onChange: (quantity: number) => void }) {
   return (
     <View style={styles.stepper}>
-      <Pressable
-        style={styles.step}
+      <StepButton
+        symbol="−"
+        label={`Quitar uno de ${line.name}`}
         onPress={() => onChange(line.quantity - 1)}
-        accessibilityRole="button"
-        accessibilityLabel={`Quitar uno de ${line.name}`}
-      >
-        <Text style={styles.stepText}>−</Text>
-      </Pressable>
+      />
       <Text style={styles.quantity}>{line.quantity}</Text>
-      <Pressable
-        style={styles.step}
+      <StepButton
+        symbol="+"
+        label={`Agregar uno de ${line.name}`}
         onPress={() => onChange(line.quantity + 1)}
-        accessibilityRole="button"
-        accessibilityLabel={`Agregar uno de ${line.name}`}
-      >
-        <Text style={styles.stepText}>+</Text>
-      </Pressable>
+      />
     </View>
   );
 }
@@ -50,30 +60,31 @@ export function TableOrderScreen() {
     <View style={styles.container}>
       <Text style={styles.sectionTitle}>Mesa</Text>
       {vm.tablesError ? (
-        <Text style={styles.error}>{vm.tablesError}</Text>
+        <Text style={styles.tablesError}>{vm.tablesError}</Text>
       ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.tables}>
-          {vm.tables.map((table) => {
-            const selected = vm.order.tableNumber === table.number;
-            return (
-              <Pressable
-                key={table.id}
-                style={[styles.table, selected && styles.tableSelected]}
-                onPress={() => vm.selectTable(table.number)}
-                accessibilityRole="radio"
-                accessibilityState={{ selected }}
-                accessibilityLabel={`Mesa ${table.number}`}
-              >
-                <Text style={selected ? styles.tableTextSelected : styles.tableText}>{table.number}</Text>
-              </Pressable>
-            );
-          })}
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.tablesBar}
+          contentContainerStyle={styles.tables}
+          accessibilityRole="radiogroup"
+        >
+          {vm.tables.map((table) => (
+            <Chip
+              key={table.id}
+              label={table.number}
+              accessibilityLabel={`Mesa ${table.number}`}
+              selected={vm.order.tableNumber === table.number}
+              onPress={() => vm.selectTable(table.number)}
+            />
+          ))}
         </ScrollView>
       )}
 
       <FlatList
         data={vm.order.lines}
         keyExtractor={(line) => String(line.dishId)}
+        contentContainerStyle={styles.lines}
         renderItem={({ item }) => (
           <View style={styles.line}>
             <View style={styles.lineInfo}>
@@ -86,91 +97,66 @@ export function TableOrderScreen() {
         ItemSeparatorComponent={() => <View style={styles.separator} />}
       />
 
-      <Card style={styles.footer}>
+      <Card elevation="raised" style={styles.footer}>
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>{vm.count} platillos · Total estimado</Text>
           <Text style={styles.total}>{formatCurrency(vm.total)}</Text>
         </View>
-        {vm.sendError && (
-          <Text style={styles.error} accessibilityRole="alert">
-            {vm.sendError}
-          </Text>
-        )}
-        <Pressable
-          style={[styles.send, vm.isSending && styles.sendDisabled]}
+        {vm.sendError && <Notice message={vm.sendError} style={styles.notice} />}
+        <Button
+          label="Enviar a cocina"
           onPress={vm.sendToKitchen}
-          disabled={vm.isSending}
-          accessibilityRole="button"
-          accessibilityLabel="Enviar a cocina"
-        >
-          {vm.isSending ? (
-            <ActivityIndicator color="#fff" />
-          ) : (
-            <Text style={styles.sendText}>Enviar a cocina</Text>
-          )}
-        </Pressable>
+          loading={vm.isSending}
+          style={styles.send}
+        />
       </Card>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surface },
+  container: { flex: 1, backgroundColor: colors.background },
   sectionTitle: {
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.muted,
-    margin: spacing.md,
-    marginBottom: spacing.sm,
+    ...typography.overline,
+    color: colors.brandStrong,
+    marginHorizontal: spacing.lg,
+    marginTop: spacing.lg,
   },
-  tables: { paddingHorizontal: spacing.md, paddingBottom: spacing.md },
-  table: {
-    minWidth: 48,
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: 8,
-    borderWidth: 1,
-    borderColor: colors.border,
-    alignItems: 'center',
-    marginRight: spacing.sm,
-  },
-  tableSelected: { backgroundColor: colors.primary, borderColor: colors.primary },
-  tableText: { color: colors.text, fontWeight: '600' },
-  tableTextSelected: { color: '#fff', fontWeight: '700' },
+  tablesError: { ...typography.small, color: colors.danger, margin: spacing.lg },
+  tablesBar: { flexGrow: 0 },
+  tables: { paddingHorizontal: spacing.lg, paddingVertical: spacing.md, gap: spacing.sm },
+  lines: { paddingHorizontal: spacing.lg, paddingBottom: spacing.lg },
   line: {
     flexDirection: 'row',
     alignItems: 'center',
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: StyleSheet.hairlineWidth,
+    borderColor: colors.border,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
   },
-  lineInfo: { flex: 1 },
-  lineName: { fontSize: 16, color: colors.text, fontWeight: '600' },
-  linePrice: { fontSize: 14, color: colors.muted, marginTop: 2 },
+  lineInfo: { flex: 1, marginRight: spacing.md },
+  lineName: { ...typography.subheading, color: colors.text },
+  linePrice: { ...typography.bodyStrong, color: colors.brandStrong, marginTop: spacing.xxs },
+  separator: { height: spacing.sm },
   stepper: { flexDirection: 'row', alignItems: 'center' },
   step: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
-    borderWidth: 1,
-    borderColor: colors.primary,
+    width: sizes.touchTarget,
+    height: sizes.touchTarget,
+    borderRadius: radius.pill,
+    borderWidth: 1.5,
+    borderColor: colors.brand,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stepText: { color: colors.primary, fontSize: 18 },
-  quantity: { minWidth: 32, textAlign: 'center', fontSize: 16, fontWeight: '700' },
-  separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginLeft: spacing.lg },
-  footer: { margin: spacing.md },
-  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  totalLabel: { color: colors.muted },
-  total: { fontSize: 20, fontWeight: '700', color: colors.text },
-  error: { color: colors.danger, marginHorizontal: spacing.md, marginTop: spacing.sm, textAlign: 'center' },
-  send: {
-    marginTop: spacing.md,
-    backgroundColor: colors.primary,
-    borderRadius: 8,
-    paddingVertical: 14,
-    alignItems: 'center',
-  },
-  sendDisabled: { opacity: 0.7 },
-  sendText: { color: '#fff', fontSize: 16, fontWeight: '600' },
+  stepPressed: { backgroundColor: colors.brandSoft },
+  stepText: { ...typography.heading, color: colors.brandStrong },
+  quantity: { ...typography.heading, color: colors.text, minWidth: spacing.xxl, textAlign: 'center' },
+  footer: { margin: spacing.lg, marginTop: 0 },
+  totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.md },
+  totalLabel: { ...typography.small, color: colors.textSecondary, flexShrink: 1 },
+  total: { ...typography.title, color: colors.text },
+  notice: { marginTop: spacing.md },
+  send: { marginTop: spacing.lg },
 });

@@ -19,7 +19,7 @@ describe('HU-02 Navegación según rol', () => {
     // Assert
     expect(tab('Dashboard')).toBeNull();
     expect(tab('Cobros')).toBeNull();
-    expect(screen.queryByText('Indicadores del día (HU-08).')).toBeNull();
+    expect(screen.queryByText('Resumen del día')).toBeNull();
   });
 
   it('HU-02 CA-2: el administrador ve su Dashboard y no ve los Cobros exclusivos del cajero', async () => {
@@ -30,7 +30,7 @@ describe('HU-02 Navegación según rol', () => {
     await signInAs('admin');
 
     // Assert
-    expect(screen.getByText('Indicadores del día (HU-08).')).toBeOnTheScreen();
+    expect(screen.getByText('Resumen del día')).toBeOnTheScreen();
     expect(tab('Cobros')).toBeNull();
   });
 

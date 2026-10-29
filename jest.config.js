@@ -1,6 +1,7 @@
 /** @type {import('jest').Config} */
 module.exports = {
   preset: 'jest-expo',
+  setupFiles: ['<rootDir>/src/core/testing/jestSetup.ts'],
 
   // `npm test` corre unitarias e integración. Aceptación y esfuerzo tienen su propio script
   // (test:acceptance, test:stress) y su etapa en CI; las de rendimiento (src/__perf__) las corre Reassure.

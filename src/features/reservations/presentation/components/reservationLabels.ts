@@ -5,6 +5,7 @@ const STATUS_LABEL: Record<string, string> = {
   confirmada: 'Confirmada',
   cancelada: 'Cancelada',
   completada: 'Completada',
+  no_show: 'No se presentó',
 };
 
 export function statusLabel(status: string): string {
