@@ -7,6 +7,14 @@ import {
   GetCashSessionUseCase,
   OpenCashRegisterUseCase,
 } from '../../features/cashier/domain/CashRegister';
+import { KitchenRepositoryImpl } from '../../features/kitchen/data/KitchenRepositoryImpl';
+import {
+  ListIncidentsUseCase,
+  ListInventoryProductsUseCase,
+  ListWasteTodayUseCase,
+  ReportIncidentUseCase,
+  ReportWasteUseCase,
+} from '../../features/kitchen/domain/Kitchen';
 import { AuthRemoteDataSource } from '../../features/auth/data/datasources/AuthRemoteDataSource';
 import { AuthRepositoryImpl } from '../../features/auth/data/repositories/AuthRepositoryImpl';
 import { SecureSessionStorage } from '../../features/auth/data/storage/SecureSessionStorage';
@@ -82,6 +90,11 @@ export interface Dependencies {
   getCashSessionUseCase: Pick<GetCashSessionUseCase, 'execute'>;
   openCashRegisterUseCase: Pick<OpenCashRegisterUseCase, 'execute'>;
   closeCashRegisterUseCase: Pick<CloseCashRegisterUseCase, 'execute'>;
+  listIncidentsUseCase: Pick<ListIncidentsUseCase, 'execute'>;
+  reportIncidentUseCase: Pick<ReportIncidentUseCase, 'execute'>;
+  listInventoryProductsUseCase: Pick<ListInventoryProductsUseCase, 'execute'>;
+  reportWasteUseCase: Pick<ReportWasteUseCase, 'execute'>;
+  listWasteTodayUseCase: Pick<ListWasteTodayUseCase, 'execute'>;
 }
 
 /**
@@ -121,6 +134,7 @@ export function createDependencies({
   const dashboardRepository = new DashboardRepositoryImpl(new DashboardRemoteDataSource(http));
   const profileRepository = new ProfileRepositoryImpl(new ProfileRemoteDataSource(http));
   const cashRepository = new CashRegisterRepositoryImpl(http);
+  const kitchenRepository = new KitchenRepositoryImpl(http);
 
   return {
     httpClient: http,
@@ -151,5 +165,10 @@ export function createDependencies({
     getCashSessionUseCase: new GetCashSessionUseCase(cashRepository),
     openCashRegisterUseCase: new OpenCashRegisterUseCase(cashRepository),
     closeCashRegisterUseCase: new CloseCashRegisterUseCase(cashRepository),
+    listIncidentsUseCase: new ListIncidentsUseCase(kitchenRepository),
+    reportIncidentUseCase: new ReportIncidentUseCase(kitchenRepository),
+    listInventoryProductsUseCase: new ListInventoryProductsUseCase(kitchenRepository),
+    reportWasteUseCase: new ReportWasteUseCase(kitchenRepository),
+    listWasteTodayUseCase: new ListWasteTodayUseCase(kitchenRepository),
   };
 }

@@ -29,6 +29,8 @@ interface Props {
   /** Cocina necesita ver todos los platillos; el resto, solo el primero. */
   showAllItems?: boolean;
   now?: Date;
+  /** Aviso de cocina sobre el pedido ("Retraso de 15 min · Diego"). */
+  alert?: string;
 }
 
 const LATE_MINUTES = LATE_AFTER_MS / 60000;
@@ -42,7 +44,7 @@ function waitingLabel(minutes: number): string {
 }
 
 /** Tarjeta de un pedido activo: lugar, estatus, espera, platillos, total y su siguiente paso. */
-export function OrderCard({ order, onPress, action, showAllItems = false, now = new Date() }: Props) {
+export function OrderCard({ order, onPress, action, showAllItems = false, now = new Date(), alert }: Props) {
   const status = orderStatusLabel(order.status);
   const total = formatCurrency(order.total);
   const minutes = minutesOpen(order.openedAt, now);
@@ -79,6 +81,14 @@ export function OrderCard({ order, onPress, action, showAllItems = false, now = 
             </View>
           )}
         </View>
+        {alert && (
+          <View style={styles.alert} accessibilityLabel={`Aviso de cocina: ${alert}`} accessible>
+            <Ionicons name="alert-circle" size={16} color={colors.warning} />
+            <Text style={styles.alertText} numberOfLines={2}>
+              {alert}
+            </Text>
+          </View>
+        )}
         <View style={styles.items}>
           {shown.map((item, index) => (
             <Text key={`${item.name}-${index}`} style={styles.item} numberOfLines={1}>
@@ -131,6 +141,16 @@ const styles = StyleSheet.create({
   waitText: { ...typography.caption, color: colors.textSecondary },
   lateText: { color: colors.danger },
   items: { marginTop: spacing.md, gap: spacing.xxs },
+  alert: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+    padding: spacing.sm,
+    borderRadius: radius.sm,
+    backgroundColor: colors.warningSoft,
+  },
+  alertText: { ...typography.caption, color: colors.warning, flex: 1 },
   item: { ...typography.body, color: colors.text },
   quantity: { ...typography.bodyStrong, color: colors.brandStrong },
   more: { ...typography.caption, color: colors.textSecondary },
