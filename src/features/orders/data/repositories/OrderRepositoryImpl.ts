@@ -1,9 +1,13 @@
 import { AppError } from '../../../../core/errors/AppError';
 import type { ActiveOrder, OrderDetail } from '../../domain/entities/ActiveOrder';
+import type { ChargeReceipt, ChargeRequest, PaymentMethod } from '../../domain/entities/Payment';
 import type { OrderLine, Table } from '../../domain/entities/TableOrder';
-import type { OrderRepository, SentOrder } from '../../domain/repositories/OrderRepository';
+import type { OrderRepository, OrderStep, SentOrder } from '../../domain/repositories/OrderRepository';
 import type { OrderRemoteDataSource } from '../datasources/OrderRemoteDataSource';
-import { toActiveOrder, toOrderDetail } from '../mappers/orderMapper';
+import { toActiveOrder, toChargeReceipt, toOrderDetail, toPaymentMethod } from '../mappers/orderMapper';
+
+/** Un 409 del API significa que otro dispositivo cambió el pedido antes; se pide refrescar. */
+const CONFLICT_STATUS = 409;
 
 export class OrderRepositoryImpl implements OrderRepository {
   constructor(private readonly remote: OrderRemoteDataSource) {}
@@ -40,16 +44,19 @@ export class OrderRepositoryImpl implements OrderRepository {
     try {
       return (await this.remote.listRecent()).map(toActiveOrder);
     } catch (error) {
-      throw forbiddenAs(error, 'Tu rol no tiene permiso para ver los pedidos.');
+      throw explain(error, 'Tu rol no tiene permiso para ver los pedidos.');
     }
   }
 
-  /** El API devuelve todos los pedidos de la mesa; aquí se toma el que se pidió. */
-  async getDetail(tableNumber: string, orderId: string): Promise<OrderDetail> {
-    const orders = await this.remote.listByTable(tableNumber);
-    const found = orders.find((order) => order.id === orderId);
-    if (!found) throw new AppError('not-found', 'Este pedido ya no está disponible.');
-    return toOrderDetail(found);
+  async getDetail(orderId: string): Promise<OrderDetail> {
+    try {
+      return toOrderDetail(await this.remote.getDetail(orderId));
+    } catch (error) {
+      if (error instanceof AppError && error.kind === 'not-found') {
+        throw new AppError('not-found', 'Este pedido ya no está disponible.', error.status);
+      }
+      throw explain(error, 'Tu rol no tiene permiso para ver este pedido.');
+    }
   }
 
   async cancel(orderId: string): Promise<string> {
@@ -61,11 +68,46 @@ export class OrderRepositoryImpl implements OrderRepository {
     const response = await this.remote.removeItem(itemId);
     return response.message || 'Platillo quitado del pedido.';
   }
+
+  async updateStatus(orderId: string, step: OrderStep): Promise<string> {
+    try {
+      const response = await this.remote.updateStatus(orderId, step);
+      return response.message || 'Pedido actualizado.';
+    } catch (error) {
+      throw explain(error, 'Tu rol no puede hacer este cambio en el pedido.');
+    }
+  }
+
+  async listPaymentMethods(): Promise<PaymentMethod[]> {
+    try {
+      return (await this.remote.listPaymentMethods()).map(toPaymentMethod);
+    } catch (error) {
+      throw explain(error, 'Solo caja puede cobrar pedidos.');
+    }
+  }
+
+  /** El monto lo calcula el API con el total guardado; aquí solo viajan método, propina y efectivo. */
+  async charge(orderId: string, request: ChargeRequest): Promise<ChargeReceipt> {
+    try {
+      const response = await this.remote.charge(orderId, {
+        metodoPagoId: request.methodId,
+        propina: request.tip > 0 ? request.tip : undefined,
+        montoRecibido: request.received,
+        referencia: request.reference?.trim() || undefined,
+      });
+      return toChargeReceipt(response);
+    } catch (error) {
+      throw explain(error, 'Solo caja puede cobrar pedidos.');
+    }
+  }
 }
 
-function forbiddenAs(error: unknown, message: string): unknown {
-  if (error instanceof AppError && error.kind === 'forbidden') {
-    return new AppError('forbidden', message, error.status);
+/** Traduce el 403 del RolesGuard y el 409 de concurrencia a mensajes que el personal entiende. */
+function explain(error: unknown, forbiddenMessage: string): unknown {
+  if (!(error instanceof AppError)) return error;
+  if (error.kind === 'forbidden') return new AppError('forbidden', forbiddenMessage, error.status);
+  if (error.status === CONFLICT_STATUS) {
+    return new AppError('validation', `${error.message} Desliza hacia abajo para actualizar.`, error.status);
   }
   return error;
 }

@@ -16,11 +16,19 @@ import { GetMenuUseCase } from '../../features/menu/domain/usecases/GetMenuUseCa
 import { OrderRemoteDataSource } from '../../features/orders/data/datasources/OrderRemoteDataSource';
 import { OrderRepositoryImpl } from '../../features/orders/data/repositories/OrderRepositoryImpl';
 import { CancelOrderUseCase } from '../../features/orders/domain/usecases/CancelOrderUseCase';
+import { ChargeOrderUseCase } from '../../features/orders/domain/usecases/ChargeOrderUseCase';
 import { ConfirmOrderUseCase } from '../../features/orders/domain/usecases/ConfirmOrderUseCase';
 import { GetOrderDetailUseCase } from '../../features/orders/domain/usecases/GetOrderDetailUseCase';
 import { ListActiveOrdersUseCase } from '../../features/orders/domain/usecases/ListActiveOrdersUseCase';
+import { ListPaymentMethodsUseCase } from '../../features/orders/domain/usecases/ListPaymentMethodsUseCase';
 import { ListTablesUseCase } from '../../features/orders/domain/usecases/ListTablesUseCase';
 import { RemoveOrderItemUseCase } from '../../features/orders/domain/usecases/RemoveOrderItemUseCase';
+import { UpdateOrderStatusUseCase } from '../../features/orders/domain/usecases/UpdateOrderStatusUseCase';
+import { ProfileRemoteDataSource } from '../../features/profile/data/datasources/ProfileRemoteDataSource';
+import { ProfileRepositoryImpl } from '../../features/profile/data/repositories/ProfileRepositoryImpl';
+import { ChangePasswordUseCase } from '../../features/profile/domain/usecases/ChangePasswordUseCase';
+import { GetProfileUseCase } from '../../features/profile/domain/usecases/GetProfileUseCase';
+import { UpdateProfileUseCase } from '../../features/profile/domain/usecases/UpdateProfileUseCase';
 import { SendOrderToKitchenUseCase } from '../../features/orders/domain/usecases/SendOrderToKitchenUseCase';
 import {
   createCurrentOrderStore,
@@ -59,6 +67,12 @@ export interface Dependencies {
   cancelOrderUseCase: Pick<CancelOrderUseCase, 'execute'>;
   removeOrderItemUseCase: Pick<RemoveOrderItemUseCase, 'execute'>;
   getDashboardUseCase: Pick<GetDashboardUseCase, 'execute'>;
+  updateOrderStatusUseCase: Pick<UpdateOrderStatusUseCase, 'execute'>;
+  listPaymentMethodsUseCase: Pick<ListPaymentMethodsUseCase, 'execute'>;
+  chargeOrderUseCase: Pick<ChargeOrderUseCase, 'execute'>;
+  getProfileUseCase: Pick<GetProfileUseCase, 'execute'>;
+  updateProfileUseCase: Pick<UpdateProfileUseCase, 'execute'>;
+  changePasswordUseCase: Pick<ChangePasswordUseCase, 'execute'>;
 }
 
 /**
@@ -96,6 +110,7 @@ export function createDependencies({
   const reservationRepository = new ReservationRepositoryImpl(new ReservationRemoteDataSource(http));
   const orderRepository = new OrderRepositoryImpl(new OrderRemoteDataSource(http));
   const dashboardRepository = new DashboardRepositoryImpl(new DashboardRemoteDataSource(http));
+  const profileRepository = new ProfileRepositoryImpl(new ProfileRemoteDataSource(http));
 
   return {
     httpClient: http,
@@ -117,5 +132,11 @@ export function createDependencies({
     cancelOrderUseCase: new CancelOrderUseCase(orderRepository),
     removeOrderItemUseCase: new RemoveOrderItemUseCase(orderRepository),
     getDashboardUseCase: new GetDashboardUseCase(dashboardRepository, orderRepository),
+    updateOrderStatusUseCase: new UpdateOrderStatusUseCase(orderRepository),
+    listPaymentMethodsUseCase: new ListPaymentMethodsUseCase(orderRepository),
+    chargeOrderUseCase: new ChargeOrderUseCase(orderRepository),
+    getProfileUseCase: new GetProfileUseCase(profileRepository),
+    updateProfileUseCase: new UpdateProfileUseCase(profileRepository, sessionStorage),
+    changePasswordUseCase: new ChangePasswordUseCase(profileRepository),
   };
 }

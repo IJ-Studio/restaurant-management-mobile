@@ -13,7 +13,13 @@ describe('GetDashboardUseCase', () => {
 
     const summary = await new GetDashboardUseCase(makeDashboardRepository(), orders).execute();
 
-    expect(summary.stats).toEqual({ salesTotal: 1250.5, pendingOrders: 1, ordersInKitchen: 2 });
+    expect(summary.stats).toEqual({
+      salesTotal: 1250.5,
+      pendingOrders: 1,
+      ordersInKitchen: 2,
+      readyOrders: 1,
+      ordersToCharge: 3,
+    });
     expect(summary.recentOrders.map((o) => o.id)).toEqual(['a', 'b', 'c']);
     // Ordenadas por número natural; un pedido activo pesa más que una reservación.
     expect(summary.tables).toEqual([

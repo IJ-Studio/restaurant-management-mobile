@@ -5,8 +5,12 @@ export interface DailyStats {
   salesTotal: number;
   /** Pedidos en carrito que aún no se mandan a cocina. */
   pendingOrders: number;
-  /** Pedidos en cocina (estatus `abierta`). */
+  /** Pedidos en cocina (enviados o en preparación). */
   ordersInKitchen: number;
+  /** Listos para llevar a la mesa. */
+  readyOrders: number;
+  /** Entregados que falta cobrar. */
+  ordersToCharge: number;
 }
 
 /** Mesa del mapa de reservaciones (GET /reservations/map). */
