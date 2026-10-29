@@ -4,7 +4,7 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../../../../shared/presentation/components/Button';
 import { Card } from '../../../../shared/presentation/components/Card';
-import { StatusBadge } from '../../../../shared/presentation/components/StatusBadge';
+import { HeroCard } from '../../../../shared/presentation/components/HeroCard';
 import { colors, opacity, radius, spacing, typography } from '../../../../shared/presentation/theme';
 import { formatTime } from '../../../../shared/utils/formatDateTime';
 import type { Role } from '../../domain/entities/Role';
@@ -85,7 +85,7 @@ export function ProfileScreen({ onEditProfile, onChangePassword }: Props = {}) {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
-      <Card elevation="raised" style={styles.hero}>
+      <HeroCard align="center" style={styles.hero}>
         <View
           style={styles.avatar}
           accessibilityElementsHidden
@@ -96,8 +96,8 @@ export function ProfileScreen({ onEditProfile, onChangePassword }: Props = {}) {
         <Text style={styles.name} accessibilityRole="header">
           {user.name} {user.lastname}
         </Text>
-        <StatusBadge label={ROLE_LABEL[user.role]} tone="brand" style={styles.role} />
-      </Card>
+        <Text style={styles.role}>{ROLE_LABEL[user.role]}</Text>
+      </HeroCard>
 
       <Card style={styles.info}>
         <InfoRow icon="mail-outline" label="Correo" value={user.email} />
@@ -142,14 +142,23 @@ const styles = StyleSheet.create({
     width: AVATAR_SIZE,
     height: AVATAR_SIZE,
     borderRadius: radius.pill,
-    backgroundColor: colors.brandSoft,
+    backgroundColor: colors.onBrandSurface,
     alignItems: 'center',
     justifyContent: 'center',
     marginBottom: spacing.lg,
   },
-  avatarText: { ...typography.display, color: colors.brandStrong },
-  name: { ...typography.title, color: colors.text, textAlign: 'center' },
-  role: { alignSelf: 'center', marginTop: spacing.sm },
+  avatarText: { ...typography.display, color: colors.textOnBrand },
+  name: { ...typography.title, color: colors.textOnBrand, textAlign: 'center' },
+  role: {
+    ...typography.badge,
+    color: colors.textOnBrand,
+    backgroundColor: colors.onBrandSurface,
+    borderRadius: radius.pill,
+    overflow: 'hidden',
+    paddingHorizontal: spacing.md,
+    paddingVertical: spacing.xs,
+    marginTop: spacing.sm,
+  },
   info: { marginTop: spacing.lg, paddingVertical: spacing.sm },
   infoRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md },
   infoText: { flex: 1 },

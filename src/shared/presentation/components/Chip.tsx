@@ -7,7 +7,7 @@ import {
   type ViewStyle,
 } from 'react-native';
 
-import { colors, radius, sizes, spacing, typography } from '../theme';
+import { colors, pressScale, radius, sizes, spacing, typography } from '../theme';
 
 interface Props {
   label: string;
@@ -42,6 +42,7 @@ export function Chip({
         styles.chip,
         selected && styles.selected,
         pressed && !selected && styles.pressed,
+        pressed && pressScale,
         style,
       ]}
     >

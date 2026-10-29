@@ -3,7 +3,14 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../../../../shared/presentation/components/Button';
 import { StatusBadge } from '../../../../shared/presentation/components/StatusBadge';
-import { colors, radius, shadows, spacing, typography } from '../../../../shared/presentation/theme';
+import {
+  colors,
+  pressScale,
+  radius,
+  shadows,
+  spacing,
+  typography,
+} from '../../../../shared/presentation/theme';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import {
   KITCHEN_STATUSES,
@@ -52,7 +59,7 @@ export function OrderCard({ order, onPress, action, showAllItems = false, now = 
         accessibilityRole={onPress ? 'button' : undefined}
         accessibilityLabel={`${order.place}, ${status}, ${order.customer}, ${total}`}
         accessibilityHint={onPress ? 'Abre el detalle del pedido' : undefined}
-        style={({ pressed }) => [styles.body, pressed && styles.pressed]}
+        style={({ pressed }) => [styles.body, pressed && styles.pressed, pressed && pressScale]}
       >
         <View style={styles.header}>
           <Text style={styles.place} numberOfLines={1}>
