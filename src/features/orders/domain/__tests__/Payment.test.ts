@@ -1,5 +1,12 @@
 import { cash, debit } from '../../__fixtures__/orders';
-import { chargeSummary, parseAmount, tipFromPercent, validateCharge } from '../entities/Payment';
+import {
+  chargeSummary,
+  equalShare,
+  itemsAmount,
+  parseAmount,
+  tipFromPercent,
+  validateCharge,
+} from '../entities/Payment';
 
 describe('tipFromPercent', () => {
   it('redondea a centavos', () => {
@@ -54,5 +61,25 @@ describe('parseAmount', () => {
     expect(parseAmount('12.345')).toBeNaN();
     expect(parseAmount('abc')).toBeNaN();
     expect(parseAmount('')).toBeNaN();
+  });
+});
+
+describe('cuenta separada', () => {
+  it('reparte en partes iguales y la última persona paga el ajuste de centavos', () => {
+    // $100 entre 3: 33.33 + 33.33 + 33.34
+    expect(equalShare(100, 3)).toBe(33.33);
+    expect(equalShare(66.67, 2)).toBe(33.34);
+    expect(equalShare(33.34, 1)).toBe(33.34);
+    expect(equalShare(50, 0)).toBe(50);
+  });
+
+  it('suma los platillos elegidos sin errores de punto flotante', () => {
+    expect(
+      itemsAmount([
+        { unitPrice: 145.5, quantity: 2 },
+        { unitPrice: 0.1, quantity: 3 },
+      ]),
+    ).toBe(291.3);
+    expect(itemsAmount([])).toBe(0);
   });
 });

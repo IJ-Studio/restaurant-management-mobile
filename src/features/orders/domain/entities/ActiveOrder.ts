@@ -31,6 +31,9 @@ export interface ActiveOrder {
   tableNumber?: string;
   status: OrderStatus | string;
   total: number;
+  /** Mesero que levantó el pedido (no hay en pedidos del cliente desde la web). */
+  waiter?: string;
+  guests: number;
 }
 
 export interface OrderItem {
@@ -43,6 +46,19 @@ export interface OrderItem {
   imageUrl?: string;
 }
 
+/** Un pago ya registrado del pedido (en una cuenta separada puede haber varios). */
+export interface OrderPayment {
+  id: number;
+  method: string;
+  amount: number;
+  tip: number;
+  /** Para quién fue ("Persona 2 de 4") o el folio de la terminal. */
+  reference?: string;
+  cashier?: string;
+  /** ISO 8601. */
+  at?: string;
+}
+
 /** Pedido con sus platillos (GET /pedidos/:id). */
 export interface OrderDetail {
   id: string;
@@ -51,6 +67,12 @@ export interface OrderDetail {
   status: OrderStatus | string;
   total: number;
   tip: number;
+  /** Lo ya cobrado del consumo y lo que falta (cuenta separada). */
+  paid: number;
+  remaining: number;
+  guests: number;
+  waiter?: string;
+  payments: OrderPayment[];
   /** ISO 8601. */
   openedAt?: string;
   kitchenNotes?: string;

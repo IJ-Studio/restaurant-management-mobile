@@ -35,16 +35,34 @@ export function toActiveOrder(dto: RecentOrderDto): ActiveOrder {
     tableNumber: tableNumberFromPlace(place),
     status: dto.status ?? 'abierta',
     total: toAmount(dto.total),
+    waiter: dto.waiter?.trim() || undefined,
+    guests: dto.guests ?? 1,
   };
 }
 
 export function toOrderDetail(dto: OrderDetailDto): OrderDetail {
+  const total = toAmount(dto.total);
+  const paid = toAmount(dto.pagado);
   return {
     id: dto.id,
     tableNumber: dto.mesa ?? undefined,
     status: dto.estatus ?? 'abierta',
-    total: toAmount(dto.total),
+    total,
     tip: toAmount(dto.propina),
+    paid,
+    // Sin el campo (API anterior) se calcula con lo pagado.
+    remaining: dto.restante != null ? toAmount(dto.restante) : Math.max(0, total - paid),
+    guests: dto.numComensales ?? 1,
+    waiter: dto.mesero?.trim() || undefined,
+    payments: (dto.pagos ?? []).map((pago) => ({
+      id: pago.id,
+      method: pago.metodo ?? 'Otro',
+      amount: toAmount(pago.monto),
+      tip: toAmount(pago.propina),
+      reference: pago.referencia?.trim() || undefined,
+      cashier: pago.cajero?.trim() || undefined,
+      at: pago.creadoEn ? toIsoTimestamp(pago.creadoEn) : undefined,
+    })),
     openedAt: dto.tiempoApertura ? toIsoTimestamp(dto.tiempoApertura) : undefined,
     kitchenNotes: dto.notasCocina?.trim() || undefined,
     items: dto.items.map((item) => ({
@@ -81,5 +99,8 @@ export function toChargeReceipt(dto: ChargeOrderResponseDto): ChargeReceipt {
     tip: toAmount(dto.propina),
     charged: toAmount(dto.totalCobrado),
     change: toAmount(dto.cambio),
+    paid: toAmount(dto.pagado ?? dto.total),
+    remaining: toAmount(dto.restante),
+    closed: dto.cerrada ?? true,
   };
 }

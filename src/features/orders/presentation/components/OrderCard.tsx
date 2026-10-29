@@ -69,7 +69,8 @@ export function OrderCard({ order, onPress, action, showAllItems = false, now = 
         </View>
         <View style={styles.metaRow}>
           <Text style={styles.meta} numberOfLines={1}>
-            {order.customer} · {order.time}
+            {order.waiter ?? order.customer} · {order.time}
+            {order.guests > 1 ? ` · ${order.guests} personas` : ''}
           </Text>
           {minutes !== undefined && (
             <View style={styles.wait}>

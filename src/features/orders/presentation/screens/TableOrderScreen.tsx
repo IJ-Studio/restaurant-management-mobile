@@ -1,19 +1,34 @@
-import { FlatList, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { useState } from 'react';
+import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../../../../shared/presentation/components/Button';
 import { Card } from '../../../../shared/presentation/components/Card';
-import { Chip } from '../../../../shared/presentation/components/Chip';
+import { FloorMap } from '../../../../shared/presentation/components/FloorMap';
 import { Notice } from '../../../../shared/presentation/components/Notice';
 import { ScreenState } from '../../../../shared/presentation/components/ScreenState';
-import { colors, radius, sizes, spacing, typography } from '../../../../shared/presentation/theme';
+import { TextField } from '../../../../shared/presentation/components/TextField';
+import {
+  colors,
+  pressScale,
+  radius,
+  sizes,
+  spacing,
+  typography,
+} from '../../../../shared/presentation/theme';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
-import type { OrderLine } from '../../domain/entities/TableOrder';
+import {
+  MAX_GUESTS,
+  MAX_KITCHEN_NOTE,
+  MAX_LINE_NOTE,
+  type OrderLine,
+} from '../../domain/entities/TableOrder';
 import { useTableOrder } from '../viewmodels/useTableOrder';
 
 function StepButton({ symbol, label, onPress }: { symbol: string; label: string; onPress: () => void }) {
   return (
     <Pressable
-      style={({ pressed }) => [styles.step, pressed && styles.stepPressed]}
+      style={({ pressed }) => [styles.step, pressed && styles.stepPressed, pressed && pressScale]}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
@@ -41,6 +56,51 @@ function QuantityStepper({ line, onChange }: { line: OrderLine; onChange: (quant
   );
 }
 
+function LineRow({
+  line,
+  onQuantity,
+  onNotes,
+}: {
+  line: OrderLine;
+  onQuantity: (quantity: number) => void;
+  onNotes: (notes: string) => void;
+}) {
+  const [editing, setEditing] = useState(Boolean(line.notes));
+  return (
+    <View style={styles.line}>
+      <View style={styles.lineRow}>
+        <View style={styles.lineInfo}>
+          <Text style={styles.lineName}>{line.name}</Text>
+          <Text style={styles.linePrice}>{formatCurrency(line.unitPrice * line.quantity)}</Text>
+        </View>
+        <QuantityStepper line={line} onChange={onQuantity} />
+      </View>
+      {editing ? (
+        <TextField
+          label="Nota para cocina"
+          accessibilityLabel={`Nota de ${line.name}`}
+          value={line.notes ?? ''}
+          onChangeText={onNotes}
+          placeholder="Sin cebolla, término medio…"
+          maxLength={MAX_LINE_NOTE}
+          style={styles.noteField}
+        />
+      ) : (
+        <Pressable
+          onPress={() => setEditing(true)}
+          accessibilityRole="button"
+          accessibilityLabel={`Agregar nota a ${line.name}`}
+          style={styles.addNote}
+          hitSlop={spacing.sm}
+        >
+          <Ionicons name="create-outline" size={16} color={colors.brandStrong} />
+          <Text style={styles.addNoteText}>Agregar nota</Text>
+        </Pressable>
+      )}
+    </View>
+  );
+}
+
 export function TableOrderScreen() {
   const vm = useTableOrder();
 
@@ -57,45 +117,59 @@ export function TableOrderScreen() {
   }
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.sectionTitle}>Mesa</Text>
-      {vm.tablesError ? (
-        <Text style={styles.tablesError}>{vm.tablesError}</Text>
-      ) : (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.tablesBar}
-          contentContainerStyle={styles.tables}
-          accessibilityRole="radiogroup"
-        >
-          {vm.tables.map((table) => (
-            <Chip
-              key={table.id}
-              label={table.number}
-              accessibilityLabel={`Mesa ${table.number}`}
-              selected={vm.order.tableNumber === table.number}
-              onPress={() => vm.selectTable(table.number)}
+    <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+      <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
+        <Text style={styles.sectionTitle}>Mesa</Text>
+        {vm.tablesError ? (
+          <Text style={styles.tablesError}>{vm.tablesError}</Text>
+        ) : (
+          <FloorMap
+            tables={vm.floor}
+            selectedNumber={vm.order.tableNumber}
+            onSelect={(table) => vm.selectTable(table.number)}
+          />
+        )}
+
+        <Text style={styles.sectionTitle}>Comensales</Text>
+        <Card style={styles.guests}>
+          <Ionicons name="people-outline" size={22} color={colors.brandStrong} />
+          <Text style={styles.guestsLabel}>Personas en la mesa</Text>
+          <View style={styles.stepper}>
+            <StepButton symbol="−" label="Menos comensales" onPress={() => vm.setGuests(vm.guests - 1)} />
+            <Text style={styles.quantity} accessibilityLabel={`${vm.guests} comensales`}>
+              {vm.guests}
+            </Text>
+            <StepButton
+              symbol="+"
+              label="Más comensales"
+              onPress={() => vm.setGuests(Math.min(MAX_GUESTS, vm.guests + 1))}
+            />
+          </View>
+        </Card>
+
+        <Text style={styles.sectionTitle}>Platillos</Text>
+        <View style={styles.lines}>
+          {vm.order.lines.map((line) => (
+            <LineRow
+              key={line.dishId}
+              line={line}
+              onQuantity={(quantity) => vm.setQuantity(line.dishId, quantity)}
+              onNotes={(notes) => vm.setLineNotes(line.dishId, notes)}
             />
           ))}
-        </ScrollView>
-      )}
+        </View>
 
-      <FlatList
-        data={vm.order.lines}
-        keyExtractor={(line) => String(line.dishId)}
-        contentContainerStyle={styles.lines}
-        renderItem={({ item }) => (
-          <View style={styles.line}>
-            <View style={styles.lineInfo}>
-              <Text style={styles.lineName}>{item.name}</Text>
-              <Text style={styles.linePrice}>{formatCurrency(item.unitPrice * item.quantity)}</Text>
-            </View>
-            <QuantityStepper line={item} onChange={(quantity) => vm.setQuantity(item.dishId, quantity)} />
-          </View>
-        )}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
-      />
+        <TextField
+          label="Nota general para cocina (opcional)"
+          accessibilityLabel="Nota para cocina"
+          value={vm.order.kitchenNote ?? ''}
+          onChangeText={vm.setKitchenNote}
+          placeholder="Alergias, llevar todo junto…"
+          maxLength={MAX_KITCHEN_NOTE}
+          multiline
+          style={styles.kitchenNote}
+        />
+      </ScrollView>
 
       <Card elevation="raised" style={styles.footer}>
         <View style={styles.totalRow}>
@@ -110,25 +184,24 @@ export function TableOrderScreen() {
           style={styles.send}
         />
       </Card>
-    </View>
+    </KeyboardAvoidingView>
   );
 }
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  content: { padding: spacing.lg, paddingBottom: spacing.xl },
   sectionTitle: {
     ...typography.overline,
     color: colors.brandStrong,
-    marginHorizontal: spacing.lg,
     marginTop: spacing.lg,
+    marginBottom: spacing.sm,
   },
-  tablesError: { ...typography.small, color: colors.danger, margin: spacing.lg },
-  tablesBar: { flexGrow: 0 },
-  tables: { paddingHorizontal: spacing.lg, paddingVertical: spacing.md, gap: spacing.sm },
-  lines: { paddingHorizontal: spacing.lg, paddingBottom: spacing.lg },
+  tablesError: { ...typography.small, color: colors.danger },
+  guests: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md },
+  guestsLabel: { ...typography.bodyStrong, color: colors.text, flex: 1 },
+  lines: { gap: spacing.sm },
   line: {
-    flexDirection: 'row',
-    alignItems: 'center',
     backgroundColor: colors.surface,
     borderRadius: radius.lg,
     borderWidth: StyleSheet.hairlineWidth,
@@ -136,10 +209,19 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
   },
+  lineRow: { flexDirection: 'row', alignItems: 'center' },
   lineInfo: { flex: 1, marginRight: spacing.md },
   lineName: { ...typography.subheading, color: colors.text },
   linePrice: { ...typography.bodyStrong, color: colors.brandStrong, marginTop: spacing.xxs },
-  separator: { height: spacing.sm },
+  addNote: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+    alignSelf: 'flex-start',
+  },
+  addNoteText: { ...typography.caption, color: colors.brandStrong },
+  noteField: { marginTop: spacing.sm },
   stepper: { flexDirection: 'row', alignItems: 'center' },
   step: {
     width: sizes.touchTarget,
@@ -153,6 +235,7 @@ const styles = StyleSheet.create({
   stepPressed: { backgroundColor: colors.brandSoft },
   stepText: { ...typography.heading, color: colors.brandStrong },
   quantity: { ...typography.heading, color: colors.text, minWidth: spacing.xxl, textAlign: 'center' },
+  kitchenNote: { marginTop: spacing.lg },
   footer: { margin: spacing.lg, marginTop: 0 },
   totalRow: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', gap: spacing.md },
   totalLabel: { ...typography.small, color: colors.textSecondary, flexShrink: 1 },

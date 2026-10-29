@@ -8,18 +8,39 @@ function setup(http: Partial<Record<'get' | 'post' | 'patch' | 'delete', jest.Mo
 }
 
 describe('OrderRepositoryImpl', () => {
-  it('lista solo las mesas activas', async () => {
-    const get = jest.fn().mockResolvedValue([
-      { id: 1, numero: '1', nombre: 'Ventana', capacidad: 4, activa: true, qrCodeUrl: 'x' },
-      { id: 2, numero: '2', nombre: null, capacidad: 2, activa: false },
-      { id: 3, numero: '3', nombre: null, capacidad: 6, activa: null },
-    ]);
+  it('lista solo las mesas activas, con su forma y su área', async () => {
+    const get = jest.fn((path: string) =>
+      Promise.resolve(
+        path === 'mesas'
+          ? [
+              { id: 1, numero: '1', nombre: 'Ventana', capacidad: 4, activa: true, forma: 'Redonda' },
+              { id: 2, numero: '2', nombre: null, capacidad: 2, activa: false },
+              { id: 3, numero: '3', nombre: null, capacidad: 6, activa: null, forma: 'triangular' },
+            ]
+          : [
+              { id: 1, areaNombre: 'Terraza' },
+              { id: 3, areaNombre: null },
+            ],
+      ),
+    );
 
     await expect(setup({ get }).listTables()).resolves.toEqual([
-      { id: 1, number: '1', name: 'Ventana', capacity: 4 },
-      { id: 3, number: '3', name: undefined, capacity: 6 },
+      { id: 1, number: '1', name: 'Ventana', capacity: 4, shape: 'redonda', area: 'Terraza' },
+      { id: 3, number: '3', name: undefined, capacity: 6, shape: 'cuadrada', area: undefined },
     ]);
     expect(get).toHaveBeenCalledWith('mesas');
+    expect(get).toHaveBeenCalledWith('reservations/map');
+  });
+
+  it('si no se pueden leer las áreas, las mesas se muestran igual', async () => {
+    const get = jest.fn((path: string) =>
+      path === 'mesas'
+        ? Promise.resolve([{ id: 1, numero: '1', nombre: null, capacidad: 2, activa: true, forma: 'barra' }])
+        : Promise.reject(new Error('offline')),
+    );
+    await expect(setup({ get }).listTables()).resolves.toEqual([
+      { id: 1, number: '1', name: undefined, capacity: 2, shape: 'barra', area: undefined },
+    ]);
   });
 
   it('registra la orden de la mesa sin mandar precios', async () => {

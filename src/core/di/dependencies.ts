@@ -1,6 +1,12 @@
 import { DashboardRemoteDataSource } from '../../features/admin/data/datasources/DashboardRemoteDataSource';
 import { DashboardRepositoryImpl } from '../../features/admin/data/repositories/DashboardRepositoryImpl';
 import { GetDashboardUseCase } from '../../features/admin/domain/usecases/GetDashboardUseCase';
+import { CashRegisterRepositoryImpl } from '../../features/cashier/data/CashRegisterRepositoryImpl';
+import {
+  CloseCashRegisterUseCase,
+  GetCashSessionUseCase,
+  OpenCashRegisterUseCase,
+} from '../../features/cashier/domain/CashRegister';
 import { AuthRemoteDataSource } from '../../features/auth/data/datasources/AuthRemoteDataSource';
 import { AuthRepositoryImpl } from '../../features/auth/data/repositories/AuthRepositoryImpl';
 import { SecureSessionStorage } from '../../features/auth/data/storage/SecureSessionStorage';
@@ -73,6 +79,9 @@ export interface Dependencies {
   getProfileUseCase: Pick<GetProfileUseCase, 'execute'>;
   updateProfileUseCase: Pick<UpdateProfileUseCase, 'execute'>;
   changePasswordUseCase: Pick<ChangePasswordUseCase, 'execute'>;
+  getCashSessionUseCase: Pick<GetCashSessionUseCase, 'execute'>;
+  openCashRegisterUseCase: Pick<OpenCashRegisterUseCase, 'execute'>;
+  closeCashRegisterUseCase: Pick<CloseCashRegisterUseCase, 'execute'>;
 }
 
 /**
@@ -111,6 +120,7 @@ export function createDependencies({
   const orderRepository = new OrderRepositoryImpl(new OrderRemoteDataSource(http));
   const dashboardRepository = new DashboardRepositoryImpl(new DashboardRemoteDataSource(http));
   const profileRepository = new ProfileRepositoryImpl(new ProfileRemoteDataSource(http));
+  const cashRepository = new CashRegisterRepositoryImpl(http);
 
   return {
     httpClient: http,
@@ -138,5 +148,8 @@ export function createDependencies({
     getProfileUseCase: new GetProfileUseCase(profileRepository),
     updateProfileUseCase: new UpdateProfileUseCase(profileRepository, sessionStorage),
     changePasswordUseCase: new ChangePasswordUseCase(profileRepository),
+    getCashSessionUseCase: new GetCashSessionUseCase(cashRepository),
+    openCashRegisterUseCase: new OpenCashRegisterUseCase(cashRepository),
+    closeCashRegisterUseCase: new CloseCashRegisterUseCase(cashRepository),
   };
 }

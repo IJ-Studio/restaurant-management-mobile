@@ -43,6 +43,7 @@ export function makeActiveOrder(overrides: Partial<ActiveOrder> = {}): ActiveOrd
     tableNumber: '5',
     status: 'abierta',
     total: 336,
+    guests: 1,
     ...overrides,
   };
 }
@@ -54,6 +55,10 @@ export function makeOrderDetail(overrides: Partial<OrderDetail> = {}): OrderDeta
     status: 'pendiente',
     total: 336,
     tip: 0,
+    paid: 0,
+    remaining: 336,
+    guests: 1,
+    payments: [],
     openedAt: '2026-10-20T18:00:00.000Z',
     items: [
       { id: 101, name: 'Enchiladas suizas', quantity: 2, unitPrice: 145.5 },
@@ -95,6 +100,9 @@ export function makeReceipt(overrides: Partial<ChargeReceipt> = {}): ChargeRecei
     tip: 34,
     charged: 370,
     change: 130,
+    paid: 336,
+    remaining: 0,
+    closed: true,
     ...overrides,
   };
 }
