@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import { Alert, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -89,6 +90,20 @@ export function OrderDetailScreen({ route, navigation }: Props) {
           <StatusBadge label={orderStatusLabel(order.status)} tone={orderStatusTone(order.status)} />
         </View>
         {order.openedAt && <Text style={styles.meta}>Abierto a las {formatTime(order.openedAt)}</Text>}
+        <View style={styles.facts}>
+          <View style={styles.fact}>
+            <Ionicons name="people-outline" size={16} color={colors.brandStrong} />
+            <Text style={styles.factText}>
+              {order.guests} {order.guests === 1 ? 'comensal' : 'comensales'}
+            </Text>
+          </View>
+          {order.waiter && (
+            <View style={styles.fact}>
+              <Ionicons name="person-outline" size={16} color={colors.brandStrong} />
+              <Text style={styles.factText}>Atendió {order.waiter}</Text>
+            </View>
+          )}
+        </View>
       </Card>
 
       {order.kitchenNotes && (
@@ -111,6 +126,21 @@ export function OrderDetailScreen({ route, navigation }: Props) {
               />
             </View>
           ))
+        )}
+        {order.payments.map((payment) => (
+          <View key={payment.id} style={styles.tipRow}>
+            <Text style={styles.tipLabel}>
+              Pagado · {payment.reference ?? payment.method}
+              {payment.cashier ? ` · ${payment.cashier}` : ''}
+            </Text>
+            <Text style={styles.paidLabel}>−{formatCurrency(payment.amount)}</Text>
+          </View>
+        ))}
+        {order.payments.length > 0 && order.remaining > 0 && (
+          <View style={styles.tipRow}>
+            <Text style={styles.remainingLabel}>Falta por cobrar</Text>
+            <Text style={styles.remainingLabel}>{formatCurrency(order.remaining)}</Text>
+          </View>
         )}
         {order.tip > 0 && (
           <View style={styles.tipRow}>
@@ -203,7 +233,12 @@ const styles = StyleSheet.create({
   divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
   empty: { ...typography.body, color: colors.textSecondary, paddingVertical: spacing.sm },
   tipRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.md },
-  tipLabel: { ...typography.small, color: colors.textSecondary },
+  tipLabel: { ...typography.small, color: colors.textSecondary, flexShrink: 1 },
+  paidLabel: { ...typography.small, color: colors.success },
+  remainingLabel: { ...typography.bodyStrong, color: colors.warning },
+  facts: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginTop: spacing.sm },
+  fact: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
+  factText: { ...typography.caption, color: colors.textSecondary },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',

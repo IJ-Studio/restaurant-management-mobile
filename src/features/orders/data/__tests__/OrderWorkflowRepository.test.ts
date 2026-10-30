@@ -65,6 +65,8 @@ describe('OrderRepositoryImpl: pedidos activos', () => {
         tableNumber: 'B01',
         status: 'en_preparacion',
         total: 75,
+        waiter: undefined,
+        guests: 1,
       },
       {
         id: 'dom1',
@@ -77,6 +79,8 @@ describe('OrderRepositoryImpl: pedidos activos', () => {
         tableNumber: undefined,
         status: 'abierta',
         total: 120.5,
+        waiter: undefined,
+        guests: 1,
       },
       {
         id: 'na1',
@@ -89,6 +93,8 @@ describe('OrderRepositoryImpl: pedidos activos', () => {
         tableNumber: undefined,
         status: 'pendiente',
         total: 0,
+        waiter: undefined,
+        guests: 1,
       },
     ]);
     expect(get).toHaveBeenCalledWith('pedidos/admin/recent');
@@ -150,6 +156,11 @@ describe('OrderRepositoryImpl: detalle', () => {
       tip: 20,
       openedAt: '2026-10-15T20:41:35.626+00:00',
       kitchenNotes: 'Alergia a la nuez',
+      paid: 0,
+      remaining: 215,
+      guests: 1,
+      waiter: undefined,
+      payments: [],
       items: [
         {
           id: 10786,
@@ -269,9 +280,14 @@ describe('OrderRepositoryImpl: estatus y cobro', () => {
       tip: 20,
       charged: 235,
       change: 65,
+      paid: 215,
+      remaining: 0,
+      closed: true,
     });
     expect(post).toHaveBeenCalledWith('pedidos/66ff/cobrar', {
       metodoPagoId: 1,
+      monto: undefined,
+      etiqueta: undefined,
       propina: 20,
       montoRecibido: 300,
       referencia: undefined,
@@ -292,5 +308,93 @@ describe('OrderRepositoryImpl: estatus y cobro', () => {
     await expect(setup({ post: forbidden() }).charge('66ff', { methodId: 1, tip: 0 })).rejects.toThrow(
       'Solo caja puede cobrar pedidos.',
     );
+  });
+
+  it('cuenta separada: manda monto y etiqueta y lee lo que falta', async () => {
+    const post = jest.fn().mockResolvedValue({
+      success: true,
+      message: 'Pago registrado. Faltan $115.00 por cobrar.',
+      metodo: 'Tarjeta débito',
+      total: '100.00',
+      propina: '10.00',
+      totalCobrado: '110.00',
+      cambio: '0.00',
+      pagado: '100.00',
+      restante: '115.00',
+      cerrada: false,
+    });
+    await expect(
+      setup({ post }).charge('66ff', { methodId: 2, tip: 10, amount: 100, label: ' Persona 1 de 2 ' }),
+    ).resolves.toMatchObject({ paid: 100, remaining: 115, closed: false });
+    expect(post).toHaveBeenCalledWith(
+      'pedidos/66ff/cobrar',
+      expect.objectContaining({ monto: 100, etiqueta: 'Persona 1 de 2' }),
+    );
+  });
+
+  it('el detalle trae pagos previos, mesero y comensales', async () => {
+    const get = jest.fn().mockResolvedValue({
+      id: '66ff',
+      tipo: 'mesa',
+      mesa: 'S01',
+      estatus: 'entregada',
+      subtotal: '215.00',
+      propina: '10.00',
+      total: '215.00',
+      notasCocina: null,
+      tiempoApertura: null,
+      pagado: '100.00',
+      restante: '115.00',
+      numComensales: 4,
+      mesero: ' Mariana Pérez ',
+      pagos: [
+        {
+          id: 1,
+          metodo: 'Tarjeta débito',
+          monto: '100.00',
+          propina: '10.00',
+          referencia: 'Persona 1 de 2',
+          cajero: 'Carlos Soto',
+          creadoEn: '2026-10-28 21:00:00+00',
+        },
+        { id: 2, metodo: null, monto: '0', propina: null, referencia: ' ', cajero: null, creadoEn: null },
+      ],
+      items: [],
+    });
+    await expect(setup({ get }).getDetail('66ff')).resolves.toMatchObject({
+      paid: 100,
+      remaining: 115,
+      guests: 4,
+      waiter: 'Mariana Pérez',
+      payments: [
+        {
+          id: 1,
+          method: 'Tarjeta débito',
+          amount: 100,
+          tip: 10,
+          reference: 'Persona 1 de 2',
+          cashier: 'Carlos Soto',
+          at: '2026-10-28T21:00:00+00:00',
+        },
+        { id: 2, method: 'Otro', amount: 0, tip: 0, reference: undefined, cashier: undefined, at: undefined },
+      ],
+    });
+  });
+
+  it('con un API anterior sin "restante" lo calcula con lo pagado', async () => {
+    const get = jest.fn().mockResolvedValue({
+      id: 'x',
+      tipo: 'mesa',
+      mesa: '1',
+      estatus: 'entregada',
+      subtotal: '100',
+      propina: '0',
+      total: '100.00',
+      notasCocina: null,
+      tiempoApertura: null,
+      pagado: '40.00',
+      items: [],
+    });
+    await expect(setup({ get }).getDetail('x')).resolves.toMatchObject({ paid: 40, remaining: 60 });
   });
 });

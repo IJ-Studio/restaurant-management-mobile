@@ -50,7 +50,7 @@ describe('casos de uso de la gestión de pedidos', () => {
 });
 
 describe('ChargeOrderUseCase', () => {
-  const order = { id: 'orden-uuid', total: 336 };
+  const order = { id: 'orden-uuid', remaining: 336 };
 
   it('cobra en efectivo con propina y lo recibido', async () => {
     const repository = makeOrderRepository();
@@ -87,5 +87,41 @@ describe('ChargeOrderUseCase', () => {
       'Elige cómo paga el cliente.',
     );
     expect(repository.charge).not.toHaveBeenCalled();
+  });
+
+  it('cuenta separada: cobra una parte con su etiqueta', async () => {
+    const repository = makeOrderRepository();
+    await new ChargeOrderUseCase(repository).execute(order, debit, {
+      tip: 0,
+      amount: 100,
+      label: 'Persona 1 de 3',
+    });
+    expect(repository.charge).toHaveBeenCalledWith('orden-uuid', {
+      methodId: 2,
+      tip: 0,
+      amount: 100,
+      label: 'Persona 1 de 3',
+      received: undefined,
+    });
+  });
+
+  it('si la parte es todo lo que falta no manda monto (el API cobra el resto exacto)', async () => {
+    const repository = makeOrderRepository();
+    await new ChargeOrderUseCase(repository).execute(order, debit, { tip: 0, amount: 336 });
+    expect(repository.charge).toHaveBeenCalledWith(
+      'orden-uuid',
+      expect.objectContaining({ amount: undefined }),
+    );
+  });
+
+  it('no deja cobrar más de lo que falta; en efectivo valida contra la parte', async () => {
+    const repository = makeOrderRepository();
+    await expect(
+      new ChargeOrderUseCase(repository).execute(order, debit, { tip: 0, amount: 400 }),
+    ).rejects.toThrow('El monto excede lo que falta por cobrar ($336.00).');
+    await expect(
+      new ChargeOrderUseCase(repository).execute(order, cash, { tip: 0, amount: 100, received: 100 }),
+    ).resolves.toBeDefined();
+    expect(repository.charge).toHaveBeenCalledTimes(1);
   });
 });

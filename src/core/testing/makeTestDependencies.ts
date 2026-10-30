@@ -35,6 +35,9 @@ export function makeTestDependencies(overrides: Partial<Dependencies> = {}): Dep
     getProfileUseCase: { execute: pending() },
     updateProfileUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
     changePasswordUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
+    getCashSessionUseCase: { execute: pending() },
+    openCashRegisterUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
+    closeCashRegisterUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
     ...overrides,
   };
 }

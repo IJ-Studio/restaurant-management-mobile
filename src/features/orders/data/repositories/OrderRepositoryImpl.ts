@@ -1,7 +1,7 @@
 import { AppError } from '../../../../core/errors/AppError';
 import type { ActiveOrder, OrderDetail } from '../../domain/entities/ActiveOrder';
 import type { ChargeReceipt, ChargeRequest, PaymentMethod } from '../../domain/entities/Payment';
-import type { OrderLine, Table } from '../../domain/entities/TableOrder';
+import type { OrderLine, Table, TableShape } from '../../domain/entities/TableOrder';
 import type { OrderRepository, OrderStep, SentOrder } from '../../domain/repositories/OrderRepository';
 import type { OrderRemoteDataSource } from '../datasources/OrderRemoteDataSource';
 import { toActiveOrder, toChargeReceipt, toOrderDetail, toPaymentMethod } from '../mappers/orderMapper';
@@ -12,8 +12,16 @@ const CONFLICT_STATUS = 409;
 export class OrderRepositoryImpl implements OrderRepository {
   constructor(private readonly remote: OrderRemoteDataSource) {}
 
+  /** Mesas activas con su forma y área para dibujarlas en el plano. */
   async listTables(): Promise<Table[]> {
-    const rows = await this.remote.listTables();
+    // El nombre del área es un extra: si su consulta falla, las mesas se muestran igual.
+    const [rows, areas] = await Promise.all([
+      this.remote.listTables(),
+      this.remote.listTableAreas().catch(() => []),
+    ]);
+    const areaById = new Map(
+      (Array.isArray(areas) ? areas : []).map((entry) => [entry.id, entry.areaNombre ?? undefined]),
+    );
     return rows
       .filter((row) => row.activa !== false)
       .map((row) => ({
@@ -21,15 +29,28 @@ export class OrderRepositoryImpl implements OrderRepository {
         number: row.numero,
         name: row.nombre ?? undefined,
         capacity: row.capacidad,
+        shape: toShape(row.forma),
+        area: areaById.get(row.id),
       }));
   }
 
   /** Solo se mandan id y cantidad: el precio lo toma el servidor de la base de datos. */
-  async createTableOrder(waiterId: number, tableNumber: string, lines: OrderLine[]): Promise<string> {
+  async createTableOrder(
+    waiterId: number,
+    tableNumber: string,
+    lines: OrderLine[],
+    details: { guests?: number; kitchenNote?: string } = {},
+  ): Promise<string> {
     const response = await this.remote.createTableOrder({
       usuarioId: waiterId,
       mesa: tableNumber,
-      items: lines.map((line) => ({ platilloId: line.dishId, cantidad: line.quantity })),
+      items: lines.map((line) => ({
+        platilloId: line.dishId,
+        cantidad: line.quantity,
+        notas: line.notes?.trim() || undefined,
+      })),
+      numComensales: details.guests,
+      notasCocina: details.kitchenNote,
     });
     if (!response.ordenId) throw new AppError('server', 'El servidor no devolvió el número de orden.');
     return response.ordenId;
@@ -91,6 +112,8 @@ export class OrderRepositoryImpl implements OrderRepository {
     try {
       const response = await this.remote.charge(orderId, {
         metodoPagoId: request.methodId,
+        monto: request.amount,
+        etiqueta: request.label?.trim() || undefined,
         propina: request.tip > 0 ? request.tip : undefined,
         montoRecibido: request.received,
         referencia: request.reference?.trim() || undefined,
@@ -100,6 +123,13 @@ export class OrderRepositoryImpl implements OrderRepository {
       throw explain(error, 'Solo caja puede cobrar pedidos.');
     }
   }
+}
+
+const SHAPES: readonly TableShape[] = ['cuadrada', 'redonda', 'rectangular', 'barra'];
+
+function toShape(forma: string | null | undefined): TableShape {
+  const value = (forma ?? '').toLowerCase().trim();
+  return (SHAPES as readonly string[]).includes(value) ? (value as TableShape) : 'cuadrada';
 }
 
 /** Traduce el 403 del RolesGuard y el 409 de concurrencia a mensajes que el personal entiende. */
