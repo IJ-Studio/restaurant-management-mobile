@@ -1,5 +1,5 @@
 import { makeActiveOrder, makeOrderRepository } from '../../../orders/__fixtures__/orders';
-import { makeDashboardRepository } from '../../__fixtures__/dashboard';
+import { makeDailyReport, makeDashboardRepository } from '../../__fixtures__/dashboard';
 import { GetDashboardUseCase } from '../usecases/GetDashboardUseCase';
 
 describe('GetDashboardUseCase', () => {
@@ -31,11 +31,51 @@ describe('GetDashboardUseCase', () => {
         area: 'Terraza',
         state: 'reservada',
         activeOrders: 0,
+        awaitingPayment: false,
       },
-      { id: 5, number: '5', capacity: 2, area: 'Salón', state: 'ocupada', activeOrders: 2 },
-      { id: 10, number: '10', capacity: 6, area: 'Salón', state: 'libre', activeOrders: 0 },
+      {
+        id: 5,
+        number: '5',
+        capacity: 2,
+        area: 'Salón',
+        state: 'ocupada',
+        activeOrders: 2,
+        awaitingPayment: false,
+      },
+      {
+        id: 10,
+        number: '10',
+        capacity: 6,
+        area: 'Salón',
+        state: 'libre',
+        activeOrders: 0,
+        awaitingPayment: false,
+      },
     ]);
     expect(summary.occupiedTables).toBe(1);
+    expect(summary.report).toEqual(makeDailyReport());
+  });
+
+  it('marca por cobrar la mesa con un pedido entregado', async () => {
+    const orders = makeOrderRepository();
+    orders.listActive.mockResolvedValue([
+      makeActiveOrder({ id: 'a', tableNumber: '5', status: 'entregada' }),
+    ]);
+
+    const summary = await new GetDashboardUseCase(makeDashboardRepository(), orders).execute();
+
+    expect(summary.tables.find((t) => t.number === '5')?.awaitingPayment).toBe(true);
+    expect(summary.tables.find((t) => t.number === '10')?.awaitingPayment).toBe(false);
+  });
+
+  it('si falla el resumen detallado muestra lo demás sin él', async () => {
+    const dashboard = makeDashboardRepository();
+    dashboard.getDailyReport.mockRejectedValue(new Error('sin permiso'));
+
+    const summary = await new GetDashboardUseCase(dashboard, makeOrderRepository()).execute();
+
+    expect(summary.report).toBeUndefined();
+    expect(summary.stats.salesTotal).toBe(1250.5);
   });
 
   it('una mesa que no aparece en el mapa queda libre y sin área', async () => {

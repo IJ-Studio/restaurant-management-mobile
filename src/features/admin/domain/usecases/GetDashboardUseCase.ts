@@ -16,12 +16,23 @@ export class GetDashboardUseCase {
   ) {}
 
   async execute(): Promise<DashboardSummary> {
-    const [stats, tables, tableMap, recentOrders] = await Promise.all([
-      this.dashboard.getDailyStats(),
-      this.orders.listTables(),
-      this.dashboard.getTableMap(),
-      this.orders.listActive(),
+    const [[stats, tables, tableMap, recentOrders], report] = await Promise.all([
+      Promise.all([
+        this.dashboard.getDailyStats(),
+        this.orders.listTables(),
+        this.dashboard.getTableMap(),
+        this.orders.listActive(),
+      ]),
+      // El resumen detallado es un extra: si falla, se muestra lo demás.
+      this.dashboard.getDailyReport().catch(() => undefined),
     ]);
+    const awaiting = new Set(
+      recentOrders
+        .filter(
+          (order) => order.tableNumber && (order.status === 'entregada' || order.status === 'para_cobrar'),
+        )
+        .map((order) => order.tableNumber),
+    );
 
     const ordersByTable = new Map<string, number>();
     for (const order of recentOrders) {
@@ -38,7 +49,13 @@ export class GetDashboardUseCase {
         let state: TableState = 'libre';
         if (activeOrders > 0) state = 'ocupada';
         else if (entry?.reserved) state = 'reservada';
-        return { ...table, area: entry?.area, state, activeOrders };
+        return {
+          ...table,
+          area: entry?.area ?? table.area,
+          state,
+          activeOrders,
+          awaitingPayment: awaiting.has(table.number),
+        };
       });
 
     return {
@@ -46,6 +63,7 @@ export class GetDashboardUseCase {
       tables: statuses,
       occupiedTables: statuses.filter((table) => table.state === 'ocupada').length,
       recentOrders,
+      report,
     };
   }
 }
