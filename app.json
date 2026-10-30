@@ -30,7 +30,13 @@
           "organization": "jose-6r",
           "project": "react-native"
         }
-      ]
+      ],
+      "@react-native-community/datetimepicker",
+      "@sentry/react-native",
+      "expo-secure-store",
+      "expo-status-bar",
+      "expo-font",
+      "expo-asset"
     ],
     "extra": {
       "eas": {

@@ -5,6 +5,9 @@ import {
   estimatedTotal,
   itemCount,
   removeLine,
+  setGuests,
+  setKitchenNote,
+  setLineNotes,
   setQuantity,
   setTable,
 } from '../entities/TableOrder';
@@ -48,5 +51,23 @@ describe('pedido en curso de la mesa', () => {
 
   it('asigna la mesa', () => {
     expect(setTable(EMPTY_ORDER, '7').tableNumber).toBe('7');
+  });
+});
+
+describe('comensales y notas', () => {
+  it('los comensales quedan entre 1 y 50', () => {
+    expect(setGuests(EMPTY_ORDER, 4).guests).toBe(4);
+    expect(setGuests(EMPTY_ORDER, 0).guests).toBe(1);
+    expect(setGuests(EMPTY_ORDER, 80).guests).toBe(50);
+    expect(setGuests(EMPTY_ORDER, Number.NaN).guests).toBe(1);
+  });
+
+  it('las notas tienen tope y una vacía se quita', () => {
+    const order = addDish(EMPTY_ORDER, enchiladas);
+    expect(setLineNotes(order, 1, 'sin cebolla').lines[0].notes).toBe('sin cebolla');
+    expect(setLineNotes(order, 1, '').lines[0].notes).toBeUndefined();
+    expect(setLineNotes(order, 1, 'x'.repeat(300)).lines[0].notes).toHaveLength(200);
+    expect(setLineNotes(order, 99, 'otra').lines[0].notes).toBeUndefined();
+    expect(setKitchenNote(EMPTY_ORDER, 'y'.repeat(600)).kitchenNote).toHaveLength(500);
   });
 });

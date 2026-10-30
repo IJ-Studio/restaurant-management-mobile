@@ -1,29 +1,60 @@
-import type { ComponentType } from 'react';
+import type Ionicons from '@expo/vector-icons/Ionicons';
+import type { ComponentProps, ComponentType } from 'react';
 
+import { DashboardScreen } from '../../features/admin/presentation/screens/DashboardScreen';
 import type { Section } from '../../features/auth/domain/entities/permissions';
-import { ProfileScreen } from '../../features/auth/presentation/screens/ProfileScreen';
 import { MenuNavigator } from '../../features/menu/presentation/navigation/MenuNavigator';
+import { CheckoutNavigator } from '../../features/orders/presentation/navigation/CheckoutNavigator';
+import { OrdersNavigator } from '../../features/orders/presentation/navigation/OrdersNavigator';
+import { ProfileNavigator } from '../../features/profile/presentation/navigation/ProfileNavigator';
 import { ReservationsNavigator } from '../../features/reservations/presentation/navigation/ReservationsNavigator';
-import { PlaceholderScreen } from '../../shared/presentation/components/PlaceholderScreen';
+
+type IconName = ComponentProps<typeof Ionicons>['name'];
 
 interface SectionConfig {
   title: string;
   component: ComponentType;
   headerShown?: boolean;
+  /** Ícono de la pestaña: relleno cuando está activa, de contorno cuando no. */
+  icon: { active: IconName; inactive: IconName };
 }
 
-const placeholder = (title: string, description: string) =>
-  function Placeholder() {
-    return <PlaceholderScreen title={title} description={description} />;
-  };
-
-/** Pantalla de cada sección. Las provisionales se reemplazan en su historia. */
+/** Pantalla de cada sección. */
 export const SECTION_CONFIG: Record<Section, SectionConfig> = {
-  dashboard: { title: 'Dashboard', component: placeholder('Dashboard', 'Indicadores del día (HU-08).') },
-  // Menú y Reservaciones tienen su propio stack con su encabezado.
-  menu: { title: 'Menú', component: MenuNavigator, headerShown: false },
-  orders: { title: 'Pedidos', component: placeholder('Pedidos', 'Pedidos activos en tiempo real (HU-06).') },
-  reservations: { title: 'Reservaciones', component: ReservationsNavigator, headerShown: false },
-  checkout: { title: 'Cobros', component: placeholder('Cobros', 'Cobro de cuentas con Stripe (HU-05).') },
-  profile: { title: 'Perfil', component: ProfileScreen },
+  dashboard: {
+    title: 'Dashboard',
+    component: DashboardScreen,
+    icon: { active: 'grid', inactive: 'grid-outline' },
+  },
+  // Menú, Pedidos, Reservaciones, Cobros y Perfil tienen su propio stack con su encabezado.
+  menu: {
+    title: 'Menú',
+    component: MenuNavigator,
+    headerShown: false,
+    icon: { active: 'restaurant', inactive: 'restaurant-outline' },
+  },
+  orders: {
+    title: 'Pedidos',
+    component: OrdersNavigator,
+    headerShown: false,
+    icon: { active: 'receipt', inactive: 'receipt-outline' },
+  },
+  reservations: {
+    title: 'Reservaciones',
+    component: ReservationsNavigator,
+    headerShown: false,
+    icon: { active: 'calendar', inactive: 'calendar-outline' },
+  },
+  checkout: {
+    title: 'Cobros',
+    component: CheckoutNavigator,
+    headerShown: false,
+    icon: { active: 'card', inactive: 'card-outline' },
+  },
+  profile: {
+    title: 'Perfil',
+    component: ProfileNavigator,
+    headerShown: false,
+    icon: { active: 'person-circle', inactive: 'person-circle-outline' },
+  },
 };

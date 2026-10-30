@@ -1,5 +1,6 @@
-import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
-import { useState, type ReactNode } from 'react';
+import { focusManager, QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { useEffect, useState, type ReactNode } from 'react';
+import { AppState, type AppStateStatus } from 'react-native';
 
 import { isRetryable } from '../errors/AppError';
 
@@ -25,6 +26,15 @@ interface Props {
 /** Providers globales: inyección de dependencias + caché de datos del servidor. */
 export function AppProviders({ children, dependencies, queryClient }: Props) {
   const [client] = useState(() => queryClient ?? createQueryClient());
+
+  // En móvil no hay foco de ventana: se usa el estado de la app. Al volver a primer plano, las
+  // consultas viejas se refrescan solas (pedidos, cuentas, Dashboard).
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (status: AppStateStatus) =>
+      focusManager.setFocused(status === 'active'),
+    );
+    return () => subscription.remove();
+  }, []);
   return (
     <QueryClientProvider client={client}>
       <DependenciesProvider value={dependencies}>{children}</DependenciesProvider>
