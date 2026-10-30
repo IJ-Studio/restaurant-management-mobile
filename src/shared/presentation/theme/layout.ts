@@ -1,5 +1,7 @@
 import type { ViewStyle } from 'react-native';
 
+import { colors } from './colors';
+
 /** Escala de 4 px, la misma de Tailwind en la web. */
 export const spacing = { xxs: 2, xs: 4, sm: 8, md: 12, lg: 16, xl: 24, xxl: 32, xxxl: 48 } as const;
 
@@ -27,6 +29,14 @@ export const sizes = {
   /** Ancho del logo en el Login. */
   logo: 220,
 } as const;
+
+/** Degradado de marca de los encabezados (Login, Dashboard, Perfil, cobro), de arriba-izquierda a abajo-derecha. */
+export const gradients = {
+  brand: [colors.brandStrong, colors.brandDeep] as const,
+} as const;
+
+/** Escala al presionar tarjetas y botones: da sensación de botón físico sin animaciones pesadas. */
+export const pressScale = { transform: [{ scale: 0.98 }] } as const satisfies ViewStyle;
 
 /** Opacidades: botón deshabilitado (`opacity-40` de la web), fila atenuada que se sigue leyendo y presionado. */
 export const opacity = { disabled: 0.4, dimmed: 0.6, pressed: 0.85 } as const;

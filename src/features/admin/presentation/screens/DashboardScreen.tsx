@@ -3,13 +3,14 @@ import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native
 import { ErrorState } from '../../../../shared/presentation/components/ErrorState';
 import { LoadingState } from '../../../../shared/presentation/components/LoadingState';
 import { Notice } from '../../../../shared/presentation/components/Notice';
-import { ScreenHeader } from '../../../../shared/presentation/components/ScreenHeader';
+import { HeroCard } from '../../../../shared/presentation/components/HeroCard';
 import { SectionTitle } from '../../../../shared/presentation/components/SectionTitle';
 import { StatCard } from '../../../../shared/presentation/components/StatCard';
 import { StatusBadge, type StatusTone } from '../../../../shared/presentation/components/StatusBadge';
 import { colors, radius, shadows, spacing, typography } from '../../../../shared/presentation/theme';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { formatDate } from '../../../../shared/utils/formatDateTime';
+import { useSession } from '../../../auth/presentation/viewmodels/useSession';
 import { OrderCard } from '../../../orders/presentation/components/OrderCard';
 import type { DashboardSummary, TableState, TableStatus } from '../../domain/entities/DashboardSummary';
 import { useDashboard } from '../viewmodels/useDashboard';
@@ -42,13 +43,6 @@ function Summary({ summary }: { summary: DashboardSummary }) {
   return (
     <>
       <View style={styles.stats}>
-        <StatCard
-          label="Ventas del día"
-          value={formatCurrency(stats.salesTotal)}
-          icon="cash-outline"
-          tone="brand"
-          style={styles.stat}
-        />
         <StatCard
           label="En cocina"
           value={String(stats.ordersInKitchen)}
@@ -111,8 +105,19 @@ function Summary({ summary }: { summary: DashboardSummary }) {
   );
 }
 
+/** "Buenos días" hasta mediodía, "Buenas tardes" hasta las 7 p.m., luego "Buenas noches". */
+export function greeting(now: Date): string {
+  const hour = now.getHours();
+  if (hour < 12) return 'Buenos días';
+  if (hour < 19) return 'Buenas tardes';
+  return 'Buenas noches';
+}
+
 export function DashboardScreen() {
   const { summary, isLoading, isRefreshing, errorMessage, refresh } = useDashboard();
+  const name = useSession((state) => state.session?.user.name);
+  const now = new Date();
+  const sales = summary ? formatCurrency(summary.stats.salesTotal) : '—';
 
   let body;
   if (isLoading) body = <LoadingState message="Cargando el resumen…" />;
@@ -134,12 +139,19 @@ export function DashboardScreen() {
         />
       }
     >
-      <ScreenHeader
-        eyebrow={formatDate(new Date())}
+      <HeroCard
+        eyebrow={formatDate(now)}
         title="Resumen del día"
-        subtitle="Ventas, pedidos y mesas de hoy."
+        subtitle={name ? `${greeting(now)}, ${name}.` : `${greeting(now)}.`}
         style={styles.header}
-      />
+      >
+        <View style={styles.sales} accessible accessibilityLabel={`Ventas del día, ${sales}`}>
+          <Text style={styles.salesLabel}>Ventas del día</Text>
+          <Text style={styles.salesValue} numberOfLines={1} adjustsFontSizeToFit>
+            {sales}
+          </Text>
+        </View>
+      </HeroCard>
       {summary && errorMessage && (
         <Notice message={`No se pudo actualizar: ${errorMessage}`} style={styles.notice} />
       )}
@@ -152,6 +164,14 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: spacing.xxxl, flexGrow: 1 },
   header: { marginBottom: spacing.xl },
+  sales: {
+    marginTop: spacing.xl,
+    paddingTop: spacing.lg,
+    borderTopWidth: StyleSheet.hairlineWidth,
+    borderTopColor: colors.onBrandSurface,
+  },
+  salesLabel: { ...typography.overline, color: colors.textOnBrandMuted },
+  salesValue: { ...typography.amount, color: colors.textOnBrand, marginTop: spacing.xs },
   notice: { marginBottom: spacing.lg },
   stats: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   stat: { flexGrow: 1, flexBasis: '45%' },

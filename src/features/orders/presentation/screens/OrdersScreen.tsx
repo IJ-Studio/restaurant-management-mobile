@@ -82,7 +82,9 @@ export function OrdersScreen() {
           );
         }}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
-        ListEmptyComponent={<EmptyState message={emptyMessage} />}
+        ListEmptyComponent={
+          <EmptyState message={emptyMessage} icon={vm.kitchen ? 'flame-outline' : 'receipt-outline'} />
+        }
         refreshControl={
           <RefreshControl
             refreshing={vm.isRefreshing}

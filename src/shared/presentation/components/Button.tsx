@@ -1,6 +1,6 @@
 import { ActivityIndicator, Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
 
-import { colors, opacity, radius, shadows, sizes, spacing, typography } from '../theme';
+import { colors, opacity, pressScale, radius, shadows, sizes, spacing, typography } from '../theme';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
 
@@ -50,6 +50,7 @@ export function Button({
         styles.base,
         styles[variant],
         pressed && pressedStyles[variant],
+        pressed && pressScale,
         disabled && styles.disabled,
         style,
       ]}

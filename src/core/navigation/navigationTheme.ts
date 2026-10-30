@@ -27,7 +27,7 @@ export const navigationTheme: Theme = {
   },
 };
 
-const headerTitleStyle = { fontFamily: fonts.bold, fontSize: 19, color: colors.text };
+const headerTitleStyle = { fontFamily: fonts.display, fontSize: 19, color: colors.text };
 
 /** Encabezado de los stacks (Menú, Reservaciones, Pedidos). */
 export const stackScreenOptions: NativeStackNavigationOptions = {
