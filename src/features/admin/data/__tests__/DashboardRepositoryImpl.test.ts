@@ -18,6 +18,8 @@ describe('DashboardRepositoryImpl', () => {
       totalVentas: 75,
       pedidosPendientes: 0,
       pedidosEnPreparacion: 1,
+      pedidosListos: 2,
+      pedidosPorCobrar: 3,
       mesasOcupadas: 0,
       mesasLibres: 16,
       totalMesas: 16,
@@ -27,6 +29,8 @@ describe('DashboardRepositoryImpl', () => {
       salesTotal: 75,
       pendingOrders: 0,
       ordersInKitchen: 1,
+      readyOrders: 2,
+      ordersToCharge: 3,
     });
     expect(get).toHaveBeenCalledWith('dashboard/admin/stats');
   });
@@ -41,6 +45,8 @@ describe('DashboardRepositoryImpl', () => {
       salesTotal: 0,
       pendingOrders: 0,
       ordersInKitchen: 0,
+      readyOrders: 0,
+      ordersToCharge: 0,
     });
   });
 

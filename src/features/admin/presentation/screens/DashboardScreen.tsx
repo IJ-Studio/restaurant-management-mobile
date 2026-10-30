@@ -62,6 +62,18 @@ function Summary({ summary }: { summary: DashboardSummary }) {
           style={styles.stat}
         />
         <StatCard
+          label="Listos para servir"
+          value={String(stats.readyOrders)}
+          icon="checkmark-done-outline"
+          style={styles.stat}
+        />
+        <StatCard
+          label="Por cobrar"
+          value={String(stats.ordersToCharge)}
+          icon="wallet-outline"
+          style={styles.stat}
+        />
+        <StatCard
           label="Mesas ocupadas"
           value={String(occupiedTables)}
           hint={`de ${tables.length} mesas`}

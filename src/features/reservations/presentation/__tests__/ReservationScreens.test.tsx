@@ -183,17 +183,15 @@ describe('Reservaciones', () => {
   });
 
   it('sin reservaciones activas lleva a las recientes, con cualquier estatus', async () => {
-    const recent = jest
-      .fn()
-      .mockResolvedValue([
-        makeReservation({ id: 'r1', customerName: 'Paola Chávez', status: 'no_show', tableId: 5 }),
-        makeReservation({
-          id: 'r2',
-          customerName: 'Raúl Vega',
-          status: 'completada',
-          occasion: 'Cumpleaños',
-        }),
-      ]);
+    const recent = jest.fn().mockResolvedValue([
+      makeReservation({ id: 'r1', customerName: 'Paola Chávez', status: 'no_show', tableId: 5 }),
+      makeReservation({
+        id: 'r2',
+        customerName: 'Raúl Vega',
+        status: 'completada',
+        occasion: 'Cumpleaños',
+      }),
+    ]);
     await renderReservations(
       makeTestDependencies({
         listActiveReservationsUseCase: { execute: jest.fn().mockResolvedValue([]) },

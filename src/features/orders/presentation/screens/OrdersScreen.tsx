@@ -8,21 +8,10 @@ import { ErrorState } from '../../../../shared/presentation/components/ErrorStat
 import { LoadingState } from '../../../../shared/presentation/components/LoadingState';
 import { Notice } from '../../../../shared/presentation/components/Notice';
 import { colors, spacing } from '../../../../shared/presentation/theme';
+import { ACTION_LABEL } from '../components/orderLabels';
 import { OrderCard } from '../components/OrderCard';
 import type { OrdersStackParamList } from '../navigation/OrdersNavigator';
-import { useActiveOrders, type OrderFilter } from '../viewmodels/useActiveOrders';
-
-const FILTERS: { value: OrderFilter; label: string }[] = [
-  { value: 'all', label: 'Todos' },
-  { value: 'pendiente', label: 'Por confirmar' },
-  { value: 'abierta', label: 'En cocina' },
-];
-
-const EMPTY_MESSAGE: Record<OrderFilter, string> = {
-  all: 'No hay pedidos activos hoy.',
-  pendiente: 'No hay pedidos por confirmar.',
-  abierta: 'No hay pedidos en cocina.',
-};
+import { useActiveOrders } from '../viewmodels/useActiveOrders';
 
 export function OrdersScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<OrdersStackParamList>>();
@@ -30,6 +19,11 @@ export function OrdersScreen() {
 
   if (vm.isLoading) return <LoadingState message="Cargando pedidos…" />;
   if (vm.errorMessage && !vm.hasData) return <ErrorState message={vm.errorMessage} onRetry={vm.refresh} />;
+
+  const now = new Date();
+  const emptyMessage = vm.kitchen
+    ? 'No hay pedidos en cocina. ¡Todo al día!'
+    : 'No hay pedidos en este filtro.';
 
   return (
     <View style={styles.container}>
@@ -40,13 +34,13 @@ export function OrdersScreen() {
         contentContainerStyle={styles.filters}
         accessibilityRole="radiogroup"
       >
-        {FILTERS.map((option) => (
+        {vm.filters.map((option) => (
           <Chip
-            key={option.value}
+            key={option.key}
             label={option.label}
-            count={vm.counts[option.value]}
-            selected={vm.filter === option.value}
-            onPress={() => vm.setFilter(option.value)}
+            count={vm.counts[option.key]}
+            selected={vm.filter === option.key}
+            onPress={() => vm.setFilter(option.key)}
           />
         ))}
       </ScrollView>
@@ -59,25 +53,36 @@ export function OrdersScreen() {
             {vm.errorMessage && (
               <Notice message={`No se pudo actualizar: ${vm.errorMessage}`} style={styles.notice} />
             )}
-            {!vm.canManage && (
-              <Notice
-                tone="info"
-                message="Vista de cocina: los pedidos se actualizan solos cada 30 segundos."
-                style={styles.notice}
-              />
-            )}
+            {vm.actionError && <Notice message={vm.actionError} style={styles.notice} />}
+            {vm.notice && <Notice tone="success" message={vm.notice} style={styles.notice} />}
           </>
         }
         renderItem={({ item }) => {
-          const { tableNumber } = item;
-          const open =
-            vm.canManage && tableNumber !== undefined
-              ? () => navigation.navigate('OrderDetail', { orderId: item.id, tableNumber, place: item.place })
-              : undefined;
-          return <OrderCard order={item} onPress={open} />;
+          const quick = vm.quickActionFor(item);
+          return (
+            <OrderCard
+              order={item}
+              now={now}
+              showAllItems={vm.kitchen}
+              onPress={
+                vm.canOpen
+                  ? () => navigation.navigate('OrderDetail', { orderId: item.id, place: item.place })
+                  : undefined
+              }
+              action={
+                quick
+                  ? {
+                      label: ACTION_LABEL[quick],
+                      onPress: () => vm.runQuickAction(item),
+                      loading: vm.busyOrderId === item.id,
+                    }
+                  : undefined
+              }
+            />
+          );
         }}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
-        ListEmptyComponent={<EmptyState message={EMPTY_MESSAGE[vm.filter]} />}
+        ListEmptyComponent={<EmptyState message={emptyMessage} />}
         refreshControl={
           <RefreshControl
             refreshing={vm.isRefreshing}

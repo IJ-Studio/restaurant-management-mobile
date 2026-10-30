@@ -36,6 +36,8 @@ export const typography = {
   /** Botón principal: 18 en negrita cuenta como texto grande, así el blanco sobre `brand` pasa AA. */
   button: { fontFamily: fonts.bold, fontSize: 18, lineHeight: 22 },
   price: { fontFamily: fonts.bold, fontSize: 18, lineHeight: 22 },
+  /** Monto principal de una pantalla (el total a cobrar). */
+  amount: { fontFamily: fonts.bold, fontSize: 44, lineHeight: 50, letterSpacing: -1 },
 } as const satisfies Record<string, TextStyle>;
 
 export type TypographyToken = keyof typeof typography;

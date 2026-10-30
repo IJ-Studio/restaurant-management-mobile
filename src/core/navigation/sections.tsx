@@ -3,11 +3,11 @@ import type { ComponentProps, ComponentType } from 'react';
 
 import { DashboardScreen } from '../../features/admin/presentation/screens/DashboardScreen';
 import type { Section } from '../../features/auth/domain/entities/permissions';
-import { ProfileScreen } from '../../features/auth/presentation/screens/ProfileScreen';
 import { MenuNavigator } from '../../features/menu/presentation/navigation/MenuNavigator';
+import { CheckoutNavigator } from '../../features/orders/presentation/navigation/CheckoutNavigator';
 import { OrdersNavigator } from '../../features/orders/presentation/navigation/OrdersNavigator';
+import { ProfileNavigator } from '../../features/profile/presentation/navigation/ProfileNavigator';
 import { ReservationsNavigator } from '../../features/reservations/presentation/navigation/ReservationsNavigator';
-import { PlaceholderScreen } from '../../shared/presentation/components/PlaceholderScreen';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
 
@@ -19,19 +19,14 @@ interface SectionConfig {
   icon: { active: IconName; inactive: IconName };
 }
 
-const placeholder = (title: string, description: string) =>
-  function Placeholder() {
-    return <PlaceholderScreen title={title} description={description} />;
-  };
-
-/** Pantalla de cada sección. Las provisionales se reemplazan en su historia. */
+/** Pantalla de cada sección. */
 export const SECTION_CONFIG: Record<Section, SectionConfig> = {
   dashboard: {
     title: 'Dashboard',
     component: DashboardScreen,
     icon: { active: 'grid', inactive: 'grid-outline' },
   },
-  // Menú, Pedidos y Reservaciones tienen su propio stack con su encabezado.
+  // Menú, Pedidos, Reservaciones, Cobros y Perfil tienen su propio stack con su encabezado.
   menu: {
     title: 'Menú',
     component: MenuNavigator,
@@ -52,12 +47,14 @@ export const SECTION_CONFIG: Record<Section, SectionConfig> = {
   },
   checkout: {
     title: 'Cobros',
-    component: placeholder('Cobros', 'Cobro de cuentas con Stripe (HU-05).'),
+    component: CheckoutNavigator,
+    headerShown: false,
     icon: { active: 'card', inactive: 'card-outline' },
   },
   profile: {
     title: 'Perfil',
-    component: ProfileScreen,
+    component: ProfileNavigator,
+    headerShown: false,
     icon: { active: 'person-circle', inactive: 'person-circle-outline' },
   },
 };

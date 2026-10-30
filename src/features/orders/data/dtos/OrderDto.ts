@@ -40,26 +40,62 @@ export interface RecentOrderDto {
   table: string | null;
   status: string | null;
   total: number | string | null;
+  /** ISO 8601 (versiones del API anteriores no lo mandan). */
+  openedAt?: string | null;
+  items?: { nombre: string | null; cantidad: number | null }[];
 }
 
-/** Pedido de GET /pedidos/usuario?mesaId=…; `numeric` y `timestamptz` llegan como string. */
-export interface TableOrderDto {
+/** GET /pedidos/:id — `numeric` y `timestamptz` llegan como string. */
+export interface OrderDetailDto {
   id: string;
-  mesaId: string;
+  tipo: string | null;
+  mesa: string | null;
   estatus: string | null;
+  subtotal: string | null;
+  propina: string | null;
   total: string | null;
+  notasCocina: string | null;
   tiempoApertura: string | null;
-  ordenItems: {
+  items: {
     id: number;
     cantidad: number;
     precioUnitario: string;
+    notas: string | null;
     platillo: { nombre: string | null; imagenUrl: string | null };
   }[];
 }
 
-/** Respuesta de PATCH /pedidos/cancelar/:id y DELETE /pedidos/item/:id. */
+/** Respuesta de PATCH /pedidos/cancelar/:id, DELETE /pedidos/item/:id y PATCH /pedidos/:id/estatus. */
 export interface OrderActionResponseDto {
   success: boolean;
   message: string;
   [extra: string]: unknown;
+}
+
+/** Fila de GET /pedidos/metodos-pago. */
+export interface PaymentMethodDto {
+  id: number;
+  nombre: string;
+  tipo: string | null;
+  aplicaPropina: boolean;
+  esEfectivo: boolean;
+}
+
+/** Body de POST /pedidos/:id/cobrar. */
+export interface ChargeOrderRequestDto {
+  metodoPagoId: number;
+  propina?: number;
+  montoRecibido?: number;
+  referencia?: string;
+}
+
+/** Respuesta de POST /pedidos/:id/cobrar; los montos llegan como string con 2 decimales. */
+export interface ChargeOrderResponseDto {
+  success: boolean;
+  message: string;
+  metodo: string;
+  total: string;
+  propina: string;
+  totalCobrado: string;
+  cambio: string;
 }
