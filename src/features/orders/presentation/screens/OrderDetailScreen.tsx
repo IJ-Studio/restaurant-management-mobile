@@ -12,7 +12,7 @@ import { colors, radius, spacing, typography } from '../../../../shared/presenta
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { formatTime } from '../../../../shared/utils/formatDateTime';
 import type { OrderItem } from '../../domain/entities/ActiveOrder';
-import { orderStatusLabel, orderStatusTone } from '../components/orderLabels';
+import { ACTION_LABEL, orderStatusLabel, orderStatusTone, STEP_FOR } from '../components/orderLabels';
 import type { OrdersStackParamList } from '../navigation/OrdersNavigator';
 import { useOrderDetail } from '../viewmodels/useOrderDetail';
 
@@ -33,6 +33,7 @@ function ItemRow({
       <View style={styles.itemInfo}>
         <Text style={styles.itemName}>{item.name}</Text>
         <Text style={styles.itemUnit}>{formatCurrency(item.unitPrice)} c/u</Text>
+        {item.notes ? <Text style={styles.itemNotes}>Nota: {item.notes}</Text> : null}
       </View>
       <Text style={styles.itemTotal}>{formatCurrency(item.unitPrice * item.quantity)}</Text>
       {onRemove && (
@@ -48,9 +49,9 @@ function ItemRow({
   );
 }
 
-export function OrderDetailScreen({ route }: Props) {
-  const { orderId, tableNumber, place } = route.params;
-  const vm = useOrderDetail(tableNumber, orderId);
+export function OrderDetailScreen({ route, navigation }: Props) {
+  const { orderId, place } = route.params;
+  const vm = useOrderDetail(orderId);
 
   if (vm.isLoading) return <LoadingState message="Cargando pedido…" />;
   if (!vm.order) {
@@ -63,6 +64,7 @@ export function OrderDetailScreen({ route }: Props) {
       { text: 'No', style: 'cancel' },
       { text: 'Sí, cancelar', style: 'destructive', onPress: vm.cancel },
     ]);
+  const stepButtons = (['start', 'ready', 'deliver'] as const).filter((action) => vm.can(action));
 
   return (
     <ScrollView
@@ -89,6 +91,9 @@ export function OrderDetailScreen({ route }: Props) {
         {order.openedAt && <Text style={styles.meta}>Abierto a las {formatTime(order.openedAt)}</Text>}
       </Card>
 
+      {order.kitchenNotes && (
+        <Notice tone="warning" message={`Nota para cocina: ${order.kitchenNotes}`} style={styles.notice} />
+      )}
       {vm.notice && <Notice tone="success" message={vm.notice} style={styles.notice} />}
       {vm.actionError && <Notice message={vm.actionError} style={styles.notice} />}
 
@@ -101,11 +106,17 @@ export function OrderDetailScreen({ route }: Props) {
             <View key={item.id} style={index > 0 && styles.divider}>
               <ItemRow
                 item={item}
-                onRemove={vm.canRemoveItems ? () => vm.removeItem(item.id) : undefined}
+                onRemove={vm.can('remove-item') ? () => vm.removeItem(item.id) : undefined}
                 removing={vm.removingItemId === item.id}
               />
             </View>
           ))
+        )}
+        {order.tip > 0 && (
+          <View style={styles.tipRow}>
+            <Text style={styles.tipLabel}>Propina</Text>
+            <Text style={styles.tipLabel}>{formatCurrency(order.tip)}</Text>
+          </View>
         )}
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Total</Text>
@@ -113,21 +124,43 @@ export function OrderDetailScreen({ route }: Props) {
         </View>
       </Card>
 
-      {vm.canConfirm && (
+      {vm.can('confirm') && (
         <Button
-          label="Confirmar y enviar a cocina"
+          label={ACTION_LABEL.confirm}
           onPress={vm.confirm}
-          loading={vm.isConfirming}
+          loading={vm.busy === 'confirm'}
           style={styles.action}
         />
       )}
-      {vm.canCancel && (
+      {stepButtons.map((action) => {
+        const step = STEP_FOR[action]!;
+        return (
+          <Button
+            key={action}
+            label={ACTION_LABEL[action]}
+            onPress={() => vm.advance(step)}
+            loading={vm.busy === step}
+            variant={action === 'deliver' ? 'secondary' : 'primary'}
+            style={styles.action}
+          />
+        );
+      })}
+      {vm.can('charge') && (
+        <Button
+          label={`${ACTION_LABEL.charge} ${formatCurrency(order.total)}`}
+          accessibilityLabel={ACTION_LABEL.charge}
+          variant="secondary"
+          onPress={() => navigation.navigate('Charge', { orderId, place })}
+          style={styles.action}
+        />
+      )}
+      {vm.can('cancel') && (
         <>
           <Button
-            label="Cancelar pedido"
+            label={ACTION_LABEL.cancel}
             variant="outline"
             onPress={confirmCancel}
-            loading={vm.isCancelling}
+            loading={vm.busy === 'cancel'}
             style={styles.action}
           />
           <Text style={styles.hint}>Solo se puede cancelar durante sus primeros 2 minutos en cocina.</Text>
@@ -165,9 +198,12 @@ const styles = StyleSheet.create({
   itemInfo: { flex: 1 },
   itemName: { ...typography.bodyStrong, color: colors.text },
   itemUnit: { ...typography.caption, color: colors.textSecondary },
+  itemNotes: { ...typography.caption, color: colors.warning, marginTop: spacing.xxs },
   itemTotal: { ...typography.bodyStrong, color: colors.text },
   divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
   empty: { ...typography.body, color: colors.textSecondary, paddingVertical: spacing.sm },
+  tipRow: { flexDirection: 'row', justifyContent: 'space-between', marginTop: spacing.md },
+  tipLabel: { ...typography.small, color: colors.textSecondary },
   totalRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -179,6 +215,6 @@ const styles = StyleSheet.create({
   },
   totalLabel: { ...typography.subheading, color: colors.textSecondary },
   total: { ...typography.title, color: colors.text },
-  action: { marginTop: spacing.xl },
+  action: { marginTop: spacing.lg },
   hint: { ...typography.caption, color: colors.textSecondary, textAlign: 'center', marginTop: spacing.sm },
 });

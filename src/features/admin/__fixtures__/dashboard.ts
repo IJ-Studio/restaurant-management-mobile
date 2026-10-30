@@ -4,7 +4,13 @@ import { makeActiveOrder } from '../../orders/__fixtures__/orders';
 
 export function makeDashboardRepository(): jest.Mocked<DashboardRepository> {
   return {
-    getDailyStats: jest.fn().mockResolvedValue({ salesTotal: 1250.5, pendingOrders: 1, ordersInKitchen: 2 }),
+    getDailyStats: jest.fn().mockResolvedValue({
+      salesTotal: 1250.5,
+      pendingOrders: 1,
+      ordersInKitchen: 2,
+      readyOrders: 1,
+      ordersToCharge: 3,
+    }),
     getTableMap: jest.fn().mockResolvedValue([
       { id: 2, area: 'Terraza', reserved: true },
       { id: 5, area: 'Salón', reserved: true },
@@ -15,7 +21,7 @@ export function makeDashboardRepository(): jest.Mocked<DashboardRepository> {
 
 export function makeDashboardSummary(overrides: Partial<DashboardSummary> = {}): DashboardSummary {
   return {
-    stats: { salesTotal: 1250.5, pendingOrders: 1, ordersInKitchen: 2 },
+    stats: { salesTotal: 1250.5, pendingOrders: 1, ordersInKitchen: 2, readyOrders: 1, ordersToCharge: 3 },
     tables: [
       {
         id: 2,

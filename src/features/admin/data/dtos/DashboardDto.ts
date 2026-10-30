@@ -3,6 +3,9 @@ export interface AdminStatsDto {
   totalVentas: number | string | null;
   pedidosPendientes: number | null;
   pedidosEnPreparacion: number | null;
+  /** Versiones anteriores del API no los mandan. */
+  pedidosListos?: number | null;
+  pedidosPorCobrar?: number | null;
   mesasOcupadas: number | null;
   mesasLibres: number | null;
   totalMesas: number | null;

@@ -21,6 +21,8 @@ export class DashboardRepositoryImpl implements DashboardRepository {
         salesTotal: toCount(dto.totalVentas),
         pendingOrders: toCount(dto.pedidosPendientes),
         ordersInKitchen: toCount(dto.pedidosEnPreparacion),
+        readyOrders: toCount(dto.pedidosListos),
+        ordersToCharge: toCount(dto.pedidosPorCobrar),
       };
     } catch (error) {
       if (error instanceof AppError && error.kind === 'forbidden') {

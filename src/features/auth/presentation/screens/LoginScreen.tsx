@@ -2,6 +2,7 @@ import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, View } f
 
 import { Button } from '../../../../shared/presentation/components/Button';
 import { Notice } from '../../../../shared/presentation/components/Notice';
+import { PasswordField } from '../../../../shared/presentation/components/PasswordField';
 import { ScreenHeader } from '../../../../shared/presentation/components/ScreenHeader';
 import { TextField } from '../../../../shared/presentation/components/TextField';
 import { colors, radius, sizes, spacing } from '../../../../shared/presentation/theme';
@@ -51,15 +52,12 @@ export function LoginScreen() {
           textContentType="username"
           editable={!isSubmitting}
         />
-        <TextField
+        <PasswordField
           label="Contraseña"
           value={password}
           onChangeText={setPassword}
           placeholder="••••••••"
           error={fieldErrors.password}
-          secureTextEntry
-          autoCapitalize="none"
-          autoCorrect={false}
           autoComplete="password"
           textContentType="password"
           returnKeyType="go"

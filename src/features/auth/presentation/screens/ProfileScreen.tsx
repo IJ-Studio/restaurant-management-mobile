@@ -1,11 +1,11 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { ComponentProps } from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../../../../shared/presentation/components/Button';
 import { Card } from '../../../../shared/presentation/components/Card';
 import { StatusBadge } from '../../../../shared/presentation/components/StatusBadge';
-import { colors, radius, spacing, typography } from '../../../../shared/presentation/theme';
+import { colors, opacity, radius, spacing, typography } from '../../../../shared/presentation/theme';
 import { formatTime } from '../../../../shared/utils/formatDateTime';
 import type { Role } from '../../domain/entities/Role';
 import { useLogout } from '../viewmodels/useLogout';
@@ -48,7 +48,36 @@ function InfoRow({
   );
 }
 
-export function ProfileScreen() {
+function ActionRow({
+  icon,
+  label,
+  onPress,
+}: {
+  icon: ComponentProps<typeof Ionicons>['name'];
+  label: string;
+  onPress: () => void;
+}) {
+  return (
+    <Pressable
+      onPress={onPress}
+      accessibilityRole="button"
+      accessibilityLabel={label}
+      style={({ pressed }) => [styles.infoRow, pressed && styles.pressed]}
+    >
+      <Ionicons name={icon} size={20} color={colors.brandStrong} />
+      <Text style={[styles.infoValue, styles.infoText]}>{label}</Text>
+      <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+    </Pressable>
+  );
+}
+
+interface Props {
+  /** Las da el navegador del perfil; sin ellas (p. ej. en pruebas) no se muestran las opciones. */
+  onEditProfile?: () => void;
+  onChangePassword?: () => void;
+}
+
+export function ProfileScreen({ onEditProfile, onChangePassword }: Props = {}) {
   const user = useSession((state) => state.session?.user);
   const expiresAt = useSession((state) => state.session?.expiresAt);
   const { logout, isLoggingOut } = useLogout();
@@ -83,6 +112,17 @@ export function ProfileScreen() {
         ) : null}
       </Card>
 
+      {(onEditProfile || onChangePassword) && (
+        <Card style={styles.info}>
+          {onEditProfile && <ActionRow icon="create-outline" label="Editar perfil" onPress={onEditProfile} />}
+          {onChangePassword && (
+            <View style={onEditProfile ? styles.divider : undefined}>
+              <ActionRow icon="key-outline" label="Cambiar contraseña" onPress={onChangePassword} />
+            </View>
+          )}
+        </Card>
+      )}
+
       <Button
         label="Cerrar sesión"
         variant="outline"
@@ -116,5 +156,6 @@ const styles = StyleSheet.create({
   infoLabel: { ...typography.caption, color: colors.textSecondary },
   infoValue: { ...typography.bodyStrong, color: colors.text },
   divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
+  pressed: { opacity: opacity.dimmed },
   logout: { marginTop: spacing.xl },
 });
