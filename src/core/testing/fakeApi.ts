@@ -308,6 +308,24 @@ export function createFakeApi(options: FakeApiOptions = {}) {
     ];
   };
 
+  // Incidencias de cocina, como las guarda el API en la bitácora.
+  const incidents: unknown[] = [];
+  const reportIncident: Handler = (body, _id, _query, user) => {
+    const { tipo, ordenId, mensaje, minutos } = body as Record<string, unknown>;
+    const order = typeof ordenId === 'string' ? orders.get(ordenId) : undefined;
+    incidents.unshift({
+      id: String(incidents.length + 1),
+      ordenId: ordenId ?? null,
+      tipo,
+      mensaje: mensaje ?? null,
+      minutos: minutos ?? null,
+      mesa: order?.mesa ?? null,
+      reportadoPor: user ? `${user.name} ${user.lastname}` : null,
+      creadoEn: new Date().toISOString(),
+    });
+    return [201, { success: true, message: 'Incidencia reportada.' }];
+  };
+
   const userDto = (user: TestUser) => ({ ...user, phone: phones.get(user.id) ?? null, isActive: true });
   const ownUser = (id: string, user: TestUser | undefined) =>
     user && (String(user.id) === id || user.roleId === 1)
@@ -445,6 +463,10 @@ export function createFakeApi(options: FakeApiOptions = {}) {
     ['PATCH', /^pedidos\/([^/]+)\/estatus$/, true, changeStatus],
     ['POST', /^pedidos\/([^/]+)\/cobrar$/, true, chargeOrder],
     ['GET', /^pedidos\/([^/]+)$/, true, orderDetail],
+    ['GET', /^cocina\/incidencias$/, true, () => [200, incidents]],
+    ['POST', /^cocina\/incidencias$/, true, reportIncident],
+    ['GET', /^inventario\/mermas$/, true, () => [200, []]],
+    ['GET', /^caja\/actual$/, true, () => [200, { abierta: false }]],
     ['GET', /^users\/([^/]+)$/, true, getUser],
     ['PATCH', /^users\/([^/]+)\/password$/, true, changePassword],
     ['PATCH', /^users\/([^/]+)$/, true, updateUser],
