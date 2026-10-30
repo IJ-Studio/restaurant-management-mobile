@@ -12,7 +12,10 @@ export class SendOrderToKitchenUseCase {
     if (!Number.isInteger(waiterId) || waiterId <= 0)
       throw new AppError('unauthorized', 'Vuelve a iniciar sesión.');
 
-    const orderId = await this.repository.createTableOrder(waiterId, order.tableNumber, order.lines);
+    const orderId = await this.repository.createTableOrder(waiterId, order.tableNumber, order.lines, {
+      guests: order.guests,
+      kitchenNote: order.kitchenNote?.trim() || undefined,
+    });
     return this.repository.confirm(orderId);
   }
 }

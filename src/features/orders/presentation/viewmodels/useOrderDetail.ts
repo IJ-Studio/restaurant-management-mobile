@@ -31,7 +31,8 @@ export function useOrderDetail(orderId: string, now: () => Date = () => new Date
     onSuccess: (message: string) => {
       feedback.success();
       setNotice(message);
-      return refreshOrderData(queryClient);
+      // Sin esperar: la confirmación se muestra al instante y las listas se ponen al día detrás.
+      void refreshOrderData(queryClient);
     },
     onError: (error: Error) => {
       feedback.error();

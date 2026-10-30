@@ -9,6 +9,7 @@ import type {
   OrderDetailDto,
   PaymentMethodDto,
   RecentOrderDto,
+  TableAreaDto,
   TableDto,
 } from '../dtos/OrderDto';
 
@@ -19,6 +20,11 @@ export class OrderRemoteDataSource {
 
   listTables(): Promise<TableDto[]> {
     return this.http.get<TableDto[]>('mesas');
+  }
+
+  /** Endpoint público con el nombre del área de cada mesa. */
+  listTableAreas(): Promise<TableAreaDto[]> {
+    return this.http.get<TableAreaDto[]>('reservations/map');
   }
 
   createTableOrder(body: CreateTableOrderRequestDto): Promise<CreateTableOrderResponseDto> {

@@ -9,6 +9,10 @@ export interface PaymentMethod {
 export interface ChargeRequest {
   methodId: number;
   tip: number;
+  /** Cuenta separada: cuánto del consumo se cobra en este pago (sin él, todo lo que falta). */
+  amount?: number;
+  /** Para quién es este pago ("Persona 2 de 4"). */
+  label?: string;
   /** Solo efectivo: con cuánto pagó el cliente. */
   received?: number;
   /** Folio de la terminal o de la transferencia. */
@@ -22,6 +26,10 @@ export interface ChargeReceipt {
   tip: number;
   charged: number;
   change: number;
+  /** Consumo cobrado hasta ahora y lo que falta; `closed` cuando ya se cubrió todo. */
+  paid: number;
+  remaining: number;
+  closed: boolean;
 }
 
 /** Propinas sugeridas en la pantalla de cobro (% del total). */
@@ -59,6 +67,20 @@ export function chargeSummary(
     else summary.missing = fromCents(-diff);
   }
   return summary;
+}
+
+/**
+ * Parte de una persona al dividir en partes iguales lo que falta entre quienes faltan por pagar.
+ * La última persona paga exactamente lo que queda, así los centavos del redondeo no se pierden.
+ */
+export function equalShare(remaining: number, peopleLeft: number): number {
+  if (peopleLeft <= 1) return remaining;
+  return fromCents(Math.round(toCents(remaining) / peopleLeft));
+}
+
+/** Importe de los platillos elegidos (cuenta por platillo). */
+export function itemsAmount(selection: { unitPrice: number; quantity: number }[]): number {
+  return fromCents(selection.reduce((sum, item) => sum + toCents(item.unitPrice) * item.quantity, 0));
 }
 
 /** Valida el cobro antes de mandarlo; devuelve el motivo o null si está bien. */

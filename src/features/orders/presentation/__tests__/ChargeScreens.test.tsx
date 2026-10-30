@@ -111,8 +111,10 @@ describe('Cobros: cobro', () => {
 
     expect(await screen.findByText('Cobrado $370.00')).toBeOnTheScreen();
     expect(screen.getByText('Cambio a entregar')).toBeOnTheScreen();
-    expect(deps.chargeOrderUseCase.execute).toHaveBeenCalledWith({ id: 'servida', total: 336 }, cash, {
+    expect(deps.chargeOrderUseCase.execute).toHaveBeenCalledWith({ id: 'servida', remaining: 336 }, cash, {
       tip: 33.6,
+      amount: undefined,
+      label: undefined,
       received: 500,
       reference: undefined,
     });
@@ -139,8 +141,10 @@ describe('Cobros: cobro', () => {
 
     expect(await screen.findByText('Cobrado $370.00')).toBeOnTheScreen();
     expect(screen.queryByText('Cambio a entregar')).toBeNull();
-    expect(deps.chargeOrderUseCase.execute).toHaveBeenCalledWith({ id: 'servida', total: 336 }, debit, {
+    expect(deps.chargeOrderUseCase.execute).toHaveBeenCalledWith({ id: 'servida', remaining: 336 }, debit, {
       tip: 25,
+      amount: undefined,
+      label: undefined,
       received: undefined,
       reference: 'AUT-77',
     });
@@ -183,6 +187,115 @@ describe('Cobros: cobro', () => {
     expect(await screen.findByRole('alert')).toHaveTextContent('Este pedido ya no está disponible.');
     await fireEvent.press(screen.getByRole('button', { name: 'Reintentar' }));
     expect(await screen.findByLabelText('Total a cobrar $336.00')).toBeOnTheScreen();
+  });
+});
+
+describe('Cobros: cuenta separada', () => {
+  it('en partes iguales cobra a cada persona y sigue con la siguiente', async () => {
+    const execute = jest.fn().mockResolvedValue(
+      makeReceipt({
+        charged: 168,
+        total: 168,
+        tip: 0,
+        change: 0,
+        paid: 168,
+        remaining: 168,
+        closed: false,
+        message: 'Pago registrado. Faltan $168.00 por cobrar.',
+      }),
+    );
+    const deps = setup({
+      getOrderDetailUseCase: {
+        execute: jest
+          .fn()
+          .mockResolvedValueOnce(makeOrderDetail({ status: 'entregada', guests: 2 }))
+          .mockResolvedValue(
+            makeOrderDetail({
+              status: 'entregada',
+              guests: 2,
+              paid: 168,
+              remaining: 168,
+              payments: [
+                { id: 1, method: 'Tarjeta débito', amount: 168, tip: 0, reference: 'Persona 1 de 2' },
+              ],
+            }),
+          ),
+      },
+      chargeOrderUseCase: { execute },
+    });
+    await openCharge(deps);
+
+    await fireEvent.press(screen.getByRole('radio', { name: 'Partes iguales' }));
+    expect(screen.getByText('Cobrando a la persona 1 de 2 · $168.00')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole('button', { name: 'Más personas en la cuenta' }));
+    expect(screen.getByLabelText('Total a cobrar $112.00')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole('button', { name: 'Menos personas en la cuenta' }));
+
+    await fireEvent.press(screen.getByRole('radio', { name: 'Tarjeta débito' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Confirmar cobro' }));
+
+    expect(execute).toHaveBeenCalledWith(
+      { id: 'servida', remaining: 336 },
+      debit,
+      expect.objectContaining({
+        amount: 168,
+        label: 'Persona 1 de 2',
+      }),
+    );
+    expect(await screen.findByText('Falta por cobrar')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole('button', { name: 'Cobrar a la siguiente persona' }));
+    expect(await screen.findByText('Cobrando a la persona 2 de 2 · $168.00')).toBeOnTheScreen();
+    expect(screen.getByText('Ya pagado $168.00 · falta $168.00')).toBeOnTheScreen();
+  });
+
+  it('por platillo cobra solo lo que eligió la persona y muestra lo ya pagado', async () => {
+    const execute = jest.fn().mockResolvedValue(makeReceipt({ closed: false, remaining: 100 }));
+    const deps = setup({
+      getOrderDetailUseCase: {
+        execute: jest.fn().mockResolvedValue(
+          makeOrderDetail({
+            status: 'entregada',
+            paid: 45,
+            remaining: 291,
+            payments: [
+              {
+                id: 1,
+                method: 'Efectivo',
+                amount: 45,
+                tip: 0,
+                reference: '1× Café de olla',
+                cashier: 'Carlos',
+              },
+            ],
+          }),
+        ),
+      },
+      chargeOrderUseCase: { execute },
+    });
+    await openCharge(deps).catch(() => undefined);
+
+    expect(await screen.findByText('Ya pagado $45.00 · falta $291.00')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole('radio', { name: 'Por platillo' }));
+    expect(screen.getByRole('button', { name: 'Confirmar cobro' })).toBeDisabled();
+    expect(screen.getByText('Elige los platillos que paga esta persona.')).toBeOnTheScreen();
+
+    await fireEvent.press(screen.getByRole('button', { name: 'Agregar Enchiladas suizas a esta cuenta' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Agregar Enchiladas suizas a esta cuenta' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Agregar Enchiladas suizas a esta cuenta' }));
+    expect(screen.getByLabelText('2 de Enchiladas suizas')).toBeOnTheScreen();
+    await fireEvent.press(screen.getByRole('button', { name: 'Quitar Enchiladas suizas de esta cuenta' }));
+    expect(screen.getByLabelText('Total a cobrar $145.50')).toBeOnTheScreen();
+
+    await fireEvent.press(screen.getByRole('radio', { name: 'Tarjeta débito' }));
+    await fireEvent.press(screen.getByRole('button', { name: 'Confirmar cobro' }));
+    expect(execute).toHaveBeenCalledWith(
+      { id: 'servida', remaining: 291 },
+      debit,
+      expect.objectContaining({
+        amount: 145.5,
+        label: '1× Enchiladas suizas',
+      }),
+    );
   });
 });
 
