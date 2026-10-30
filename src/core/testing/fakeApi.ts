@@ -25,12 +25,14 @@ interface StoredOrder {
   id: string;
   usuarioId: number;
   mesa: string;
-  items: { platilloId: number; cantidad: number }[];
+  /** `id` es el de la fila en orden_items (el que usa DELETE /pedidos/item/:id). */
+  items: { id: number; platilloId: number; cantidad: number }[];
   total: number;
-  estado: 'pendiente' | 'abierta';
+  estado: 'pendiente' | 'abierta' | 'cancelada';
+  tiempoApertura: string;
 }
 
-type Handler = (body: unknown, param: string) => [status: number, body?: unknown];
+type Handler = (body: unknown, param: string, query: URLSearchParams) => [status: number, body?: unknown];
 
 const json = (status: number, body?: unknown) =>
   new Response(body === undefined ? null : JSON.stringify(body), { status });
@@ -135,8 +137,14 @@ export function createFakeApi(options: FakeApiOptions = {}) {
     return [200, { accessToken, user: { ...user, password: '$2b$10$hash-de-prueba', loginAttempts: 0 } }];
   };
 
+  let nextItemId = 1;
+
   const createOrder: Handler = (body) => {
-    const { usuarioId, mesa, items } = body as Omit<StoredOrder, 'id' | 'total' | 'estado'>;
+    const { usuarioId, mesa, items } = body as {
+      usuarioId: number;
+      mesa: string;
+      items: { platilloId: number; cantidad: number }[];
+    };
     let total = 0;
     for (const item of items) {
       const found = dishes.find((d) => d.id === item.platilloId);
@@ -146,7 +154,15 @@ export function createFakeApi(options: FakeApiOptions = {}) {
       total += Number(found.precio) * item.cantidad;
     }
     const id = `orden-${orders.size + 1}`;
-    orders.set(id, { id, usuarioId, mesa, items, total, estado: 'pendiente' });
+    orders.set(id, {
+      id,
+      usuarioId,
+      mesa,
+      items: items.map((item) => ({ ...item, id: nextItemId++ })),
+      total,
+      estado: 'pendiente',
+      tiempoApertura: new Date().toISOString(),
+    });
     return [201, { success: true, message: 'Pedido registrado', ordenId: id, total: total.toFixed(2) }];
   };
 
@@ -154,8 +170,104 @@ export function createFakeApi(options: FakeApiOptions = {}) {
     const order = orders.get(id);
     if (!order) return [404, { message: 'Pedido no encontrado' }];
     order.estado = 'abierta';
+    order.tiempoApertura = new Date().toISOString();
     return [200, { success: true, message: 'Pedido enviado a cocina', ordenId: id }];
   };
+
+  const dishName = (platilloId: number) => dishes.find((d) => d.id === platilloId)?.nombre ?? null;
+  const recalculate = (order: StoredOrder) => {
+    order.total = order.items.reduce(
+      (sum, item) => sum + Number(dishes.find((d) => d.id === item.platilloId)?.precio ?? 0) * item.cantidad,
+      0,
+    );
+  };
+
+  // Como el API: solo los pedidos activos (sin cancelados), el más reciente primero.
+  const recentOrders: Handler = () => [
+    200,
+    [...orders.values()]
+      .filter((order) => order.estado !== 'cancelada')
+      .reverse()
+      .map((order) => ({
+        id: order.id,
+        customer: 'Cliente de mesa',
+        time: '08:00 p.m.',
+        item: dishName(order.items[0]?.platilloId ?? -1) ?? '—',
+        table: `Mesa ${order.mesa}`,
+        status: order.estado,
+        total: order.total,
+      })),
+  ];
+
+  const ordersByTable: Handler = (_body, _param, query) => {
+    const mesa = query.get('mesaId');
+    if (!mesa) return [400, { message: 'Debes indicar mesaId o tipo=domicilio.' }];
+    return [
+      200,
+      [...orders.values()]
+        .filter((order) => order.mesa === mesa)
+        .map((order) => ({
+          id: order.id,
+          mesaId: order.mesa,
+          estatus: order.estado,
+          total: order.total.toFixed(2),
+          tiempoApertura: order.tiempoApertura.replace('T', ' ').replace('Z', '+00'),
+          ordenItems: order.items.map((item) => ({
+            id: item.id,
+            cantidad: item.cantidad,
+            precioUnitario: String(dishes.find((d) => d.id === item.platilloId)?.precio ?? '0'),
+            platillo: { nombre: dishName(item.platilloId), imagenUrl: null },
+          })),
+        })),
+    ];
+  };
+
+  const cancelOrder: Handler = (_body, id) => {
+    const order = orders.get(id);
+    if (!order) return [404, { message: `La orden con ID ${id} no existe.` }];
+    if (order.estado !== 'abierta')
+      return [400, { message: `No se puede cancelar una comanda en estado: ${order.estado}.` }];
+    order.estado = 'cancelada';
+    return [200, { success: true, message: 'Tu comanda ha sido cancelada con éxito.' }];
+  };
+
+  const removeItem: Handler = (_body, id) => {
+    const order = [...orders.values()].find((o) => o.items.some((item) => String(item.id) === id));
+    if (!order) return [404, { message: `El producto con ID ${id} no existe en ningún pedido.` }];
+    if (order.estado !== 'pendiente')
+      return [400, { message: 'Este producto ya no se puede quitar porque el pedido ya fue confirmado.' }];
+    order.items = order.items.filter((item) => String(item.id) !== id);
+    recalculate(order);
+    return [200, { success: true, message: 'Producto eliminado de tu pedido.', ordenId: order.id }];
+  };
+
+  const adminStats: Handler = () => {
+    const active = [...orders.values()].filter((order) => order.estado !== 'cancelada');
+    return [
+      200,
+      {
+        totalVentas: active.reduce((sum, order) => sum + order.total, 0),
+        pedidosPendientes: active.filter((order) => order.estado === 'pendiente').length,
+        pedidosEnPreparacion: active.filter((order) => order.estado === 'abierta').length,
+        mesasOcupadas: 0,
+        mesasLibres: tables.length,
+        totalMesas: tables.length,
+      },
+    ];
+  };
+
+  const tableMap: Handler = () => [
+    200,
+    tables
+      .filter((table) => table.activa !== false)
+      .map((table) => ({
+        id: table.id,
+        numero: table.numero,
+        capacidad: table.capacidad,
+        areaNombre: 'Salón',
+        estado: 'disponible',
+      })),
+  ];
 
   const createReservation: Handler = (body) => {
     const created = {
@@ -182,6 +294,12 @@ export function createFakeApi(options: FakeApiOptions = {}) {
     ['GET', /^mesas$/, false, () => [200, tables]],
     ['POST', /^pedidos\/mesa$/, true, createOrder],
     ['POST', /^pedidos\/confirmar\/([^/]+)$/, true, confirmOrder],
+    ['GET', /^pedidos\/admin\/recent$/, true, recentOrders],
+    ['GET', /^pedidos\/usuario$/, true, ordersByTable],
+    ['PATCH', /^pedidos\/cancelar\/([^/]+)$/, true, cancelOrder],
+    ['DELETE', /^pedidos\/item\/([^/]+)$/, true, removeItem],
+    ['GET', /^dashboard\/admin\/stats$/, true, adminStats],
+    ['GET', /^reservations\/map$/, false, tableMap],
     ['GET', /^reservations$/, true, () => [200, reservations]],
     ['POST', /^reservations$/, false, createReservation],
   ];
@@ -206,7 +324,7 @@ export function createFakeApi(options: FakeApiOptions = {}) {
       if (needsToken && !tokens.has(authorization?.replace(/^Bearer /, '') ?? '')) {
         return json(401, { message: 'Unauthorized' });
       }
-      const [status, responseBody] = handler(body, match[1] ?? '');
+      const [status, responseBody] = handler(body, match[1] ?? '', url.searchParams);
       return json(status, responseBody);
     }
     return json(404, { message: `Cannot ${method} /${path}` });

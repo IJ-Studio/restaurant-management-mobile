@@ -1,8 +1,9 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import DateTimePicker, { type DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, spacing } from '../../../../shared/presentation/theme';
+import { colors, radius, sizes, spacing, typography } from '../../../../shared/presentation/theme';
 import { formatDate, formatTime } from '../../../../shared/utils/formatDateTime';
 
 type Mode = 'date' | 'time';
@@ -35,20 +36,31 @@ export function DateTimeField({ value, onChange, minimumDate, hasError }: Props)
   return (
     <View style={styles.row}>
       <Pressable
-        style={[styles.button, hasError && styles.error]}
+        style={({ pressed }) => [styles.button, hasError && styles.error, pressed && styles.pressed]}
         onPress={() => setMode('date')}
         accessibilityRole="button"
         accessibilityLabel={value ? `Fecha: ${formatDate(value)}` : 'Elegir fecha'}
       >
-        <Text style={styles.text}>{value ? formatDate(value) : 'Fecha'}</Text>
+        <Ionicons name="calendar-outline" size={18} color={colors.brandStrong} />
+        <Text style={[styles.text, !value && styles.placeholder]} numberOfLines={1}>
+          {value ? formatDate(value) : 'Fecha'}
+        </Text>
       </Pressable>
       <Pressable
-        style={[styles.button, styles.time, hasError && styles.error]}
+        style={({ pressed }) => [
+          styles.button,
+          styles.time,
+          hasError && styles.error,
+          pressed && styles.pressed,
+        ]}
         onPress={() => setMode('time')}
         accessibilityRole="button"
         accessibilityLabel={value ? `Hora: ${formatTime(value)}` : 'Elegir hora'}
       >
-        <Text style={styles.text}>{value ? formatTime(value) : 'Hora'}</Text>
+        <Ionicons name="time-outline" size={18} color={colors.brandStrong} />
+        <Text style={[styles.text, !value && styles.placeholder]} numberOfLines={1}>
+          {value ? formatTime(value) : 'Hora'}
+        </Text>
       </Pressable>
       {mode && (
         <DateTimePicker
@@ -56,6 +68,7 @@ export function DateTimeField({ value, onChange, minimumDate, hasError }: Props)
           mode={mode}
           minimumDate={mode === 'date' ? minimumDate : undefined}
           minuteInterval={15}
+          accentColor={colors.brand}
           onChange={handleChange}
         />
       )}
@@ -64,16 +77,22 @@ export function DateTimeField({ value, onChange, minimumDate, hasError }: Props)
 }
 
 const styles = StyleSheet.create({
-  row: { flexDirection: 'row' },
+  row: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   button: {
     flex: 2,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    minHeight: sizes.control,
     borderWidth: 1,
     borderColor: colors.border,
-    borderRadius: 8,
+    borderRadius: radius.sm,
+    backgroundColor: colors.surface,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.md,
   },
-  time: { flex: 1, marginLeft: spacing.sm },
+  time: { flex: 1 },
+  pressed: { backgroundColor: colors.elevated },
   error: { borderColor: colors.danger },
-  text: { fontSize: 16, color: colors.text },
+  text: { ...typography.body, color: colors.text, flexShrink: 1 },
+  placeholder: { color: colors.textSecondary },
 });

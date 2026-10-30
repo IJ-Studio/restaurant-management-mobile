@@ -1,4 +1,4 @@
-export type ReservationStatus = 'pendiente' | 'confirmada' | 'cancelada' | 'completada';
+export type ReservationStatus = 'pendiente' | 'confirmada' | 'cancelada' | 'completada' | 'no_show';
 export type ReservationChannel = 'telefono' | 'presencial';
 
 export interface Reservation {
@@ -34,7 +34,8 @@ export interface CreatedReservation {
   message: string;
 }
 
-const INACTIVE: readonly string[] = ['cancelada', 'completada'];
+// `no_show`: el cliente no llegó; la reservación ya no ocupa la mesa.
+const INACTIVE: readonly string[] = ['cancelada', 'completada', 'no_show'];
 
 export function isActive(reservation: Reservation): boolean {
   return !INACTIVE.includes(reservation.status);

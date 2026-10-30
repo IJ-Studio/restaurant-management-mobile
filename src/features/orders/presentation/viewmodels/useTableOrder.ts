@@ -1,14 +1,16 @@
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { useDependencies } from '../../../../core/di/DependenciesProvider';
 import { userMessage } from '../../../../core/errors/AppError';
 import { estimatedTotal, itemCount } from '../../domain/entities/TableOrder';
+import { orderQueryKeys } from './orderQueryKeys';
 import { useCurrentOrder } from './useCurrentOrder';
 
 /** ViewModel del pedido de la mesa: mesas (React Query), pedido local (Zustand) y envío a cocina. */
 export function useTableOrder() {
   const { listTablesUseCase, sendOrderToKitchenUseCase, currentOrderStore, sessionStore } = useDependencies();
   const order = useCurrentOrder((state) => state.order);
+  const queryClient = useQueryClient();
 
   const tables = useQuery({
     queryKey: ['tables'],
@@ -21,7 +23,11 @@ export function useTableOrder() {
       const waiterId = Number(sessionStore.getState().session?.user.id);
       return sendOrderToKitchenUseCase.execute(currentOrderStore.getState().order, waiterId);
     },
-    onSuccess: () => currentOrderStore.getState().clear(),
+    onSuccess: () => {
+      currentOrderStore.getState().clear();
+      // El pedido recién enviado aparece en la pestaña Pedidos sin esperar al siguiente refresco.
+      void queryClient.invalidateQueries({ queryKey: orderQueryKeys.all });
+    },
   });
 
   const actions = currentOrderStore.getState();
