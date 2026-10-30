@@ -4,7 +4,7 @@ import { AppError } from '../../../../core/errors/AppError';
 import { makeTestDependencies } from '../../../../core/testing/makeTestDependencies';
 import { renderWithProviders } from '../../../../core/testing/renderWithProviders';
 import { makeDashboardSummary } from '../../__fixtures__/dashboard';
-import { DashboardScreen } from '../screens/DashboardScreen';
+import { DashboardScreen, greeting } from '../screens/DashboardScreen';
 
 function renderDashboard(execute: jest.Mock) {
   return renderWithProviders(<DashboardScreen />, makeTestDependencies({ getDashboardUseCase: { execute } }));
@@ -54,5 +54,13 @@ describe('DashboardScreen', () => {
   it('un error inesperado usa un mensaje genérico', async () => {
     await renderDashboard(jest.fn().mockRejectedValue(new Error('boom')));
     expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo cargar el resumen del día.');
+  });
+});
+
+describe('greeting', () => {
+  it('saluda según la hora del día', () => {
+    expect(greeting(new Date(2026, 9, 28, 9))).toBe('Buenos días');
+    expect(greeting(new Date(2026, 9, 28, 15))).toBe('Buenas tardes');
+    expect(greeting(new Date(2026, 9, 28, 21))).toBe('Buenas noches');
   });
 });

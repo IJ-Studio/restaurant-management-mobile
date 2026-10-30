@@ -5,7 +5,6 @@
   "dependencies": {
     "@expo-google-fonts/dm-sans": "^0.4.2",
     "@expo-google-fonts/fraunces": "^0.4.1",
-    "@expo-google-fonts/ibarra-real-nova": "^0.4.2",
     "@expo/vector-icons": "^15.0.2",
     "@react-native-community/datetimepicker": "9.2.1",
     "@react-navigation/bottom-tabs": "^7.20.0",

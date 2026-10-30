@@ -9,6 +9,14 @@ export const colors = {
   brandStrong: '#b54803',
   /** Fondo naranja tenue (brand al 10 %), como los badges y el letrero "Abierto ahora" de la web. */
   brandSoft: '#fdefe6',
+  /** Naranja profundo para el final del degradado de marca (blanco encima: 9.4:1). */
+  brandDeep: '#7c2d12',
+  /** Texto secundario sobre el degradado de marca (blanco al 85 %, pasa AA en todo el degradado). */
+  textOnBrandMuted: 'rgba(255, 255, 255, 0.85)',
+  /** Trazos decorativos sobre el degradado (no llevan información). */
+  onBrandDecor: 'rgba(255, 255, 255, 0.08)',
+  /** Fondo de un elemento sobre el degradado (avatar, chips). */
+  onBrandSurface: 'rgba(255, 255, 255, 0.16)',
   /** Gris pizarra del botón secundario y los enlaces de la web. */
   secondary: '#232f38',
 

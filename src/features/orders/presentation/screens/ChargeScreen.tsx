@@ -7,6 +7,7 @@ import { Card } from '../../../../shared/presentation/components/Card';
 import { Chip } from '../../../../shared/presentation/components/Chip';
 import { ErrorState } from '../../../../shared/presentation/components/ErrorState';
 import { LoadingState } from '../../../../shared/presentation/components/LoadingState';
+import { HeroCard } from '../../../../shared/presentation/components/HeroCard';
 import { Notice } from '../../../../shared/presentation/components/Notice';
 import { TextField } from '../../../../shared/presentation/components/TextField';
 import { colors, radius, sizes, spacing, typography } from '../../../../shared/presentation/theme';
@@ -76,8 +77,7 @@ export function ChargeScreen() {
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
       <ScrollView contentContainerStyle={styles.content} keyboardShouldPersistTaps="handled">
-        <Card elevation="raised" style={styles.totalCard}>
-          <Text style={styles.eyebrow}>{params.place}</Text>
+        <HeroCard align="center" eyebrow={params.place}>
           <Text style={styles.toPay} accessibilityLabel={`Total a cobrar ${formatCurrency(summary.toPay)}`}>
             {formatCurrency(summary.toPay)}
           </Text>
@@ -86,7 +86,7 @@ export function ChargeScreen() {
             {formatCurrency(vm.order.total)}
             {vm.tip > 0 ? ` + propina ${formatCurrency(vm.tip)}` : ''}
           </Text>
-        </Card>
+        </HeroCard>
 
         <Text style={styles.section}>¿Cómo paga?</Text>
         <View style={styles.chips} accessibilityRole="radiogroup">
@@ -198,10 +198,13 @@ const CHECK_SIZE = 88;
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: spacing.xxxl },
-  totalCard: { alignItems: 'center', paddingVertical: spacing.xl },
-  eyebrow: { ...typography.overline, color: colors.brandStrong },
-  toPay: { ...typography.amount, color: colors.text, marginTop: spacing.sm },
-  toPayHint: { ...typography.small, color: colors.textSecondary, textAlign: 'center', marginTop: spacing.xs },
+  toPay: { ...typography.amount, color: colors.textOnBrand, marginTop: spacing.sm },
+  toPayHint: {
+    ...typography.small,
+    color: colors.textOnBrandMuted,
+    textAlign: 'center',
+    marginTop: spacing.xs,
+  },
   section: {
     ...typography.overline,
     color: colors.brandStrong,

@@ -1,9 +1,10 @@
 import {
-  IbarraRealNova_400Regular,
-  IbarraRealNova_500Medium,
-  IbarraRealNova_600SemiBold,
-  IbarraRealNova_700Bold,
-} from '@expo-google-fonts/ibarra-real-nova';
+  DMSans_400Regular,
+  DMSans_500Medium,
+  DMSans_600SemiBold,
+  DMSans_700Bold,
+} from '@expo-google-fonts/dm-sans';
+import { Fraunces_600SemiBold, Fraunces_700Bold } from '@expo-google-fonts/fraunces';
 
 import { fonts } from './typography';
 
@@ -12,8 +13,10 @@ import { fonts } from './typography';
  * pantallas (y sus pruebas) no carguen los .ttf al importar los tokens.
  */
 export const appFonts = {
-  [fonts.regular]: IbarraRealNova_400Regular,
-  [fonts.medium]: IbarraRealNova_500Medium,
-  [fonts.semibold]: IbarraRealNova_600SemiBold,
-  [fonts.bold]: IbarraRealNova_700Bold,
+  [fonts.display]: Fraunces_700Bold,
+  [fonts.displayMedium]: Fraunces_600SemiBold,
+  [fonts.regular]: DMSans_400Regular,
+  [fonts.medium]: DMSans_500Medium,
+  [fonts.semibold]: DMSans_600SemiBold,
+  [fonts.bold]: DMSans_700Bold,
 };

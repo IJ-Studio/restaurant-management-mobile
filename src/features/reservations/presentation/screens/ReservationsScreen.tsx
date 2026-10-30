@@ -29,11 +29,15 @@ export function ReservationsScreen() {
   const empty =
     view === 'active' ? (
       <EmptyState
+        icon="calendar-outline"
         message="No hay reservaciones activas."
         action={{ label: 'Ver las recientes', onPress: () => setView('recent') }}
       />
     ) : (
-      <EmptyState message={`No hubo reservaciones en los últimos ${RECENT_RESERVATIONS_DAYS} días.`} />
+      <EmptyState
+        icon="time-outline"
+        message={`No hubo reservaciones en los últimos ${RECENT_RESERVATIONS_DAYS} días.`}
+      />
     );
 
   let content;

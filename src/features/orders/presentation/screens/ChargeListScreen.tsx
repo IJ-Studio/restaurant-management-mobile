@@ -59,7 +59,7 @@ export function ChargeListScreen() {
         />
       )}
       ItemSeparatorComponent={() => <View style={styles.separator} />}
-      ListEmptyComponent={<EmptyState message="No hay cuentas por cobrar." />}
+      ListEmptyComponent={<EmptyState message="No hay cuentas por cobrar." icon="wallet-outline" />}
       refreshControl={
         <RefreshControl
           refreshing={vm.isRefreshing}
