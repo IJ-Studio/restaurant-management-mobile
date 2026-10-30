@@ -46,7 +46,7 @@ describe('AppNavigator', () => {
 
     const root = navigationRef.getRootState()!;
     expect(root.routes[root.index].name).toBe('menu');
-    expect(screen.queryByText('Indicadores del día (HU-08).')).toBeNull();
+    expect(screen.queryByText('Resumen del día')).toBeNull();
   });
 
   it('un administrador sí entra al dashboard', async () => {
@@ -56,7 +56,7 @@ describe('AppNavigator', () => {
     await act(() => navigationRef.navigate('dashboard'));
 
     expect(navigationRef.getCurrentRoute()?.name).toBe('dashboard');
-    expect(screen.getByText('Indicadores del día (HU-08).')).toBeOnTheScreen();
+    expect(screen.getByText('Resumen del día')).toBeOnTheScreen();
   });
 
   it('si cambia el rol en la sesión, se reconstruyen los tabs sin historial del rol anterior', async () => {
@@ -68,6 +68,9 @@ describe('AppNavigator', () => {
     await act(() => deps.sessionStore.getState().setSession(cocina));
 
     expect(tabButton('Dashboard')).toBeNull();
-    expect(navigationRef.getCurrentRoute()?.name).toBe('orders');
+    // Pedidos tiene su propio stack: la pestaña activa es la raíz; la ruta interna, su lista.
+    const root = navigationRef.getRootState()!;
+    expect(root.routes[root.index].name).toBe('orders');
+    expect(navigationRef.getCurrentRoute()?.name).toBe('OrdersList');
   });
 });

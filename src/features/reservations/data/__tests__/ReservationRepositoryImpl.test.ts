@@ -78,6 +78,13 @@ describe('ReservationRepositoryImpl', () => {
     expect(list[0].customerPhone).toBeUndefined();
   });
 
+  it('convierte la fecha de Postgres a ISO para que Hermes la entienda', async () => {
+    const get = jest.fn().mockResolvedValue([{ ...row, fechaHora: '2026-10-02 20:30:00+00' }]);
+    const [reservation] = await setup({ get }).listFrom(new Date());
+
+    expect(reservation.dateTime).toBe('2026-10-02T20:30:00+00:00');
+  });
+
   it('explica un 403 (el API hoy solo deja listar al administrador)', async () => {
     const get = jest.fn().mockRejectedValue(new AppError('forbidden', 'Forbidden resource', 403));
     await expect(setup({ get }).listFrom(new Date())).rejects.toThrow(

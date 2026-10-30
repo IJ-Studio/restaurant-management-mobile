@@ -19,9 +19,16 @@ export function makeTestDependencies(overrides: Partial<Dependencies> = {}): Dep
     getDishUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
     createReservationUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
     listActiveReservationsUseCase: { execute: pending() },
+    listRecentReservationsUseCase: { execute: pending() },
     currentOrderStore: createCurrentOrderStore(),
     listTablesUseCase: { execute: pending() },
     sendOrderToKitchenUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
+    listActiveOrdersUseCase: { execute: pending() },
+    getOrderDetailUseCase: { execute: pending() },
+    confirmOrderUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
+    cancelOrderUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
+    removeOrderItemUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
+    getDashboardUseCase: { execute: pending() },
     ...overrides,
   };
 }

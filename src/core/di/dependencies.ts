@@ -1,3 +1,6 @@
+import { DashboardRemoteDataSource } from '../../features/admin/data/datasources/DashboardRemoteDataSource';
+import { DashboardRepositoryImpl } from '../../features/admin/data/repositories/DashboardRepositoryImpl';
+import { GetDashboardUseCase } from '../../features/admin/domain/usecases/GetDashboardUseCase';
 import { AuthRemoteDataSource } from '../../features/auth/data/datasources/AuthRemoteDataSource';
 import { AuthRepositoryImpl } from '../../features/auth/data/repositories/AuthRepositoryImpl';
 import { SecureSessionStorage } from '../../features/auth/data/storage/SecureSessionStorage';
@@ -12,7 +15,12 @@ import { GetDishUseCase } from '../../features/menu/domain/usecases/GetDishUseCa
 import { GetMenuUseCase } from '../../features/menu/domain/usecases/GetMenuUseCase';
 import { OrderRemoteDataSource } from '../../features/orders/data/datasources/OrderRemoteDataSource';
 import { OrderRepositoryImpl } from '../../features/orders/data/repositories/OrderRepositoryImpl';
+import { CancelOrderUseCase } from '../../features/orders/domain/usecases/CancelOrderUseCase';
+import { ConfirmOrderUseCase } from '../../features/orders/domain/usecases/ConfirmOrderUseCase';
+import { GetOrderDetailUseCase } from '../../features/orders/domain/usecases/GetOrderDetailUseCase';
+import { ListActiveOrdersUseCase } from '../../features/orders/domain/usecases/ListActiveOrdersUseCase';
 import { ListTablesUseCase } from '../../features/orders/domain/usecases/ListTablesUseCase';
+import { RemoveOrderItemUseCase } from '../../features/orders/domain/usecases/RemoveOrderItemUseCase';
 import { SendOrderToKitchenUseCase } from '../../features/orders/domain/usecases/SendOrderToKitchenUseCase';
 import {
   createCurrentOrderStore,
@@ -22,6 +30,7 @@ import { ReservationRemoteDataSource } from '../../features/reservations/data/da
 import { ReservationRepositoryImpl } from '../../features/reservations/data/repositories/ReservationRepositoryImpl';
 import { CreateReservationUseCase } from '../../features/reservations/domain/usecases/CreateReservationUseCase';
 import { ListActiveReservationsUseCase } from '../../features/reservations/domain/usecases/ListActiveReservationsUseCase';
+import { ListRecentReservationsUseCase } from '../../features/reservations/domain/usecases/ListRecentReservationsUseCase';
 import { SESSION_EXPIRED_MESSAGE } from '../errors/AppError';
 import { httpClient, type HttpClient } from '../http/httpClient';
 
@@ -40,9 +49,16 @@ export interface Dependencies {
   getDishUseCase: Pick<GetDishUseCase, 'execute'>;
   createReservationUseCase: Pick<CreateReservationUseCase, 'execute'>;
   listActiveReservationsUseCase: Pick<ListActiveReservationsUseCase, 'execute'>;
+  listRecentReservationsUseCase: Pick<ListRecentReservationsUseCase, 'execute'>;
   currentOrderStore: CurrentOrderStore;
   listTablesUseCase: Pick<ListTablesUseCase, 'execute'>;
   sendOrderToKitchenUseCase: Pick<SendOrderToKitchenUseCase, 'execute'>;
+  listActiveOrdersUseCase: Pick<ListActiveOrdersUseCase, 'execute'>;
+  getOrderDetailUseCase: Pick<GetOrderDetailUseCase, 'execute'>;
+  confirmOrderUseCase: Pick<ConfirmOrderUseCase, 'execute'>;
+  cancelOrderUseCase: Pick<CancelOrderUseCase, 'execute'>;
+  removeOrderItemUseCase: Pick<RemoveOrderItemUseCase, 'execute'>;
+  getDashboardUseCase: Pick<GetDashboardUseCase, 'execute'>;
 }
 
 /**
@@ -79,6 +95,7 @@ export function createDependencies({
   const menuRepository = new MenuRepositoryImpl(new MenuRemoteDataSource(http));
   const reservationRepository = new ReservationRepositoryImpl(new ReservationRemoteDataSource(http));
   const orderRepository = new OrderRepositoryImpl(new OrderRemoteDataSource(http));
+  const dashboardRepository = new DashboardRepositoryImpl(new DashboardRemoteDataSource(http));
 
   return {
     httpClient: http,
@@ -90,8 +107,15 @@ export function createDependencies({
     getDishUseCase: new GetDishUseCase(menuRepository),
     createReservationUseCase: new CreateReservationUseCase(reservationRepository),
     listActiveReservationsUseCase: new ListActiveReservationsUseCase(reservationRepository),
+    listRecentReservationsUseCase: new ListRecentReservationsUseCase(reservationRepository),
     currentOrderStore,
     listTablesUseCase: new ListTablesUseCase(orderRepository),
     sendOrderToKitchenUseCase: new SendOrderToKitchenUseCase(orderRepository),
+    listActiveOrdersUseCase: new ListActiveOrdersUseCase(orderRepository),
+    getOrderDetailUseCase: new GetOrderDetailUseCase(orderRepository),
+    confirmOrderUseCase: new ConfirmOrderUseCase(orderRepository),
+    cancelOrderUseCase: new CancelOrderUseCase(orderRepository),
+    removeOrderItemUseCase: new RemoveOrderItemUseCase(orderRepository),
+    getDashboardUseCase: new GetDashboardUseCase(dashboardRepository, orderRepository),
   };
 }

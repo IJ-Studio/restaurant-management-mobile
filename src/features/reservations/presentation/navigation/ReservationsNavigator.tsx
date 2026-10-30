@@ -1,5 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import { stackScreenOptions } from '../../../../core/navigation/navigationTheme';
 import { NewReservationScreen } from '../screens/NewReservationScreen';
 import { ReservationsScreen } from '../screens/ReservationsScreen';
 
@@ -12,7 +13,7 @@ const Stack = createNativeStackNavigator<ReservationsStackParamList>();
 
 export function ReservationsNavigator() {
   return (
-    <Stack.Navigator>
+    <Stack.Navigator screenOptions={stackScreenOptions}>
       <Stack.Screen
         name="ReservationsList"
         component={ReservationsScreen}

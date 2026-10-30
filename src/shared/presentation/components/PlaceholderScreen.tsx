@@ -1,4 +1,7 @@
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, View } from 'react-native';
+
+import { colors, spacing } from '../theme';
+import { ScreenHeader } from './ScreenHeader';
 
 interface Props {
   title: string;
@@ -9,10 +12,7 @@ interface Props {
 export function PlaceholderScreen({ title, description }: Props) {
   return (
     <View style={styles.container}>
-      <Text style={styles.title} accessibilityRole="header">
-        {title}
-      </Text>
-      <Text style={styles.description}>{description}</Text>
+      <ScreenHeader eyebrow="Próximamente" title={title} subtitle={description} align="center" />
     </View>
   );
 }
@@ -22,9 +22,7 @@ const styles = StyleSheet.create({
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
-    padding: 24,
-    backgroundColor: '#fff',
+    padding: spacing.xl,
+    backgroundColor: colors.background,
   },
-  title: { fontSize: 22, fontWeight: '700', color: '#1f2933' },
-  description: { fontSize: 14, color: '#52606d', marginTop: 8, textAlign: 'center' },
 });

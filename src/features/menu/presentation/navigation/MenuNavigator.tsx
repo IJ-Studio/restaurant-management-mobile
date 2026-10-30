@@ -1,5 +1,6 @@
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 
+import { stackScreenOptions } from '../../../../core/navigation/navigationTheme';
 import { CurrentOrderButton } from '../../../orders/presentation/components/CurrentOrderButton';
 import { TableOrderScreen } from '../../../orders/presentation/screens/TableOrderScreen';
 import { DishDetailScreen } from '../screens/DishDetailScreen';
@@ -18,6 +19,7 @@ export function MenuNavigator() {
   return (
     <Stack.Navigator
       screenOptions={({ navigation }) => ({
+        ...stackScreenOptions,
         headerRight: () => <CurrentOrderButton onPress={() => navigation.navigate('TableOrder')} />,
       })}
     >
