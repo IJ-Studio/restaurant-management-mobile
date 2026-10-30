@@ -15,6 +15,8 @@ import { formatTime } from '../../../../shared/utils/formatDateTime';
 import type { OrderItem } from '../../domain/entities/ActiveOrder';
 import { ACTION_LABEL, orderStatusLabel, orderStatusTone, STEP_FOR } from '../components/orderLabels';
 import type { OrdersStackParamList } from '../navigation/OrdersNavigator';
+import { useSession } from '../../../auth/presentation/viewmodels/useSession';
+import { incidentSummary, useIncidents } from '../../../kitchen/presentation/viewmodels';
 import { useOrderDetail } from '../viewmodels/useOrderDetail';
 
 type Props = NativeStackScreenProps<OrdersStackParamList, 'OrderDetail'>;
@@ -53,6 +55,10 @@ function ItemRow({
 export function OrderDetailScreen({ route, navigation }: Props) {
   const { orderId, place } = route.params;
   const vm = useOrderDetail(orderId);
+  const { incidents } = useIncidents(orderId);
+  const role = useSession((state) => state.session?.user.role);
+  // Cocina, piso y administración pueden avisar de un problema con el pedido.
+  const canReport = role === 'cocina' || role === 'mesero' || role === 'admin';
 
   if (vm.isLoading) return <LoadingState message="Cargando pedido…" />;
   if (!vm.order) {
@@ -109,6 +115,9 @@ export function OrderDetailScreen({ route, navigation }: Props) {
       {order.kitchenNotes && (
         <Notice tone="warning" message={`Nota para cocina: ${order.kitchenNotes}`} style={styles.notice} />
       )}
+      {incidents.map((incident) => (
+        <Notice key={incident.id} tone="warning" message={incidentSummary(incident)} style={styles.notice} />
+      ))}
       {vm.notice && <Notice tone="success" message={vm.notice} style={styles.notice} />}
       {vm.actionError && <Notice message={vm.actionError} style={styles.notice} />}
 
@@ -181,6 +190,14 @@ export function OrderDetailScreen({ route, navigation }: Props) {
           accessibilityLabel={ACTION_LABEL.charge}
           variant="secondary"
           onPress={() => navigation.navigate('Charge', { orderId, place })}
+          style={styles.action}
+        />
+      )}
+      {canReport && (
+        <Button
+          label="Reportar un problema"
+          variant="outline"
+          onPress={() => navigation.navigate('ReportIncident', { orderId, place })}
           style={styles.action}
         />
       )}

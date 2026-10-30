@@ -38,6 +38,12 @@ export function makeTestDependencies(overrides: Partial<Dependencies> = {}): Dep
     getCashSessionUseCase: { execute: pending() },
     openCashRegisterUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
     closeCashRegisterUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
+    // Sin incidencias por defecto: las listas de pedidos las consultan siempre.
+    listIncidentsUseCase: { execute: jest.fn().mockResolvedValue([]) },
+    reportIncidentUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
+    listInventoryProductsUseCase: { execute: pending() },
+    reportWasteUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
+    listWasteTodayUseCase: { execute: pending() },
     ...overrides,
   };
 }

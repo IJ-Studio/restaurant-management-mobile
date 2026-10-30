@@ -11,11 +11,13 @@ import { colors, spacing } from '../../../../shared/presentation/theme';
 import { ACTION_LABEL } from '../components/orderLabels';
 import { OrderCard } from '../components/OrderCard';
 import type { OrdersStackParamList } from '../navigation/OrdersNavigator';
+import { incidentSummary, useIncidents } from '../../../kitchen/presentation/viewmodels';
 import { useActiveOrders } from '../viewmodels/useActiveOrders';
 
 export function OrdersScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<OrdersStackParamList>>();
   const vm = useActiveOrders();
+  const { byOrder } = useIncidents();
 
   if (vm.isLoading) return <LoadingState message="Cargando pedidos…" />;
   if (vm.errorMessage && !vm.hasData) return <ErrorState message={vm.errorMessage} onRetry={vm.refresh} />;
@@ -64,6 +66,7 @@ export function OrdersScreen() {
               order={item}
               now={now}
               showAllItems={vm.kitchen}
+              alert={byOrder.get(item.id) ? incidentSummary(byOrder.get(item.id)!) : undefined}
               onPress={
                 vm.canOpen
                   ? () => navigation.navigate('OrderDetail', { orderId: item.id, place: item.place })
