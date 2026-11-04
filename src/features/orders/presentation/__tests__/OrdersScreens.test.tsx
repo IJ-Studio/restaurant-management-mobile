@@ -209,11 +209,17 @@ describe('Pedidos: detalle', () => {
     );
 
     expect(await screen.findByText(/primeros 2 minutos/)).toBeOnTheScreen();
+    // Sin motivo no se abre el aviso (Prioridad 3.3: el API lo exige).
+    await fireEvent.press(screen.getByRole('button', { name: 'Cancelar pedido' }));
+    expect(await screen.findByText('Escribe el motivo de la cancelación.')).toBeOnTheScreen();
+    expect(alert).not.toHaveBeenCalled();
+
+    await fireEvent.changeText(screen.getByLabelText('Motivo de la cancelación'), 'El cliente cambió de opinión');
     await fireEvent.press(screen.getByRole('button', { name: 'Cancelar pedido' }));
 
     expect(alert).toHaveBeenCalled();
     expect(await screen.findByRole('alert')).toHaveTextContent('Tu comanda ha sido cancelada con éxito.');
-    expect(cancel).toHaveBeenCalledWith('a');
+    expect(cancel).toHaveBeenCalledWith('a', 'El cliente cambió de opinión');
     alert.mockRestore();
   });
 

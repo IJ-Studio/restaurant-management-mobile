@@ -4,7 +4,10 @@ import type { OrderRepository } from '../repositories/OrderRepository';
 export class CancelOrderUseCase {
   constructor(private readonly repository: OrderRepository) {}
 
-  execute(orderId: string): Promise<string> {
-    return this.repository.cancel(orderId);
+  /** El motivo es obligatorio: sin él ni siquiera se llama al API. */
+  async execute(orderId: string, reason: string): Promise<string> {
+    const motivo = reason.trim();
+    if (motivo.length < 3) throw new Error('Escribe el motivo de la cancelación.');
+    return this.repository.cancel(orderId, motivo);
   }
 }

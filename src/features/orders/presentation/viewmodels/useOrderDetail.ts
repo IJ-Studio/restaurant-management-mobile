@@ -44,7 +44,10 @@ export function useOrderDetail(orderId: string, now: () => Date = () => new Date
     mutationFn: async () => (await deps.confirmOrderUseCase.execute(orderId)).message,
     ...handlers,
   });
-  const cancel = useMutation({ mutationFn: () => deps.cancelOrderUseCase.execute(orderId), ...handlers });
+  const cancel = useMutation({
+    mutationFn: (reason: string) => deps.cancelOrderUseCase.execute(orderId, reason),
+    ...handlers,
+  });
   const removeItem = useMutation({
     mutationFn: (itemId: number) => deps.removeOrderItemUseCase.execute(itemId),
     ...handlers,
@@ -66,7 +69,7 @@ export function useOrderDetail(orderId: string, now: () => Date = () => new Date
     refresh: () => query.refetch(),
     can,
     confirm: () => confirm.mutate(),
-    cancel: () => cancel.mutate(),
+    cancel: (reason: string) => cancel.mutate(reason),
     removeItem: (itemId: number) => removeItem.mutate(itemId),
     advance: (next: OrderStep) => step.mutate(next),
     /** La acción que se está mandando, para mostrar el indicador en su botón. */

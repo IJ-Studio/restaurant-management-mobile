@@ -93,9 +93,9 @@ describe('OrderRepositoryImpl', () => {
     const del = jest.fn().mockResolvedValue({ success: true, message: 'Producto eliminado de tu pedido.' });
     const repository = setup({ patch, delete: del });
 
-    await expect(repository.cancel('66ff')).resolves.toBe('Tu comanda ha sido cancelada con éxito.');
+    await expect(repository.cancel('66ff', 'El cliente se fue')).resolves.toBe('Tu comanda ha sido cancelada con éxito.');
     await expect(repository.removeItem(10786)).resolves.toBe('Producto eliminado de tu pedido.');
-    expect(patch).toHaveBeenCalledWith('pedidos/cancelar/66ff');
+    expect(patch).toHaveBeenCalledWith('pedidos/cancelar/66ff', { motivo: 'El cliente se fue' });
     expect(del).toHaveBeenCalledWith('pedidos/item/10786');
   });
 
@@ -104,7 +104,7 @@ describe('OrderRepositoryImpl', () => {
       patch: jest.fn().mockResolvedValue({ success: true }),
       delete: jest.fn().mockResolvedValue({ success: true }),
     });
-    await expect(repository.cancel('66ff')).resolves.toBe('Pedido cancelado.');
+    await expect(repository.cancel('66ff', 'Motivo')).resolves.toBe('Pedido cancelado.');
     await expect(repository.removeItem(1)).resolves.toBe('Platillo quitado del pedido.');
   });
 });
