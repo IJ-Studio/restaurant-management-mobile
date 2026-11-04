@@ -1,3 +1,4 @@
+import { properName } from '../../../../shared/utils/formatCase';
 import { toIsoTimestamp } from '../../../../shared/utils/apiDate';
 import type { CreatedReservation, NewReservation, Reservation } from '../../domain/entities/Reservation';
 import type {
@@ -9,7 +10,7 @@ import type {
 export function toReservation(dto: ReservationDto): Reservation {
   return {
     id: dto.id,
-    customerName: dto.clienteNombre,
+    customerName: properName(dto.clienteNombre),
     customerPhone: dto.clienteTelefono ?? undefined,
     customerEmail: dto.clienteEmail ?? undefined,
     dateTime: toIsoTimestamp(dto.fechaHora),

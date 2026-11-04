@@ -1,3 +1,4 @@
+import { sentenceCase } from '../../../../shared/utils/formatCase';
 import { toIsoTimestamp } from '../../../../shared/utils/apiDate';
 import { tableNumberFromPlace, type ActiveOrder, type OrderDetail } from '../../domain/entities/ActiveOrder';
 import type { ChargeReceipt, PaymentMethod } from '../../domain/entities/Payment';
@@ -23,13 +24,13 @@ export function toActiveOrder(dto: RecentOrderDto): ActiveOrder {
   const place = dto.table && dto.table !== 'N/A' ? dto.table : 'Sin mesa';
   const items = (dto.items ?? [])
     .filter((item) => item.nombre)
-    .map((item) => ({ name: item.nombre ?? '', quantity: item.cantidad ?? 1 }));
+    .map((item) => ({ name: sentenceCase(item.nombre), quantity: item.cantidad ?? 1 }));
   return {
     id: dto.id,
     customer: dto.customer?.trim() || 'Sin cliente',
     time: dto.time ?? '—',
     openedAt: dto.openedAt ? toIsoTimestamp(dto.openedAt) : undefined,
-    firstItem: dto.item ?? items[0]?.name ?? '—',
+    firstItem: (dto.item ? sentenceCase(dto.item) : items[0]?.name) || '—',
     items,
     place,
     tableNumber: tableNumberFromPlace(place),
@@ -67,7 +68,7 @@ export function toOrderDetail(dto: OrderDetailDto): OrderDetail {
     kitchenNotes: dto.notasCocina?.trim() || undefined,
     items: dto.items.map((item) => ({
       id: item.id,
-      name: item.platillo.nombre ?? 'Platillo',
+      name: sentenceCase(item.platillo.nombre) || 'Platillo',
       quantity: item.cantidad,
       unitPrice: toAmount(item.precioUnitario),
       notes: item.notas?.trim() || undefined,
@@ -85,7 +86,7 @@ const KIND: Record<string, PaymentMethod['kind']> = {
 export function toPaymentMethod(dto: PaymentMethodDto): PaymentMethod {
   return {
     id: dto.id,
-    name: dto.nombre,
+    name: sentenceCase(dto.nombre),
     kind: dto.esEfectivo ? 'cash' : (KIND[(dto.tipo ?? '').toLowerCase()] ?? 'other'),
     allowsTip: dto.aplicaPropina !== false,
   };
