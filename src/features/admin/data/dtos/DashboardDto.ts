@@ -1,5 +1,9 @@
+import type { CalculationDto } from '../../../../shared/domain/Calculation';
+
 /** GET /dashboard/admin/stats */
 export interface AdminStatsDto {
+  /** Desglose de cada cifra (P1.4); versiones anteriores del API no lo mandan. */
+  calculos?: Record<string, CalculationDto>;
   totalVentas: number | string | null;
   pedidosPendientes: number | null;
   pedidosEnPreparacion: number | null;
@@ -13,6 +17,7 @@ export interface AdminStatsDto {
 
 /** GET /reportes/hoy — los montos llegan como string con 2 decimales. */
 export interface DailyReportDto {
+  calculos?: Record<string, CalculationDto>;
   ventas: {
     cobrado: string;
     propinas: string;

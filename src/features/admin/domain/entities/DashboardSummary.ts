@@ -1,3 +1,4 @@
+import type { Calculation } from '../../../../shared/domain/Calculation';
 import type { Incident } from '../../../kitchen/domain/Kitchen';
 import type { ActiveOrder } from '../../../orders/domain/entities/ActiveOrder';
 import type { TableShape } from '../../../orders/domain/entities/TableOrder';
@@ -13,6 +14,8 @@ export interface DailyStats {
   readyOrders: number;
   /** Entregados que falta cobrar. */
   ordersToCharge: number;
+  /** «Ver cálculo» de cada cifra, del API (P1.4). */
+  calculations?: Partial<Record<'salesTotal' | 'pendingOrders' | 'ordersInKitchen' | 'readyOrders' | 'ordersToCharge', Calculation>>;
 }
 
 /** Mesa del mapa de reservaciones (GET /reservations/map). */
@@ -67,6 +70,8 @@ export interface DailyReport {
   }[];
   incidents: Incident[];
   waste: { records: number; cost: number };
+  /** «Ver cálculo» de cada cifra, del API (P1.4). */
+  calculations?: Partial<Record<'collected' | 'tips' | 'averageTicket' | 'guests' | 'waste', Calculation>>;
   openRegisters: { id: number; cashier?: string; since?: string }[];
 }
 

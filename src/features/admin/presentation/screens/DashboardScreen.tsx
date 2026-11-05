@@ -1,6 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { countOf } from '../../../../shared/domain/Calculation';
+import { CalculationToggle } from '../../../../shared/presentation/components/CalculationView';
 import { Card } from '../../../../shared/presentation/components/Card';
 import { BreakdownBars, HourlyBars } from '../../../../shared/presentation/components/Charts';
 import { ErrorState } from '../../../../shared/presentation/components/ErrorState';
@@ -49,30 +51,40 @@ function Kpis({ summary }: { summary: DashboardSummary }) {
       <StatCard
         label="En cocina"
         value={String(stats.ordersInKitchen)}
+        calculation={stats.calculations?.ordersInKitchen}
         icon="flame-outline"
         style={styles.stat}
       />
       <StatCard
         label="Por confirmar"
         value={String(stats.pendingOrders)}
+        calculation={stats.calculations?.pendingOrders}
         icon="time-outline"
         style={styles.stat}
       />
       <StatCard
         label="Listos para servir"
         value={String(stats.readyOrders)}
+        calculation={stats.calculations?.readyOrders}
         icon="checkmark-done-outline"
         style={styles.stat}
       />
       <StatCard
         label="Por cobrar"
         value={String(stats.ordersToCharge)}
+        calculation={stats.calculations?.ordersToCharge}
         icon="wallet-outline"
         style={styles.stat}
       />
       <StatCard
         label="Mesas ocupadas"
         value={String(occupiedTables)}
+        calculation={countOf(
+          'mesas ocupadas = mesas con un pedido activo hoy',
+          tables.filter((t) => t.state === 'ocupada'),
+          (t) => `Mesa ${t.number}`,
+          (t) => t.state,
+        )}
         hint={`de ${tables.length} mesas`}
         icon="restaurant-outline"
         style={styles.stat}
@@ -81,6 +93,7 @@ function Kpis({ summary }: { summary: DashboardSummary }) {
         <StatCard
           label="Propinas"
           value={formatCurrency(report.sales.tips)}
+          calculation={report.calculations?.tips}
           hint={plural(report.sales.payments, 'cobro', 'cobros')}
           icon="heart-outline"
           style={styles.stat}
@@ -130,12 +143,14 @@ function KitchenSection({ report }: { report: DailyReport }) {
         <StatCard
           label="Incidencias"
           value={String(report.incidents.length)}
+          calculation={countOf('incidencias = reportes de cocina de hoy', report.incidents, (i) => (i.table ? `Mesa ${i.table}` : 'General'), incidentSummary)}
           icon="alert-circle-outline"
           style={styles.stat}
         />
         <StatCard
           label="Mermas"
           value={formatCurrency(report.waste.cost)}
+          calculation={report.calculations?.waste}
           hint={plural(report.waste.records, 'registro', 'registros')}
           icon="trash-outline"
           style={styles.stat}
@@ -292,8 +307,10 @@ function SalesHeader({ summary }: { summary?: DashboardSummary }) {
   // Con el resumen detallado se muestra lo cobrado; sin él, el total de pedidos del día.
   const value = summary ? (report?.sales.collected ?? summary.stats.salesTotal) : undefined;
   const sales = value !== undefined ? formatCurrency(value) : '—';
+  const salesCalculation = report ? report.calculations?.collected : summary?.stats.calculations?.salesTotal;
   return (
-    <View style={styles.sales} accessible accessibilityLabel={`Ventas del día, ${sales}`}>
+    <View style={styles.sales}>
+      <View accessible accessibilityLabel={`Ventas del día, ${sales}`}>
       <Text style={styles.salesLabel}>{report ? 'Cobrado hoy' : 'Ventas del día'}</Text>
       <Text style={styles.salesValue} numberOfLines={1} adjustsFontSizeToFit>
         {sales}
@@ -304,6 +321,14 @@ function SalesHeader({ summary }: { summary?: DashboardSummary }) {
           {formatCurrency(report.sales.averageTicket)} ·{' '}
           {plural(report.sales.guests, 'comensal', 'comensales')}
         </Text>
+      )}
+      </View>
+      {salesCalculation && <CalculationToggle title={report ? 'cobrado hoy' : 'ventas del día'} result={sales} calculation={salesCalculation} />}
+      {report?.calculations?.averageTicket && (
+        <CalculationToggle title="ticket promedio" result={formatCurrency(report.sales.averageTicket)} calculation={report.calculations.averageTicket} />
+      )}
+      {report?.calculations?.guests && (
+        <CalculationToggle title="comensales" result={String(report.sales.guests)} calculation={report.calculations.guests} />
       )}
     </View>
   );

@@ -1,3 +1,5 @@
+import type { Calculation } from '../../../shared/domain/Calculation';
+
 /** Turno de caja del cajero (tabla `cierres_caja`). */
 export interface CashSession {
   id: number;
@@ -16,6 +18,8 @@ export interface CashSession {
   expectedCash: number;
   countedCash?: number;
   difference?: number;
+  /** «Ver cálculo» de cada cifra, del API (P1.4). */
+  calculations?: Partial<Record<'totalSales' | 'tips' | 'expectedCash', Calculation>>;
 }
 
 export interface CloseResult {
