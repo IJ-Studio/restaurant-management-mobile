@@ -1,5 +1,7 @@
 import { DashboardRemoteDataSource } from '../../features/admin/data/datasources/DashboardRemoteDataSource';
 import { PayrollRepositoryImpl } from '../../features/admin/payroll/data/PayrollRepositoryImpl';
+import { TablesRepositoryImpl } from '../../features/admin/tables/data/TablesRepositoryImpl';
+import { SaveTableUseCase, type TablesRepository } from '../../features/admin/tables/domain/Tables';
 import {
   AddPayrollMovementUseCase,
   CorrectPayrollMovementUseCase,
@@ -104,6 +106,8 @@ export interface Dependencies {
   payrollRepository: Pick<PayrollRepository, 'summary' | 'movements'>;
   addPayrollMovementUseCase: Pick<AddPayrollMovementUseCase, 'execute'>;
   correctPayrollMovementUseCase: Pick<CorrectPayrollMovementUseCase, 'execute'>;
+  tablesRepository: TablesRepository;
+  saveTableUseCase: Pick<SaveTableUseCase, 'execute'>;
 }
 
 /**
@@ -145,6 +149,7 @@ export function createDependencies({
   const cashRepository = new CashRegisterRepositoryImpl(http);
   const kitchenRepository = new KitchenRepositoryImpl(http);
   const payrollRepository = new PayrollRepositoryImpl(http);
+  const tablesRepository = new TablesRepositoryImpl(http);
 
   return {
     httpClient: http,
@@ -183,5 +188,7 @@ export function createDependencies({
     payrollRepository,
     addPayrollMovementUseCase: new AddPayrollMovementUseCase(payrollRepository),
     correctPayrollMovementUseCase: new CorrectPayrollMovementUseCase(payrollRepository),
+    tablesRepository,
+    saveTableUseCase: new SaveTableUseCase(tablesRepository),
   };
 }

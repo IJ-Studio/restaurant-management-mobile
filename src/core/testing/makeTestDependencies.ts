@@ -47,6 +47,8 @@ export function makeTestDependencies(overrides: Partial<Dependencies> = {}): Dep
     payrollRepository: { summary: pending(), movements: pending() },
     addPayrollMovementUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
     correctPayrollMovementUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
+    tablesRepository: { list: pending(), areas: pending(), create: pending(), update: pending(), remove: pending() },
+    saveTableUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
     ...overrides,
   };
 }
