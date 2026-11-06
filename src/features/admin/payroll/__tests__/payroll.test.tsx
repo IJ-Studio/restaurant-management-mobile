@@ -2,7 +2,12 @@ import { fireEvent, screen } from '@testing-library/react-native';
 
 import { renderWithProviders } from '../../../../core/testing/renderWithProviders';
 import { makeTestDependencies } from '../../../../core/testing/makeTestDependencies';
-import { AddPayrollMovementUseCase, CorrectPayrollMovementUseCase, currentWeek, type PayrollRepository } from '../domain/Payroll';
+import {
+  AddPayrollMovementUseCase,
+  CorrectPayrollMovementUseCase,
+  currentWeek,
+  type PayrollRepository,
+} from '../domain/Payroll';
 import { PayrollScreen } from '../presentation/PayrollScreen';
 
 const repo = (): jest.Mocked<PayrollRepository> => ({
@@ -17,7 +22,14 @@ describe('nómina: dominio (Prioridad 3.1)', () => {
   it('exige justificación, monto positivo y concepto válido; no llama al API si falta algo', async () => {
     const r = repo();
     const uc = new AddPayrollMovementUseCase(r);
-    const base = { employeeId: 'e1', type: 'resta' as const, concept: 'objeto_roto', amount: 10, period, justification: 'Rompió una copa' };
+    const base = {
+      employeeId: 'e1',
+      type: 'resta' as const,
+      concept: 'objeto_roto',
+      amount: 10,
+      period,
+      justification: 'Rompió una copa',
+    };
     await expect(uc.execute({ ...base, justification: ' ' })).rejects.toThrow('Explica el motivo');
     await expect(uc.execute({ ...base, amount: 0 })).rejects.toThrow('monto');
     await expect(uc.execute({ ...base, concept: 'correccion' })).rejects.toThrow('concepto');
@@ -38,8 +50,22 @@ describe('nómina: pantalla', () => {
     const deps = makeTestDependencies({
       payrollRepository: {
         summary: jest.fn().mockResolvedValue([
-          { employeeId: 'e1', name: 'ANA LÓPEZ', role: 'MESERA', base: 800, additions: 0, deductions: 45.35, net: 754.65,
-            calculation: { formula: 'neto = base + sumas − restas', data: [{ key: 'base', value: 800 }, { key: 'resta:consumo#1', value: -45.35 }] } },
+          {
+            employeeId: 'e1',
+            name: 'ANA LÓPEZ',
+            role: 'MESERA',
+            base: 800,
+            additions: 0,
+            deductions: 45.35,
+            net: 754.65,
+            calculation: {
+              formula: 'neto = base + sumas − restas',
+              data: [
+                { key: 'base', value: 800 },
+                { key: 'resta:consumo#1', value: -45.35 },
+              ],
+            },
+          },
         ]),
         movements: jest.fn().mockResolvedValue([]),
       },
@@ -54,6 +80,13 @@ describe('nómina: pantalla', () => {
     await fireEvent.changeText(screen.getByLabelText('Monto'), '20');
     await fireEvent.changeText(screen.getByLabelText('Justificación'), 'Rompió un plato');
     await fireEvent.press(screen.getByRole('button', { name: 'Registrar' }));
-    expect(add).toHaveBeenCalledWith(expect.objectContaining({ employeeId: 'e1', type: 'resta', amount: 20, justification: 'Rompió un plato' }));
+    expect(add).toHaveBeenCalledWith(
+      expect.objectContaining({
+        employeeId: 'e1',
+        type: 'resta',
+        amount: 20,
+        justification: 'Rompió un plato',
+      }),
+    );
   });
 });

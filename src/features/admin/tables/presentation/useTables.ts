@@ -29,7 +29,11 @@ export function useTables() {
       setMessage({ tone: 'danger', text: userMessage(e, 'No se pudo guardar la mesa.') });
     },
   });
-  const go = (job: () => Promise<string>) => run.mutateAsync(job).then(() => true, () => false);
+  const go = (job: () => Promise<string>) =>
+    run.mutateAsync(job).then(
+      () => true,
+      () => false,
+    );
 
   return {
     tables: tables.data ?? [],
@@ -40,10 +44,16 @@ export function useTables() {
     message,
     busy: run.isPending,
     save: (input: TableInput, id?: number) =>
-      go(() => saveTableUseCase.execute(input, id).then(() => (id === undefined ? 'Mesa añadida.' : 'Mesa guardada.'))),
+      go(() =>
+        saveTableUseCase
+          .execute(input, id)
+          .then(() => (id === undefined ? 'Mesa añadida.' : 'Mesa guardada.')),
+      ),
     toggle: (t: AdminTable) =>
       go(() =>
-        tablesRepository.update(t.id, { active: !t.active }).then(() => (t.active ? `Mesa ${t.number} desactivada.` : `Mesa ${t.number} activada.`)),
+        tablesRepository
+          .update(t.id, { active: !t.active })
+          .then(() => (t.active ? `Mesa ${t.number} desactivada.` : `Mesa ${t.number} activada.`)),
       ),
     remove: (t: AdminTable) => go(() => tablesRepository.remove(t.id).then((r) => r.message)),
   };

@@ -130,10 +130,18 @@ function OpenSession({ vm }: { vm: Vm }) {
           {session.payments} cobros en tu turno · propinas {formatCurrency(session.tips)}
         </Text>
         {session.calculations?.totalSales && (
-          <CalculationToggle title="cobrado en tu turno" result={formatCurrency(session.totalSales)} calculation={session.calculations.totalSales} />
+          <CalculationToggle
+            title="cobrado en tu turno"
+            result={formatCurrency(session.totalSales)}
+            calculation={session.calculations.totalSales}
+          />
         )}
         {session.calculations?.tips && (
-          <CalculationToggle title="propinas" result={formatCurrency(session.tips)} calculation={session.calculations.tips} />
+          <CalculationToggle
+            title="propinas"
+            result={formatCurrency(session.tips)}
+            calculation={session.calculations.tips}
+          />
         )}
       </HeroCard>
 
@@ -141,21 +149,33 @@ function OpenSession({ vm }: { vm: Vm }) {
         <StatCard
           label="Efectivo"
           value={formatCurrency(session.cashSales)}
-          calculation={partOf('efectivo = pagos en efectivo de tu turno', session.calculations?.totalSales, 'efectivo')}
+          calculation={partOf(
+            'efectivo = pagos en efectivo de tu turno',
+            session.calculations?.totalSales,
+            'efectivo',
+          )}
           icon="cash-outline"
           style={styles.stat}
         />
         <StatCard
           label="Tarjeta"
           value={formatCurrency(session.cardSales)}
-          calculation={partOf('tarjeta = pagos con tarjeta de tu turno', session.calculations?.totalSales, 'tarjeta')}
+          calculation={partOf(
+            'tarjeta = pagos con tarjeta de tu turno',
+            session.calculations?.totalSales,
+            'tarjeta',
+          )}
           icon="card-outline"
           style={styles.stat}
         />
         <StatCard
           label="Digital"
           value={formatCurrency(session.digitalSales)}
-          calculation={partOf('digital = pagos digitales de tu turno', session.calculations?.totalSales, 'digital')}
+          calculation={partOf(
+            'digital = pagos digitales de tu turno',
+            session.calculations?.totalSales,
+            'digital',
+          )}
           icon="phone-portrait-outline"
           style={styles.stat}
         />

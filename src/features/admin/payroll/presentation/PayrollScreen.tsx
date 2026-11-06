@@ -21,7 +21,11 @@ function Calculation({ person }: { person: PayrollSummary }) {
   return (
     <View style={styles.calc} accessibilityLabel={`Cálculo del neto de ${properName(person.name)}`}>
       <Text style={styles.calcText}>{calculation.formula}</Text>
-      {calculation.period && <Text style={styles.calcText}>{`Periodo: ${calculation.period.start} a ${calculation.period.end}`}</Text>}
+      {calculation.period && (
+        <Text
+          style={styles.calcText}
+        >{`Periodo: ${calculation.period.start} a ${calculation.period.end}`}</Text>
+      )}
       {calculation.data.map((d) => (
         <View key={d.key} style={styles.row}>
           <Text style={styles.calcKey}>{d.key}</Text>
@@ -52,7 +56,13 @@ export function PayrollScreen() {
   if (vm.error) return <ErrorState message={vm.error} onRetry={vm.refresh} />;
 
   const submit = async (employeeId: string) => {
-    const ok = await vm.add({ employeeId, type, concept, amount: Number(amount.replace(',', '.')), justification });
+    const ok = await vm.add({
+      employeeId,
+      type,
+      concept,
+      amount: Number(amount.replace(',', '.')),
+      justification,
+    });
     if (ok) {
       setOpen(null);
       setAmount('');
@@ -61,8 +71,14 @@ export function PayrollScreen() {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={false} onRefresh={vm.refresh} />}>
-      <Text style={styles.hint}>{`Semana del ${vm.period.start} al ${vm.period.end}. Solo controla la nómina: no se paga nada.`}</Text>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      refreshControl={<RefreshControl refreshing={false} onRefresh={vm.refresh} />}
+    >
+      <Text
+        style={styles.hint}
+      >{`Semana del ${vm.period.start} al ${vm.period.end}. Solo controla la nómina: no se paga nada.`}</Text>
       {vm.message && <Notice tone={vm.message.tone} message={vm.message.text} />}
       <SectionTitle title="Neto del periodo" />
       {vm.summary.map((p) => (
@@ -74,25 +90,56 @@ export function PayrollScreen() {
           </View>
           <Text style={styles.net}>{`Neto ${formatCurrency(p.net)}`}</Text>
           <View style={styles.actions}>
-            <Button label={showCalc === p.employeeId ? 'Ocultar cálculo' : 'Ver cálculo'} variant="ghost" onPress={() => setShowCalc(showCalc === p.employeeId ? null : p.employeeId)} />
-            <Button label="Sumar o restar" variant="outline" onPress={() => setOpen(open === p.employeeId ? null : p.employeeId)} accessibilityLabel={`Sumar o restar a ${properName(p.name)}`} />
+            <Button
+              label={showCalc === p.employeeId ? 'Ocultar cálculo' : 'Ver cálculo'}
+              variant="ghost"
+              onPress={() => setShowCalc(showCalc === p.employeeId ? null : p.employeeId)}
+            />
+            <Button
+              label="Sumar o restar"
+              variant="outline"
+              onPress={() => setOpen(open === p.employeeId ? null : p.employeeId)}
+              accessibilityLabel={`Sumar o restar a ${properName(p.name)}`}
+            />
           </View>
           {showCalc === p.employeeId && <Calculation person={p} />}
           {open === p.employeeId && (
             <View style={styles.form}>
               <View style={styles.chips}>
-                <Chip label="Restar" selected={type === 'resta'} onPress={() => setType('resta')} accessibilityRole="radio" />
-                <Chip label="Sumar" selected={type === 'suma'} onPress={() => setType('suma')} accessibilityRole="radio" />
+                <Chip
+                  label="Restar"
+                  selected={type === 'resta'}
+                  onPress={() => setType('resta')}
+                  accessibilityRole="radio"
+                />
+                <Chip
+                  label="Sumar"
+                  selected={type === 'suma'}
+                  onPress={() => setType('suma')}
+                  accessibilityRole="radio"
+                />
               </View>
               <View style={styles.chips}>
                 {Object.entries(CONCEPTS)
                   .filter(([k]) => k !== 'correccion')
                   .map(([k, label]) => (
-                    <Chip key={k} label={label} selected={concept === k} onPress={() => setConcept(k)} accessibilityRole="radio" />
+                    <Chip
+                      key={k}
+                      label={label}
+                      selected={concept === k}
+                      onPress={() => setConcept(k)}
+                      accessibilityRole="radio"
+                    />
                   ))}
               </View>
               <TextField label="Monto" value={amount} onChangeText={setAmount} keyboardType="decimal-pad" />
-              <TextField label="Justificación" value={justification} onChangeText={setJustification} multiline maxLength={500} />
+              <TextField
+                label="Justificación"
+                value={justification}
+                onChangeText={setJustification}
+                multiline
+                maxLength={500}
+              />
               <Button label="Registrar" onPress={() => void submit(p.employeeId)} loading={vm.busy} />
             </View>
           )}
@@ -102,7 +149,9 @@ export function PayrollScreen() {
       {vm.movements.length === 0 && <Text style={styles.hint}>Sin movimientos en el periodo.</Text>}
       {vm.movements.map((m) => (
         <Card key={m.id} style={styles.card}>
-          <Text style={styles.name}>{`${m.type === 'suma' ? '+' : '−'}${formatCurrency(m.amount)} · ${CONCEPTS[m.concept] ?? m.concept}`}</Text>
+          <Text
+            style={styles.name}
+          >{`${m.type === 'suma' ? '+' : '−'}${formatCurrency(m.amount)} · ${CONCEPTS[m.concept] ?? m.concept}`}</Text>
           <Text>{properName(m.employee)}</Text>
           <Text style={styles.hint}>{sentenceCase(m.justification)}</Text>
           <Text style={styles.hint}>{`${m.date} · Registró ${properName(m.author)}`}</Text>
@@ -127,7 +176,12 @@ export function PayrollScreen() {
               />
             </View>
           ) : (
-            <Button label="Corregir" variant="ghost" onPress={() => setCorrecting(m.id)} accessibilityLabel={`Corregir el movimiento ${m.id}`} />
+            <Button
+              label="Corregir"
+              variant="ghost"
+              onPress={() => setCorrecting(m.id)}
+              accessibilityLabel={`Corregir el movimiento ${m.id}`}
+            />
           )}
         </Card>
       ))}
@@ -146,7 +200,13 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.xs },
   form: { gap: spacing.sm, marginTop: spacing.sm },
-  calc: { gap: spacing.xs, marginTop: spacing.sm, padding: spacing.sm, borderRadius: 8, backgroundColor: colors.surface },
+  calc: {
+    gap: spacing.xs,
+    marginTop: spacing.sm,
+    padding: spacing.sm,
+    borderRadius: 8,
+    backgroundColor: colors.surface,
+  },
   calcText: { ...typography.caption, color: colors.textMuted },
   calcKey: { ...typography.caption, color: colors.text, fontFamily: 'monospace' },
   calcValue: { ...typography.caption, color: colors.text, fontFamily: 'monospace' },

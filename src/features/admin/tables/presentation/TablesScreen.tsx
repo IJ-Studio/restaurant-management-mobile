@@ -24,24 +24,69 @@ const draftOf = (t?: AdminTable): Draft => ({
   areaId: t?.areaId ?? null,
 });
 
-function TableForm({ initial, areas, busy, label, onSubmit }: { initial: Draft; areas: Area[]; busy: boolean; label: string; onSubmit: (d: Draft) => void }) {
+function TableForm({
+  initial,
+  areas,
+  busy,
+  label,
+  onSubmit,
+}: {
+  initial: Draft;
+  areas: Area[];
+  busy: boolean;
+  label: string;
+  onSubmit: (d: Draft) => void;
+}) {
   const [d, setD] = useState(initial);
   return (
     <View style={styles.form}>
-      <TextField label="Número" value={d.number} onChangeText={(number) => setD({ ...d, number })} maxLength={10} autoCapitalize="characters" />
-      <TextField label="Capacidad" value={d.capacity} onChangeText={(capacity) => setD({ ...d, capacity })} keyboardType="number-pad" />
-      <TextField label="Nombre (opcional)" value={d.name} onChangeText={(name) => setD({ ...d, name })} maxLength={50} />
+      <TextField
+        label="Número"
+        value={d.number}
+        onChangeText={(number) => setD({ ...d, number })}
+        maxLength={10}
+        autoCapitalize="characters"
+      />
+      <TextField
+        label="Capacidad"
+        value={d.capacity}
+        onChangeText={(capacity) => setD({ ...d, capacity })}
+        keyboardType="number-pad"
+      />
+      <TextField
+        label="Nombre (opcional)"
+        value={d.name}
+        onChangeText={(name) => setD({ ...d, name })}
+        maxLength={50}
+      />
       <Text style={styles.hint}>Área</Text>
       <View style={styles.chips}>
-        <Chip label="Sin área" selected={d.areaId === null} onPress={() => setD({ ...d, areaId: null })} accessibilityRole="radio" />
+        <Chip
+          label="Sin área"
+          selected={d.areaId === null}
+          onPress={() => setD({ ...d, areaId: null })}
+          accessibilityRole="radio"
+        />
         {areas.map((a) => (
-          <Chip key={a.id} label={properName(a.name)} selected={d.areaId === a.id} onPress={() => setD({ ...d, areaId: a.id })} accessibilityRole="radio" />
+          <Chip
+            key={a.id}
+            label={properName(a.name)}
+            selected={d.areaId === a.id}
+            onPress={() => setD({ ...d, areaId: a.id })}
+            accessibilityRole="radio"
+          />
         ))}
       </View>
       <Text style={styles.hint}>Forma</Text>
       <View style={styles.chips}>
         {Object.entries(SHAPES).map(([k, text]) => (
-          <Chip key={k} label={text} selected={d.shape === k} onPress={() => setD({ ...d, shape: k })} accessibilityRole="radio" />
+          <Chip
+            key={k}
+            label={text}
+            selected={d.shape === k}
+            onPress={() => setD({ ...d, shape: k })}
+            accessibilityRole="radio"
+          />
         ))}
       </View>
       <Button label={label} loading={busy} onPress={() => onSubmit(d)} />
@@ -60,18 +105,39 @@ export function TablesScreen() {
 
   const save = (d: Draft, id?: number) =>
     void vm
-      .save({ number: d.number, name: d.name || null, capacity: Number(d.capacity), shape: d.shape, areaId: d.areaId }, id)
+      .save(
+        {
+          number: d.number,
+          name: d.name || null,
+          capacity: Number(d.capacity),
+          shape: d.shape,
+          areaId: d.areaId,
+        },
+        id,
+      )
       .then((ok) => ok && setEditing(null));
   const active = vm.tables.filter((t) => t.active);
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content} refreshControl={<RefreshControl refreshing={false} onRefresh={vm.refresh} />}>
-      <Text style={styles.hint}>{`${active.length} activas · ${active.reduce((s, t) => s + t.capacity, 0)} lugares. Las que tienen historial se desactivan en lugar de borrarse.`}</Text>
+    <ScrollView
+      style={styles.container}
+      contentContainerStyle={styles.content}
+      refreshControl={<RefreshControl refreshing={false} onRefresh={vm.refresh} />}
+    >
+      <Text
+        style={styles.hint}
+      >{`${active.length} activas · ${active.reduce((s, t) => s + t.capacity, 0)} lugares. Las que tienen historial se desactivan en lugar de borrarse.`}</Text>
       {vm.message && <Notice tone={vm.message.tone} message={vm.message.text} />}
       {editing === 'new' ? (
         <Card>
           <SectionTitle title="Mesa nueva" />
-          <TableForm initial={draftOf()} areas={vm.areas} busy={vm.busy} label="Añadir mesa" onSubmit={(d) => save(d)} />
+          <TableForm
+            initial={draftOf()}
+            areas={vm.areas}
+            busy={vm.busy}
+            label="Añadir mesa"
+            onSubmit={(d) => save(d)}
+          />
         </Card>
       ) : (
         <Button label="Mesa nueva" onPress={() => setEditing('new')} />
@@ -92,10 +158,28 @@ export function TablesScreen() {
               onPress={() => void vm.toggle(t)}
               accessibilityLabel={`${t.active ? 'Desactivar' : 'Activar'} la mesa ${t.number}`}
             />
-            <Button label="Editar" variant="outline" onPress={() => setEditing(editing === t.id ? null : t.id)} accessibilityLabel={`Editar la mesa ${t.number}`} />
-            <Button label="Dar de baja" variant="ghost" onPress={() => setRemoving(t.id)} accessibilityLabel={`Dar de baja la mesa ${t.number}`} />
+            <Button
+              label="Editar"
+              variant="outline"
+              onPress={() => setEditing(editing === t.id ? null : t.id)}
+              accessibilityLabel={`Editar la mesa ${t.number}`}
+            />
+            <Button
+              label="Dar de baja"
+              variant="ghost"
+              onPress={() => setRemoving(t.id)}
+              accessibilityLabel={`Dar de baja la mesa ${t.number}`}
+            />
           </View>
-          {editing === t.id && <TableForm initial={draftOf(t)} areas={vm.areas} busy={vm.busy} label="Guardar cambios" onSubmit={(d) => save(d, t.id)} />}
+          {editing === t.id && (
+            <TableForm
+              initial={draftOf(t)}
+              areas={vm.areas}
+              busy={vm.busy}
+              label="Guardar cambios"
+              onSubmit={(d) => save(d, t.id)}
+            />
+          )}
           {removing === t.id && (
             <View style={styles.form}>
               <Text style={styles.hint}>

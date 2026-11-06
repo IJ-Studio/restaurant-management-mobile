@@ -61,7 +61,12 @@ export function ChargeListScreen() {
             <StatCard
               label="Por cobrar"
               value={formatCurrency(vm.pendingTotal)}
-              calculation={sumOf('por cobrar = suma del total de cada cuenta abierta', vm.orders, (o) => o.place, (o) => o.total)}
+              calculation={sumOf(
+                'por cobrar = suma del total de cada cuenta abierta',
+                vm.orders,
+                (o) => o.place,
+                (o) => o.total,
+              )}
               icon="wallet-outline"
               tone="brand"
               style={styles.stat}
@@ -69,7 +74,12 @@ export function ChargeListScreen() {
             <StatCard
               label="Cuentas abiertas"
               value={String(vm.orders.length)}
-              calculation={countOf('cuentas abiertas = cuentas entregadas o listas por cobrar', vm.orders, (o) => o.place, (o) => formatCurrency(o.total))}
+              calculation={countOf(
+                'cuentas abiertas = cuentas entregadas o listas por cobrar',
+                vm.orders,
+                (o) => o.place,
+                (o) => formatCurrency(o.total),
+              )}
               icon="receipt-outline"
               style={styles.stat}
             />

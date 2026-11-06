@@ -34,7 +34,12 @@ export function fromCalculationDto(dto?: CalculationDto | null): Calculation | u
 }
 
 /** Cuántas filas cumplen: un dato por fila. */
-export function countOf<T>(formula: string, rows: readonly T[], key: (row: T, i: number) => string, value: (row: T) => string = () => 'sí'): Calculation {
+export function countOf<T>(
+  formula: string,
+  rows: readonly T[],
+  key: (row: T, i: number) => string,
+  value: (row: T) => string = () => 'sí',
+): Calculation {
   return { formula, operation: 'conteo', data: rows.map((r, i) => ({ key: key(r, i), value: value(r) })) };
 }
 
@@ -47,12 +52,27 @@ export function recalculate({ operation, data }: Calculation): number {
 }
 
 /** Suma de un valor por fila. */
-export function sumOf<T>(formula: string, rows: readonly T[], key: (row: T, i: number) => string, value: (row: T) => number): Calculation {
-  return { formula, operation: 'suma', data: rows.map((r, i) => ({ key: key(r, i), value: Math.round(value(r) * 100) / 100 })) };
+export function sumOf<T>(
+  formula: string,
+  rows: readonly T[],
+  key: (row: T, i: number) => string,
+  value: (row: T) => number,
+): Calculation {
+  return {
+    formula,
+    operation: 'suma',
+    data: rows.map((r, i) => ({ key: key(r, i), value: Math.round(value(r) * 100) / 100 })),
+  };
 }
 
 /** Un solo dato de un desglose ya calculado (p. ej. «efectivo» del total cobrado). */
-export function partOf(formula: string, calculation: Calculation | undefined, key: string): Calculation | undefined {
+export function partOf(
+  formula: string,
+  calculation: Calculation | undefined,
+  key: string,
+): Calculation | undefined {
   const item = calculation?.data.find((d) => d.key === key);
-  return item ? { formula, operation: 'suma', data: [item], period: calculation?.period, filters: calculation?.filters } : undefined;
+  return item
+    ? { formula, operation: 'suma', data: [item], period: calculation?.period, filters: calculation?.filters }
+    : undefined;
 }

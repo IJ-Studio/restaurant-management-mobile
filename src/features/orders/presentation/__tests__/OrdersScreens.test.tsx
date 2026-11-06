@@ -214,7 +214,10 @@ describe('Pedidos: detalle', () => {
     expect(await screen.findByText('Escribe el motivo de la cancelación.')).toBeOnTheScreen();
     expect(alert).not.toHaveBeenCalled();
 
-    await fireEvent.changeText(screen.getByLabelText('Motivo de la cancelación'), 'El cliente cambió de opinión');
+    await fireEvent.changeText(
+      screen.getByLabelText('Motivo de la cancelación'),
+      'El cliente cambió de opinión',
+    );
     await fireEvent.press(screen.getByRole('button', { name: 'Cancelar pedido' }));
 
     expect(alert).toHaveBeenCalled();

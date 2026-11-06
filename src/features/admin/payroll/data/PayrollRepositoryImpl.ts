@@ -1,5 +1,11 @@
 import type { HttpClient } from '../../../../core/http/httpClient';
-import type { NewMovement, PayrollMovement, PayrollRepository, PayrollSummary, Period } from '../domain/Payroll';
+import type {
+  NewMovement,
+  PayrollMovement,
+  PayrollRepository,
+  PayrollSummary,
+  Period,
+} from '../domain/Payroll';
 
 interface SummaryDto {
   empleadoId: string;
@@ -9,7 +15,11 @@ interface SummaryDto {
   sumas: number;
   restas: number;
   neto: number;
-  calculo: { formula: string; periodo?: { inicio: string; fin: string }; datos: { clave: string; valor: number; origen?: string }[] };
+  calculo: {
+    formula: string;
+    periodo?: { inicio: string; fin: string };
+    datos: { clave: string; valor: number; origen?: string }[];
+  };
 }
 interface MovementDto {
   id: number;
@@ -42,7 +52,9 @@ export class PayrollRepositoryImpl implements PayrollRepository {
       net: r.neto,
       calculation: {
         formula: r.calculo.formula,
-        period: r.calculo.periodo ? { start: r.calculo.periodo.inicio, end: r.calculo.periodo.fin } : undefined,
+        period: r.calculo.periodo
+          ? { start: r.calculo.periodo.inicio, end: r.calculo.periodo.fin }
+          : undefined,
         data: r.calculo.datos.map((d) => ({ key: d.clave, value: d.valor, source: d.origen })),
       },
     }));

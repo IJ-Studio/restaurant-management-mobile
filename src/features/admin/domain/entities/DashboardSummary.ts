@@ -15,7 +15,9 @@ export interface DailyStats {
   /** Entregados que falta cobrar. */
   ordersToCharge: number;
   /** «Ver cálculo» de cada cifra, del API (P1.4). */
-  calculations?: Partial<Record<'salesTotal' | 'pendingOrders' | 'ordersInKitchen' | 'readyOrders' | 'ordersToCharge', Calculation>>;
+  calculations?: Partial<
+    Record<'salesTotal' | 'pendingOrders' | 'ordersInKitchen' | 'readyOrders' | 'ordersToCharge', Calculation>
+  >;
 }
 
 /** Mesa del mapa de reservaciones (GET /reservations/map). */

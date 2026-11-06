@@ -85,11 +85,14 @@ export class AddPayrollMovementUseCase {
 
   async execute(movement: NewMovement): Promise<void> {
     if (!(movement.amount > 0)) throw new Error('Escribe un monto mayor que cero.');
-    if (movement.justification.trim().length < 5)
-      throw new Error('Explica el motivo (al menos 5 letras).');
+    if (movement.justification.trim().length < 5) throw new Error('Explica el motivo (al menos 5 letras).');
     if (!(movement.concept in CONCEPTS) || movement.concept === 'correccion')
       throw new Error('Elige un concepto.');
-    return this.repository.add({ ...movement, amount: Math.round(movement.amount * 100) / 100, justification: movement.justification.trim() });
+    return this.repository.add({
+      ...movement,
+      amount: Math.round(movement.amount * 100) / 100,
+      justification: movement.justification.trim(),
+    });
   }
 }
 

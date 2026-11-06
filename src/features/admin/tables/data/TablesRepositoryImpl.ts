@@ -16,9 +16,14 @@ interface TableDto {
 
 const body = (t: Partial<TableInput> & { active?: boolean }) =>
   Object.fromEntries(
-    Object.entries({ numero: t.number, nombre: t.name, capacidad: t.capacity, forma: t.shape, areaId: t.areaId, activa: t.active }).filter(
-      ([, v]) => v !== undefined,
-    ),
+    Object.entries({
+      numero: t.number,
+      nombre: t.name,
+      capacidad: t.capacity,
+      forma: t.shape,
+      areaId: t.areaId,
+      activa: t.active,
+    }).filter(([, v]) => v !== undefined),
   );
 
 /** GET /mesas/admin, GET /mesas/admin/areas, POST /mesas/admin, PATCH y DELETE /mesas/admin/:id (solo admin). */
@@ -55,7 +60,9 @@ export class TablesRepositoryImpl implements TablesRepository {
   }
 
   async remove(id: number): Promise<RemoveResult> {
-    const r = await this.http.delete<{ resultado: RemoveResult['result']; message: string }>(`mesas/admin/${id}`);
+    const r = await this.http.delete<{ resultado: RemoveResult['result']; message: string }>(
+      `mesas/admin/${id}`,
+    );
     return { result: r.resultado, message: r.message };
   }
 }

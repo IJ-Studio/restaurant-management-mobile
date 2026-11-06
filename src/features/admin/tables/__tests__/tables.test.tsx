@@ -20,11 +20,19 @@ const table = (extra: Partial<AdminTable> = {}): AdminTable => ({
 });
 
 const repo = (): jest.Mocked<TablesRepository> => ({
-  list: jest.fn().mockResolvedValue([table(), table({ id: 2, number: 'T09', hasHistory: false, upcomingReservations: 0, active: false })]),
+  list: jest
+    .fn()
+    .mockResolvedValue([
+      table(),
+      table({ id: 2, number: 'T09', hasHistory: false, upcomingReservations: 0, active: false }),
+    ]),
   areas: jest.fn().mockResolvedValue([{ id: 2, name: 'TERRAZA' }]),
   create: jest.fn().mockResolvedValue(undefined),
   update: jest.fn().mockResolvedValue(undefined),
-  remove: jest.fn().mockResolvedValue({ result: 'desactivada', message: 'La mesa tiene historial: se desactivó en lugar de borrarla.' }),
+  remove: jest.fn().mockResolvedValue({
+    result: 'desactivada',
+    message: 'La mesa tiene historial: se desactivó en lugar de borrarla.',
+  }),
 });
 
 describe('mesas: dominio (Prioridad 1.3)', () => {
@@ -58,14 +66,26 @@ describe('mesas: pantalla', () => {
     await fireEvent.changeText(screen.getByLabelText('Capacidad'), '2');
     await fireEvent.press(screen.getByRole('radio', { name: 'Terraza' }));
     await fireEvent.press(screen.getByRole('button', { name: 'Añadir mesa' }));
-    await waitFor(() => expect(r.create).toHaveBeenCalledWith({ number: 'T10', name: null, capacity: 2, shape: 'cuadrada', areaId: 2 }));
+    await waitFor(() =>
+      expect(r.create).toHaveBeenCalledWith({
+        number: 'T10',
+        name: null,
+        capacity: 2,
+        shape: 'cuadrada',
+        areaId: 2,
+      }),
+    );
     expect(await screen.findByText('Mesa añadida.')).toBeOnTheScreen();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Dar de baja la mesa S01' }));
-    expect(screen.getByText('Tiene historial o reservas activas: se desactivará y se conserva todo.')).toBeOnTheScreen();
+    expect(
+      screen.getByText('Tiene historial o reservas activas: se desactivará y se conserva todo.'),
+    ).toBeOnTheScreen();
     await fireEvent.press(screen.getByRole('button', { name: 'Desactivar mesa' }));
     await waitFor(() => expect(r.remove).toHaveBeenCalledWith(1));
-    expect(await screen.findByText('La mesa tiene historial: se desactivó en lugar de borrarla.')).toBeOnTheScreen();
+    expect(
+      await screen.findByText('La mesa tiene historial: se desactivó en lugar de borrarla.'),
+    ).toBeOnTheScreen();
 
     await fireEvent.press(screen.getByRole('button', { name: 'Activar la mesa T09' }));
     await waitFor(() => expect(r.update).toHaveBeenCalledWith(2, { active: true }));

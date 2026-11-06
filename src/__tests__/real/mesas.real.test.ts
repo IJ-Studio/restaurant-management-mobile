@@ -12,10 +12,19 @@ describeReal('móvil contra el API real: mesas (Prioridad 1.3)', () => {
     const repo = new TablesRepositoryImpl(await clienteComo('admin'));
     const number = `M${String(Date.now()).slice(-5)}`;
     const [area] = await repo.areas();
-    await new SaveTableUseCase(repo).execute({ number, name: null, capacity: 2, shape: 'barra', areaId: area.id });
+    await new SaveTableUseCase(repo).execute({
+      number,
+      name: null,
+      capacity: 2,
+      shape: 'barra',
+      areaId: area.id,
+    });
     let mia = (await repo.list()).find((t) => t.number === number)!;
     expect(mia).toMatchObject({ capacity: 2, areaId: area.id, active: true, hasHistory: false });
-    await new SaveTableUseCase(repo).execute({ number, name: null, capacity: 6, shape: 'barra', areaId: null }, mia.id);
+    await new SaveTableUseCase(repo).execute(
+      { number, name: null, capacity: 6, shape: 'barra', areaId: null },
+      mia.id,
+    );
     mia = (await repo.list()).find((t) => t.id === mia.id)!;
     expect(mia).toMatchObject({ capacity: 6, areaId: null });
     expect((await repo.remove(mia.id)).result).toBe('eliminada');

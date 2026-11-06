@@ -44,5 +44,11 @@ export function AdminNavigator() {
 
 const styles = StyleSheet.create({
   home: { flex: 1 },
-  modules: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, paddingHorizontal: spacing.lg, paddingTop: spacing.md },
+  modules: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: spacing.sm,
+    paddingHorizontal: spacing.lg,
+    paddingTop: spacing.md,
+  },
 });

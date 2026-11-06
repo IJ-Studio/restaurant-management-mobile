@@ -2,7 +2,10 @@
  * @jest-environment node
  */
 import { PayrollRepositoryImpl } from '../../features/admin/payroll/data/PayrollRepositoryImpl';
-import { AddPayrollMovementUseCase, CorrectPayrollMovementUseCase } from '../../features/admin/payroll/domain/Payroll';
+import {
+  AddPayrollMovementUseCase,
+  CorrectPayrollMovementUseCase,
+} from '../../features/admin/payroll/domain/Payroll';
 import { clienteComo, describeReal } from '../../core/testing/clienteReal';
 
 jest.setTimeout(60_000);
@@ -13,7 +16,14 @@ describeReal('móvil contra el API real: nómina (Prioridad 3.1)', () => {
     const repo = new PayrollRepositoryImpl(await clienteComo('admin'));
     const [persona] = await repo.summary(periodo);
     const marca = `Movil ${Date.now()}`;
-    await new AddPayrollMovementUseCase(repo).execute({ employeeId: persona.employeeId, type: 'resta', concept: 'consumo', amount: 33.3, period: periodo, justification: marca });
+    await new AddPayrollMovementUseCase(repo).execute({
+      employeeId: persona.employeeId,
+      type: 'resta',
+      concept: 'consumo',
+      amount: 33.3,
+      period: periodo,
+      justification: marca,
+    });
     const historial = await repo.movements(periodo);
     const mio = historial.find((m) => m.justification.toUpperCase() === marca.toUpperCase());
     expect(mio).toMatchObject({ type: 'resta', amount: 33.3 });

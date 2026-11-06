@@ -143,7 +143,12 @@ function KitchenSection({ report }: { report: DailyReport }) {
         <StatCard
           label="Incidencias"
           value={String(report.incidents.length)}
-          calculation={countOf('incidencias = reportes de cocina de hoy', report.incidents, (i) => (i.table ? `Mesa ${i.table}` : 'General'), incidentSummary)}
+          calculation={countOf(
+            'incidencias = reportes de cocina de hoy',
+            report.incidents,
+            (i) => (i.table ? `Mesa ${i.table}` : 'General'),
+            incidentSummary,
+          )}
           icon="alert-circle-outline"
           style={styles.stat}
         />
@@ -311,24 +316,38 @@ function SalesHeader({ summary }: { summary?: DashboardSummary }) {
   return (
     <View style={styles.sales}>
       <View accessible accessibilityLabel={`Ventas del día, ${sales}`}>
-      <Text style={styles.salesLabel}>{report ? 'Cobrado hoy' : 'Ventas del día'}</Text>
-      <Text style={styles.salesValue} numberOfLines={1} adjustsFontSizeToFit>
-        {sales}
-      </Text>
-      {report && (
-        <Text style={styles.salesHint}>
-          {plural(report.sales.paidOrders, 'cuenta', 'cuentas')} · ticket promedio{' '}
-          {formatCurrency(report.sales.averageTicket)} ·{' '}
-          {plural(report.sales.guests, 'comensal', 'comensales')}
+        <Text style={styles.salesLabel}>{report ? 'Cobrado hoy' : 'Ventas del día'}</Text>
+        <Text style={styles.salesValue} numberOfLines={1} adjustsFontSizeToFit>
+          {sales}
         </Text>
-      )}
+        {report && (
+          <Text style={styles.salesHint}>
+            {plural(report.sales.paidOrders, 'cuenta', 'cuentas')} · ticket promedio{' '}
+            {formatCurrency(report.sales.averageTicket)} ·{' '}
+            {plural(report.sales.guests, 'comensal', 'comensales')}
+          </Text>
+        )}
       </View>
-      {salesCalculation && <CalculationToggle title={report ? 'cobrado hoy' : 'ventas del día'} result={sales} calculation={salesCalculation} />}
+      {salesCalculation && (
+        <CalculationToggle
+          title={report ? 'cobrado hoy' : 'ventas del día'}
+          result={sales}
+          calculation={salesCalculation}
+        />
+      )}
       {report?.calculations?.averageTicket && (
-        <CalculationToggle title="ticket promedio" result={formatCurrency(report.sales.averageTicket)} calculation={report.calculations.averageTicket} />
+        <CalculationToggle
+          title="ticket promedio"
+          result={formatCurrency(report.sales.averageTicket)}
+          calculation={report.calculations.averageTicket}
+        />
       )}
       {report?.calculations?.guests && (
-        <CalculationToggle title="comensales" result={String(report.sales.guests)} calculation={report.calculations.guests} />
+        <CalculationToggle
+          title="comensales"
+          result={String(report.sales.guests)}
+          calculation={report.calculations.guests}
+        />
       )}
     </View>
   );

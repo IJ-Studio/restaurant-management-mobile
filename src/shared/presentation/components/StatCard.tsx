@@ -27,16 +27,18 @@ export function StatCard({ label, value, icon, hint, tone = 'neutral', style, ca
   return (
     <View style={[styles.card, brand && styles.brandCard, style]}>
       <View accessible accessibilityLabel={[label, value, hint].filter(Boolean).join(', ')}>
-      <View style={[styles.icon, brand && styles.brandIcon]}>
-        <Ionicons name={icon} size={18} color={brand ? colors.textOnBrand : colors.brandStrong} />
+        <View style={[styles.icon, brand && styles.brandIcon]}>
+          <Ionicons name={icon} size={18} color={brand ? colors.textOnBrand : colors.brandStrong} />
+        </View>
+        <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit>
+          {value}
+        </Text>
+        <Text style={styles.label}>{label}</Text>
+        {hint && <Text style={styles.hint}>{hint}</Text>}
       </View>
-      <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit>
-        {value}
-      </Text>
-      <Text style={styles.label}>{label}</Text>
-      {hint && <Text style={styles.hint}>{hint}</Text>}
-      </View>
-      {calculation && <CalculationToggle title={label.toLowerCase()} result={value} calculation={calculation} />}
+      {calculation && (
+        <CalculationToggle title={label.toLowerCase()} result={value} calculation={calculation} />
+      )}
     </View>
   );
 }

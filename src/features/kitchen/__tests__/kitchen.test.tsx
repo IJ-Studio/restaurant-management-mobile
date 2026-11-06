@@ -325,7 +325,16 @@ describe('Pantallas de cocina', () => {
     const deps = setup('admin', {
       listWasteTodayUseCase: {
         execute: jest.fn().mockResolvedValue([
-          { id: 1, productName: 'Aguacate', quantity: 1, unit: 'kg', reason: 'derrame', justification: 'Se cayó', reportedBy: 'Diego', cost: 120 },
+          {
+            id: 1,
+            productName: 'Aguacate',
+            quantity: 1,
+            unit: 'kg',
+            reason: 'derrame',
+            justification: 'Se cayó',
+            reportedBy: 'Diego',
+            cost: 120,
+          },
         ]),
       },
     });

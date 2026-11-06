@@ -116,7 +116,10 @@ export class KitchenRepositoryImpl implements KitchenRepository {
       });
       return response.message || 'Merma registrada.';
     } catch (error) {
-      throw explain(error, 'Solo el personal operativo puede registrar mermas; el administrador solo las consulta.');
+      throw explain(
+        error,
+        'Solo el personal operativo puede registrar mermas; el administrador solo las consulta.',
+      );
     }
   }
 
