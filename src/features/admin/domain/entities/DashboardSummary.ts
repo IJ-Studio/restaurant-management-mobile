@@ -78,3 +78,11 @@ export interface DashboardSummary {
   /** Puede faltar si el API no lo tiene o falló: el resto del Dashboard se muestra igual. */
   report?: DailyReport;
 }
+
+/** Porcentaje de mesas ocupadas (0 a 100); sin mesas, 0. */
+export function occupancy({
+  occupiedTables,
+  tables,
+}: Pick<DashboardSummary, 'occupiedTables' | 'tables'>): number {
+  return tables.length > 0 ? Math.round((occupiedTables / tables.length) * 100) : 0;
+}

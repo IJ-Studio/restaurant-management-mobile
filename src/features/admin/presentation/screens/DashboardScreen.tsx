@@ -17,7 +17,7 @@ import { formatDate, formatTime } from '../../../../shared/utils/formatDateTime'
 import { useSession } from '../../../auth/presentation/viewmodels/useSession';
 import { incidentSummary } from '../../../kitchen/presentation/viewmodels';
 import { OrderCard } from '../../../orders/presentation/components/OrderCard';
-import type { DailyReport, DashboardSummary } from '../../domain/entities/DashboardSummary';
+import { occupancy, type DailyReport, type DashboardSummary } from '../../domain/entities/DashboardSummary';
 import { useDashboard } from '../viewmodels/useDashboard';
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
@@ -75,6 +75,12 @@ function Kpis({ summary }: { summary: DashboardSummary }) {
         value={String(occupiedTables)}
         hint={`de ${tables.length} mesas`}
         icon="restaurant-outline"
+        style={styles.stat}
+      />
+      <StatCard
+        label="Ocupación"
+        value={`${occupancy(summary)}%`}
+        icon="pie-chart-outline"
         style={styles.stat}
       />
       {report && (
