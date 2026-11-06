@@ -57,7 +57,7 @@
     "audit": "audit-ci --config audit-ci.jsonc",
     "duplication": "jscpd",
     "test:unit": "jest --testPathIgnorePatterns /node_modules/ \"\\.integration\\.test\\.\" \"\\.acceptance\\.test\\.\" \"\\.stress\\.test\\.\"",
-    "test:integration": "jest --testPathPattern \"\\.integration\\.test\\.\" --coverage=false",
+    "test:integration": "jest --testPathPatterns \"\\.integration\\.test\\.\" --coverage=false",
     "test:acceptance": "jest --config jest.acceptance.config.js",
     "test:perf": "reassure",
     "test:stress": "node --expose-gc node_modules/jest/bin/jest.js --config jest.stress.config.js --runInBand"
