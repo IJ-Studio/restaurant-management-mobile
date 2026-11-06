@@ -21,7 +21,10 @@ export function DashboardScreen() {
   const { dashboard, isLoading, isRefreshing, error, updatedAt, refresh } = useDashboard();
 
   if (isLoading) return <ScreenState kind="loading" message="Cargando dashboard…" />;
-  if (!dashboard) return <ScreenState kind="error" message={error ?? 'No se pudo cargar el dashboard.'} onRetry={refresh} />;
+  if (!dashboard)
+    return (
+      <ScreenState kind="error" message={error ?? 'No se pudo cargar el dashboard.'} onRetry={refresh} />
+    );
 
   const { stats, salesByHour } = dashboard;
   return (

@@ -8,7 +8,9 @@ import type { Dashboard } from '../../domain/entities/Dashboard';
 import { DashboardScreen } from '../screens/DashboardScreen';
 
 const testQueryClient = () =>
-  new QueryClient({ defaultOptions: { queries: { retry: false, gcTime: Infinity, refetchInterval: false } } });
+  new QueryClient({
+    defaultOptions: { queries: { retry: false, gcTime: Infinity, refetchInterval: false } },
+  });
 
 const salesByHour = Array(24).fill(0);
 salesByHour[13] = 450;
@@ -51,7 +53,9 @@ describe('DashboardScreen', () => {
   it('dibuja las ventas por hora y resalta la hora pico', async () => {
     await renderDashboard(jest.fn().mockResolvedValue(dashboard));
 
-    expect(await screen.findByLabelText('Ventas por hora. Hora con más ventas: 20:00, $1,080.50.')).toBeOnTheScreen();
+    expect(
+      await screen.findByLabelText('Ventas por hora. Hora con más ventas: 20:00, $1,080.50.'),
+    ).toBeOnTheScreen();
     const peakBar = screen.getByTestId('bar-20').children[0] as unknown as { props: { style: unknown } };
     const otherBar = screen.getByTestId('bar-13').children[0] as unknown as { props: { style: unknown } };
     expect(peakBar.props.style).toEqual(expect.arrayContaining([expect.objectContaining({ height: 140 })]));
@@ -66,13 +70,18 @@ describe('DashboardScreen', () => {
   });
 
   it('muestra el error y permite reintentar', async () => {
-    await renderDashboard(jest.fn().mockRejectedValue(new AppError('forbidden', 'No tienes permiso para hacer esto.')));
+    await renderDashboard(
+      jest.fn().mockRejectedValue(new AppError('forbidden', 'No tienes permiso para hacer esto.')),
+    );
     expect(await screen.findByRole('alert')).toHaveTextContent('No tienes permiso para hacer esto.');
     expect(screen.getByText('Reintentar')).toBeOnTheScreen();
   });
 
   it('un refresco fallido no tapa los datos que ya hay', async () => {
-    const execute = jest.fn().mockResolvedValueOnce(dashboard).mockRejectedValue(new AppError('network', 'Sin red'));
+    const execute = jest
+      .fn()
+      .mockResolvedValueOnce(dashboard)
+      .mockRejectedValue(new AppError('network', 'Sin red'));
     const queryClient = await renderDashboard(execute);
     await screen.findByText('$1,530.50');
 
