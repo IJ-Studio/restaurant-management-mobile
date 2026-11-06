@@ -329,19 +329,17 @@ describe('Pantallas de cocina', () => {
       listInventoryProductsUseCase: { execute: jest.fn().mockResolvedValue([]) },
       reportWasteUseCase: { execute: report },
       listWasteTodayUseCase: {
-        execute: jest
-          .fn()
-          .mockResolvedValue([
-            {
-              id: 1,
-              productName: 'Crema',
-              quantity: 2,
-              unit: 'lt',
-              reason: 'caducado',
-              justification: 'Vencida',
-              cost: 120,
-            },
-          ]),
+        execute: jest.fn().mockResolvedValue([
+          {
+            id: 1,
+            productName: 'Crema',
+            quantity: 2,
+            unit: 'lt',
+            reason: 'caducado',
+            justification: 'Vencida',
+            cost: 120,
+          },
+        ]),
       },
       listIncidentsUseCase: {
         execute: jest
