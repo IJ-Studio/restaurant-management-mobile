@@ -17,7 +17,9 @@ export function NotificationSettings() {
             onPress={needsSettings ? openSettings : request}
             accessibilityRole="button"
           >
-            <Text style={styles.buttonText}>{needsSettings ? 'Abrir Ajustes' : 'Activar notificaciones'}</Text>
+            <Text style={styles.buttonText}>
+              {needsSettings ? 'Abrir Ajustes' : 'Activar notificaciones'}
+            </Text>
           </Pressable>
         </>
       )}

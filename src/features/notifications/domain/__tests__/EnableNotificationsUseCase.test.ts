@@ -12,8 +12,14 @@ function makePort(current: PermissionState, afterRequest?: PermissionState): jes
 
 describe('EnableNotificationsUseCase', () => {
   it('pide el permiso si nunca se ha preguntado', async () => {
-    const port = makePort({ status: 'undetermined', canAskAgain: true }, { status: 'granted', canAskAgain: true });
-    await expect(new EnableNotificationsUseCase(port).execute()).resolves.toEqual({ status: 'granted', canAskAgain: true });
+    const port = makePort(
+      { status: 'undetermined', canAskAgain: true },
+      { status: 'granted', canAskAgain: true },
+    );
+    await expect(new EnableNotificationsUseCase(port).execute()).resolves.toEqual({
+      status: 'granted',
+      canAskAgain: true,
+    });
     expect(port.configure).toHaveBeenCalled();
     expect(port.requestPermission).toHaveBeenCalled();
   });

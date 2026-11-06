@@ -10,7 +10,8 @@ import type {
 export const ANDROID_CHANNEL_ID = 'operacion';
 
 function toState(response: { status: string; canAskAgain: boolean }): PermissionState {
-  const status = response.status === 'granted' || response.status === 'denied' ? response.status : 'undetermined';
+  const status =
+    response.status === 'granted' || response.status === 'denied' ? response.status : 'undetermined';
   return { status, canAskAgain: response.canAskAgain };
 }
 
