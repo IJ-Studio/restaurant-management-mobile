@@ -1,3 +1,5 @@
+import type { ActiveOrder, OrderDetail } from '../domain/entities/ActiveOrder';
+import type { ChargeReceipt, PaymentMethod } from '../domain/entities/Payment';
 import type { OrderLine, Table, TableOrder } from '../domain/entities/TableOrder';
 import type { OrderRepository } from '../domain/repositories/OrderRepository';
 
@@ -27,6 +29,45 @@ export function makeTables(): Table[] {
   ];
 }
 
+export function makeActiveOrder(overrides: Partial<ActiveOrder> = {}): ActiveOrder {
+  return {
+    id: 'orden-uuid',
+    customer: 'Ana López',
+    time: '08:25 p.m.',
+    firstItem: 'Enchiladas suizas',
+    items: [
+      { name: 'Enchiladas suizas', quantity: 2 },
+      { name: 'Café de olla', quantity: 1 },
+    ],
+    place: 'Mesa 5',
+    tableNumber: '5',
+    status: 'abierta',
+    total: 336,
+    guests: 1,
+    ...overrides,
+  };
+}
+
+export function makeOrderDetail(overrides: Partial<OrderDetail> = {}): OrderDetail {
+  return {
+    id: 'orden-uuid',
+    tableNumber: '5',
+    status: 'pendiente',
+    total: 336,
+    tip: 0,
+    paid: 0,
+    remaining: 336,
+    guests: 1,
+    payments: [],
+    openedAt: '2026-10-20T18:00:00.000Z',
+    items: [
+      { id: 101, name: 'Enchiladas suizas', quantity: 2, unitPrice: 145.5 },
+      { id: 102, name: 'Café de olla', quantity: 1, unitPrice: 45 },
+    ],
+    ...overrides,
+  };
+}
+
 export function makeOrderRepository(): jest.Mocked<OrderRepository> {
   return {
     listTables: jest.fn().mockResolvedValue(makeTables()),
@@ -34,5 +75,34 @@ export function makeOrderRepository(): jest.Mocked<OrderRepository> {
     confirm: jest
       .fn()
       .mockResolvedValue({ orderId: 'orden-uuid', message: 'Tu pedido fue enviado a cocina.' }),
+    listActive: jest.fn().mockResolvedValue([makeActiveOrder()]),
+    getDetail: jest.fn().mockResolvedValue(makeOrderDetail()),
+    cancel: jest.fn().mockResolvedValue('Tu comanda ha sido cancelada con éxito.'),
+    removeItem: jest.fn().mockResolvedValue('Producto eliminado de tu pedido.'),
+    updateStatus: jest.fn().mockResolvedValue('Pedido actualizado.'),
+    listPaymentMethods: jest.fn().mockResolvedValue(makePaymentMethods()),
+    charge: jest.fn().mockResolvedValue(makeReceipt()),
+  };
+}
+
+export const cash: PaymentMethod = { id: 1, name: 'Efectivo', kind: 'cash', allowsTip: true };
+export const debit: PaymentMethod = { id: 2, name: 'Tarjeta débito', kind: 'card', allowsTip: true };
+
+export function makePaymentMethods(): PaymentMethod[] {
+  return [debit, cash, { id: 4, name: 'Transferencia', kind: 'digital', allowsTip: false }];
+}
+
+export function makeReceipt(overrides: Partial<ChargeReceipt> = {}): ChargeReceipt {
+  return {
+    message: 'Pago registrado. El pedido quedó cerrado.',
+    method: 'Efectivo',
+    total: 336,
+    tip: 34,
+    charged: 370,
+    change: 130,
+    paid: 336,
+    remaining: 0,
+    closed: true,
+    ...overrides,
   };
 }

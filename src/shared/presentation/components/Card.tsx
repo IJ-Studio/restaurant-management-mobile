@@ -1,29 +1,26 @@
 import type { ReactNode } from 'react';
 import { StyleSheet, View, type StyleProp, type ViewStyle } from 'react-native';
 
-import { colors, spacing } from '../theme';
+import { colors, radius, shadows, spacing } from '../theme';
 
 interface Props {
   children: ReactNode;
+  /** `raised` usa la sombra más marcada (T.shadowHov de la web) para lo que flota sobre la lista. */
+  elevation?: 'card' | 'raised';
   style?: StyleProp<ViewStyle>;
 }
 
-/** Contenedor con fondo, borde redondeado y sombra suave. */
-export function Card({ children, style }: Props) {
-  return <View style={[styles.card, style]}>{children}</View>;
+/** Tarjeta blanca con borde cálido y sombra suave, como `menu-card` de la web. */
+export function Card({ children, elevation = 'card', style }: Props) {
+  return <View style={[styles.card, shadows[elevation], style]}>{children}</View>;
 }
 
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
-    borderRadius: 12,
+    borderRadius: radius.xl,
     padding: spacing.lg,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
-    shadowColor: '#000',
-    shadowOpacity: 0.06,
-    shadowRadius: 6,
-    shadowOffset: { width: 0, height: 2 },
-    elevation: 2,
   },
 });
