@@ -30,6 +30,12 @@
           "organization": "jose-6r",
           "project": "react-native"
         }
+      ],
+      [
+        "expo-notifications",
+        {
+          "color": "#1f6feb"
+        }
       ]
     ],
     "extra": {

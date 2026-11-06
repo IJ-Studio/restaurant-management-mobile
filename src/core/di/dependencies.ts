@@ -23,6 +23,8 @@ import { ReservationRepositoryImpl } from '../../features/reservations/data/repo
 import { CreateReservationUseCase } from '../../features/reservations/domain/usecases/CreateReservationUseCase';
 import { ListActiveReservationsUseCase } from '../../features/reservations/domain/usecases/ListActiveReservationsUseCase';
 import { SESSION_EXPIRED_MESSAGE } from '../errors/AppError';
+import { ExpoPushNotifications } from '../../features/notifications/data/gateways/ExpoPushNotifications';
+import { EnableNotificationsUseCase } from '../../features/notifications/domain/usecases/EnableNotificationsUseCase';
 import { httpClient, type HttpClient } from '../http/httpClient';
 
 /**
@@ -43,6 +45,7 @@ export interface Dependencies {
   currentOrderStore: CurrentOrderStore;
   listTablesUseCase: Pick<ListTablesUseCase, 'execute'>;
   sendOrderToKitchenUseCase: Pick<SendOrderToKitchenUseCase, 'execute'>;
+  enableNotificationsUseCase: Pick<EnableNotificationsUseCase, 'execute'>;
 }
 
 /**
@@ -93,5 +96,6 @@ export function createDependencies({
     currentOrderStore,
     listTablesUseCase: new ListTablesUseCase(orderRepository),
     sendOrderToKitchenUseCase: new SendOrderToKitchenUseCase(orderRepository),
+    enableNotificationsUseCase: new EnableNotificationsUseCase(new ExpoPushNotifications()),
   };
 }
