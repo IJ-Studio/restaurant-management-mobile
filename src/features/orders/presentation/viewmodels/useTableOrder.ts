@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 
 import { useDependencies } from '../../../../core/di/DependenciesProvider';
 import { userMessage } from '../../../../core/errors/AppError';
@@ -73,6 +73,14 @@ export function useTableOrder() {
   });
 
   const actions = currentOrderStore.getState();
+  // Estable entre renders para que el plano (memo) no vuelva a pintar todas las mesas.
+  const selectTable = useCallback(
+    (tableNumber: string) => {
+      feedback.select();
+      currentOrderStore.getState().setTable(tableNumber);
+    },
+    [currentOrderStore],
+  );
 
   return {
     order,
@@ -82,10 +90,7 @@ export function useTableOrder() {
     tables: tables.data ?? [],
     floor,
     tablesError: tables.error ? toMessage(tables.error) : null,
-    selectTable: (tableNumber: string) => {
-      feedback.select();
-      actions.setTable(tableNumber);
-    },
+    selectTable,
     setQuantity: actions.setQuantity,
     setGuests: actions.setGuests,
     setKitchenNote: actions.setKitchenNote,
