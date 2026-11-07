@@ -2,6 +2,7 @@ import { useQueryClient } from '@tanstack/react-query';
 import { useEffect, type ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
+import { colors } from '../../../../shared/presentation/theme';
 import { LoginScreen } from '../screens/LoginScreen';
 import { useSession } from '../viewmodels/useSession';
 import { useSessionBootstrap } from '../viewmodels/useSessionBootstrap';
@@ -20,7 +21,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
   if (status === 'restoring') {
     return (
       <View style={styles.center}>
-        <ActivityIndicator size="large" accessibilityLabel="Cargando sesión" />
+        <ActivityIndicator size="large" color={colors.brand} accessibilityLabel="Cargando sesión" />
       </View>
     );
   }
@@ -29,5 +30,5 @@ export function AuthGate({ children }: { children: ReactNode }) {
 }
 
 const styles = StyleSheet.create({
-  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#fff' },
+  center: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.surface },
 });

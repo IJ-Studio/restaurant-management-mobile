@@ -1,6 +1,7 @@
 import { makeDraft, makeReservation, makeReservationRepository, NOW } from '../../__fixtures__/reservations';
 import { CreateReservationUseCase } from '../usecases/CreateReservationUseCase';
 import { ListActiveReservationsUseCase } from '../usecases/ListActiveReservationsUseCase';
+import { ListRecentReservationsUseCase } from '../usecases/ListRecentReservationsUseCase';
 
 describe('CreateReservationUseCase', () => {
   it('envía la reservación limpia al repositorio', async () => {
@@ -35,6 +36,7 @@ describe('ListActiveReservationsUseCase', () => {
       makeReservation({ id: 'cancelada', status: 'cancelada' }),
       makeReservation({ id: 'temprano', dateTime: '2026-10-20T20:00:00.000Z', status: 'pendiente' }),
       makeReservation({ id: 'completada', status: 'completada' }),
+      makeReservation({ id: 'no-llego', status: 'no_show' }),
     ]);
 
     const list = await new ListActiveReservationsUseCase(repository, () => NOW).execute();
@@ -42,6 +44,31 @@ describe('ListActiveReservationsUseCase', () => {
     const from = repository.listFrom.mock.calls[0][0];
     expect([from.getHours(), from.getMinutes(), from.getSeconds()]).toEqual([0, 0, 0]);
     expect(list.map((r) => r.id)).toEqual(['temprano', 'tarde']);
+  });
+});
+
+describe('ListRecentReservationsUseCase', () => {
+  it('pide los últimos 30 días y deja solo las de antes de hoy, de la más reciente a la más antigua', async () => {
+    const repository = makeReservationRepository([
+      makeReservation({ id: 'hoy', dateTime: '2026-10-20T19:00:00.000Z' }),
+      makeReservation({ id: 'hace-una-semana', dateTime: '2026-10-13T20:00:00.000Z', status: 'completada' }),
+      makeReservation({ id: 'ayer', dateTime: '2026-10-19T20:00:00.000Z', status: 'no_show' }),
+    ]);
+
+    const list = await new ListRecentReservationsUseCase(repository, () => NOW).execute();
+
+    const from = repository.listFrom.mock.calls[0][0];
+    const expected = new Date(NOW);
+    expected.setHours(0, 0, 0, 0);
+    expected.setDate(expected.getDate() - 30);
+    expect(from).toEqual(expected);
+    expect(list.map((r) => r.id)).toEqual(['ayer', 'hace-una-semana']);
+  });
+
+  it('con el reloj por defecto consulta hacia atrás desde hoy', async () => {
+    const repository = makeReservationRepository([]);
+    await expect(new ListRecentReservationsUseCase(repository).execute()).resolves.toEqual([]);
+    expect(repository.listFrom.mock.calls[0][0].getTime()).toBeLessThan(Date.now());
   });
 });
 

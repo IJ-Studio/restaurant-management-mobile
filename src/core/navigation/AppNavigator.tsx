@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer, type NavigationContainerRef } from '@react-navigation/native';
 import type { Ref } from 'react';
@@ -5,6 +6,7 @@ import type { Ref } from 'react';
 import { sectionsFor, type Section } from '../../features/auth/domain/entities/permissions';
 import { RequireSection } from '../../features/auth/presentation/components/RequireSection';
 import { useSession } from '../../features/auth/presentation/viewmodels/useSession';
+import { navigationTheme, tabScreenOptions } from './navigationTheme';
 import { SECTION_CONFIG } from './sections';
 
 export type TabParamList = Record<Section, undefined>;
@@ -36,12 +38,9 @@ export function AppNavigator({ navigationRef }: Props) {
   const sections = sectionsFor(role);
 
   return (
-    <NavigationContainer ref={navigationRef}>
+    <NavigationContainer ref={navigationRef} theme={navigationTheme}>
       {/* key: si cambia el rol se reconstruye el navegador y no queda historial de otro rol. */}
-      <Tab.Navigator
-        key={role}
-        screenOptions={{ headerTitleAlign: 'center', tabBarActiveTintColor: '#b44d12' }}
-      >
+      <Tab.Navigator key={role} screenOptions={tabScreenOptions}>
         {sections.map((section) => (
           <Tab.Screen
             key={section}
@@ -50,6 +49,13 @@ export function AppNavigator({ navigationRef }: Props) {
             options={{
               title: SECTION_CONFIG[section].title,
               headerShown: SECTION_CONFIG[section].headerShown ?? true,
+              tabBarIcon: ({ focused, color, size }) => (
+                <Ionicons
+                  name={focused ? SECTION_CONFIG[section].icon.active : SECTION_CONFIG[section].icon.inactive}
+                  color={color}
+                  size={size}
+                />
+              ),
             }}
           />
         ))}
