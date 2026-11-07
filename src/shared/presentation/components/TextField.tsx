@@ -1,4 +1,4 @@
-import { useState, type ReactNode } from 'react';
+import { memo, useState, type ReactNode } from 'react';
 import {
   StyleSheet,
   Text,
@@ -24,7 +24,8 @@ interface Props extends Omit<TextInputProps, 'style'> {
  * Campo de texto con la etiqueta montada sobre el borde, como `input-floating` de la web.
  * Al enfocarse se pinta el anillo naranja; con error, el borde y el mensaje van en rojo.
  */
-export function TextField({
+// memo: solo se vuelve a pintar si cambian sus props.
+export const TextField = memo(function TextField({
   label,
   error,
   right,
@@ -78,7 +79,7 @@ export function TextField({
       {error && <Text style={styles.error}>{error}</Text>}
     </View>
   );
-}
+});
 
 const LABEL_OFFSET = spacing.sm + spacing.xxs;
 

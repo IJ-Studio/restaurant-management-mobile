@@ -1,5 +1,6 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { Image, KeyboardAvoidingView, Platform, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { memo } from 'react';
+import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../../../../shared/presentation/components/Button';
 import { Notice } from '../../../../shared/presentation/components/Notice';
@@ -13,46 +14,53 @@ const LOGO = require('../../../../../assets/brand/logo-el-quijote.png');
 /** Proporción del archivo del logo (720 × 372). */
 const LOGO_ASPECT_RATIO = 720 / 372;
 
+// Partes fijas de la pantalla en memo: al escribir solo se vuelven a pintar los campos.
+const Brand = memo(function Brand() {
+  return (
+    <LinearGradient colors={gradients.brand} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
+      <View style={styles.ring} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" />
+      <Image
+        source={LOGO}
+        style={styles.logo}
+        resizeMode="contain"
+        accessibilityRole="image"
+        accessibilityLabel="Restaurante El Quijote"
+      />
+      <Text style={styles.tagline}>Sabor con Alma</Text>
+    </LinearGradient>
+  );
+});
+
+const Header = memo(function Header() {
+  return (
+    <ScreenHeader
+      title="Iniciar sesión"
+      subtitle="Acceso exclusivo para el personal del restaurante"
+      size="title"
+      style={styles.header}
+    />
+  );
+});
+
 export function LoginScreen() {
   const { email, setEmail, password, setPassword, fieldErrors, submit, isSubmitting, errorMessage } =
     useLogin();
 
   return (
-    <KeyboardAvoidingView style={styles.screen} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
+    // Sin KeyboardAvoidingView (añade un render al montarse): en iOS el ScrollView ajusta su inserción al
+    // teclado; en Android el sistema redimensiona la ventana, igual que antes.
+    <View style={styles.screen}>
       <ScrollView
+        automaticallyAdjustKeyboardInsets
         contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}
         bounces={false}
       >
-        <LinearGradient
-          colors={gradients.brand}
-          start={{ x: 0, y: 0 }}
-          end={{ x: 1, y: 1 }}
-          style={styles.hero}
-        >
-          <View
-            style={styles.ring}
-            accessibilityElementsHidden
-            importantForAccessibility="no-hide-descendants"
-          />
-          <Image
-            source={LOGO}
-            style={styles.logo}
-            resizeMode="contain"
-            accessibilityRole="image"
-            accessibilityLabel="Restaurante El Quijote"
-          />
-          <Text style={styles.tagline}>Sabor con Alma</Text>
-        </LinearGradient>
+        <Brand />
 
         <View style={styles.sheet}>
-          <ScreenHeader
-            title="Iniciar sesión"
-            subtitle="Acceso exclusivo para el personal del restaurante"
-            size="title"
-            style={styles.header}
-          />
+          <Header />
 
           <TextField
             label="Correo"
@@ -86,7 +94,7 @@ export function LoginScreen() {
           <Button label="Entrar" onPress={submit} loading={isSubmitting} style={styles.submit} />
         </View>
       </ScrollView>
-    </KeyboardAvoidingView>
+    </View>
   );
 }
 
