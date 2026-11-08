@@ -382,9 +382,12 @@ export function createFakeApi(options: FakeApiOptions = {}) {
     ];
   };
 
-  const cancelOrder: Handler = (_body, id) => {
+  const cancelOrder: Handler = (body, id) => {
     const order = orders.get(id);
     if (!order) return [404, { message: `La orden con ID ${id} no existe.` }];
+    const motivo = (body as { motivo?: unknown } | undefined)?.motivo;
+    if (typeof motivo !== 'string' || motivo.trim().length < 3)
+      return [400, { message: ['Escribe el motivo de la cancelación.'] }];
     if (order.estado !== 'abierta')
       return [400, { message: `No se puede cancelar una comanda en estado: ${order.estado}.` }];
     order.estado = 'cancelada';

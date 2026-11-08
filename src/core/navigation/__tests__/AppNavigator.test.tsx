@@ -55,7 +55,9 @@ describe('AppNavigator', () => {
     await act(() => navigationRef.navigate('reservations'));
     await act(() => navigationRef.navigate('dashboard'));
 
-    expect(navigationRef.getCurrentRoute()?.name).toBe('dashboard');
+    // El dashboard está dentro del navegador de administración (inicio + módulos como Nómina).
+    expect(navigationRef.getCurrentRoute()?.name).toBe('AdminHome');
+    expect(screen.getByRole('button', { name: 'Nómina' })).toBeOnTheScreen();
     expect(screen.getByText('Resumen del día')).toBeOnTheScreen();
   });
 

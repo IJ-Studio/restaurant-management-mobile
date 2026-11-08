@@ -17,6 +17,7 @@ import { OrderCard } from '../components/OrderCard';
 import type { CheckoutStackParamList } from '../navigation/CheckoutNavigator';
 import { cashQueryKey } from '../../../cashier/presentation/useCashRegister';
 import { useChargeableOrders } from '../viewmodels/useChargeableOrders';
+import { countOf, sumOf } from '../../../../shared/domain/Calculation';
 
 /** Cobros (cajero): pedidos por cobrar, los ya entregados primero. */
 export function ChargeListScreen() {
@@ -60,6 +61,12 @@ export function ChargeListScreen() {
             <StatCard
               label="Por cobrar"
               value={formatCurrency(vm.pendingTotal)}
+              calculation={sumOf(
+                'por cobrar = suma del total de cada cuenta abierta',
+                vm.orders,
+                (o) => o.place,
+                (o) => o.total,
+              )}
               icon="wallet-outline"
               tone="brand"
               style={styles.stat}
@@ -67,6 +74,12 @@ export function ChargeListScreen() {
             <StatCard
               label="Cuentas abiertas"
               value={String(vm.orders.length)}
+              calculation={countOf(
+                'cuentas abiertas = cuentas entregadas o listas por cobrar',
+                vm.orders,
+                (o) => o.place,
+                (o) => formatCurrency(o.total),
+              )}
               icon="receipt-outline"
               style={styles.stat}
             />

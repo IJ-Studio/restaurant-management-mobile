@@ -1,3 +1,4 @@
+import { properName } from '../../../../shared/utils/formatCase';
 import { AppError } from '../../../../core/errors/AppError';
 import type { UserProfile } from '../../domain/entities/Profile';
 import type { ProfileRepository } from '../../domain/repositories/ProfileRepository';
@@ -6,8 +7,8 @@ import type { ProfileRemoteDataSource, UserDto } from '../datasources/ProfileRem
 function toProfile(dto: UserDto): UserProfile {
   return {
     id: String(dto.id),
-    name: dto.name,
-    lastname: dto.lastname,
+    name: properName(dto.name),
+    lastname: properName(dto.lastname),
     email: dto.email,
     phone: dto.phone ?? undefined,
   };

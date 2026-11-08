@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
+import { useState } from 'react';
 import { Alert, RefreshControl, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../../../../shared/presentation/components/Button';
@@ -9,6 +10,7 @@ import { LoadingState } from '../../../../shared/presentation/components/Loading
 import { Notice } from '../../../../shared/presentation/components/Notice';
 import { SectionTitle } from '../../../../shared/presentation/components/SectionTitle';
 import { StatusBadge } from '../../../../shared/presentation/components/StatusBadge';
+import { TextField } from '../../../../shared/presentation/components/TextField';
 import { colors, radius, spacing, typography } from '../../../../shared/presentation/theme';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { formatTime } from '../../../../shared/utils/formatDateTime';
@@ -55,6 +57,8 @@ function ItemRow({
 export function OrderDetailScreen({ route, navigation }: Props) {
   const { orderId, place } = route.params;
   const vm = useOrderDetail(orderId);
+  const [cancelReason, setCancelReason] = useState('');
+  const [reasonError, setReasonError] = useState<string | undefined>();
   const { incidents } = useIncidents(orderId);
   const role = useSession((state) => state.session?.user.role);
   // Cocina, piso y administración pueden avisar de un problema con el pedido.
@@ -66,11 +70,16 @@ export function OrderDetailScreen({ route, navigation }: Props) {
   }
 
   const { order } = vm;
-  const confirmCancel = () =>
+  const confirmCancel = () => {
+    if (cancelReason.trim().length < 3) {
+      setReasonError('Escribe el motivo de la cancelación.');
+      return;
+    }
     Alert.alert('Cancelar pedido', `¿Cancelar el pedido de ${place}? Cocina dejará de prepararlo.`, [
       { text: 'No', style: 'cancel' },
-      { text: 'Sí, cancelar', style: 'destructive', onPress: vm.cancel },
+      { text: 'Sí, cancelar', style: 'destructive', onPress: () => vm.cancel(cancelReason) },
     ]);
+  };
   const stepButtons = (['start', 'ready', 'deliver'] as const).filter((action) => vm.can(action));
 
   return (
@@ -203,6 +212,17 @@ export function OrderDetailScreen({ route, navigation }: Props) {
       )}
       {vm.can('cancel') && (
         <>
+          <TextField
+            label="Motivo de la cancelación"
+            value={cancelReason}
+            onChangeText={(texto) => {
+              setCancelReason(texto);
+              if (reasonError) setReasonError(undefined);
+            }}
+            error={reasonError}
+            maxLength={300}
+            placeholder="Por ejemplo: el cliente cambió de opinión"
+          />
           <Button
             label={ACTION_LABEL.cancel}
             variant="outline"

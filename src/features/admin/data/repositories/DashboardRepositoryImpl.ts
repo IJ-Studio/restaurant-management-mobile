@@ -1,4 +1,5 @@
 import { AppError } from '../../../../core/errors/AppError';
+import { fromCalculationDto } from '../../../../shared/domain/Calculation';
 import { toIsoTimestamp } from '../../../../shared/utils/apiDate';
 import { toIncident } from '../../../kitchen/data/KitchenRepositoryImpl';
 import type { DailyReport, DailyStats, TableMapEntry } from '../../domain/entities/DashboardSummary';
@@ -25,6 +26,13 @@ export class DashboardRepositoryImpl implements DashboardRepository {
         ordersInKitchen: toCount(dto.pedidosEnPreparacion),
         readyOrders: toCount(dto.pedidosListos),
         ordersToCharge: toCount(dto.pedidosPorCobrar),
+        calculations: dto.calculos && {
+          salesTotal: fromCalculationDto(dto.calculos?.totalVentas),
+          pendingOrders: fromCalculationDto(dto.calculos?.pedidosPendientes),
+          ordersInKitchen: fromCalculationDto(dto.calculos?.pedidosEnPreparacion),
+          readyOrders: fromCalculationDto(dto.calculos?.pedidosListos),
+          ordersToCharge: fromCalculationDto(dto.calculos?.pedidosPorCobrar),
+        },
       };
     } catch (error) {
       if (error instanceof AppError && error.kind === 'forbidden') {
@@ -72,6 +80,13 @@ export class DashboardRepositoryImpl implements DashboardRepository {
       })),
       incidents: dto.incidencias.map(toIncident),
       waste: { records: dto.mermas.registros, cost: toCount(dto.mermas.costo) },
+      calculations: dto.calculos && {
+        collected: fromCalculationDto(dto.calculos?.cobrado),
+        tips: fromCalculationDto(dto.calculos?.propinas),
+        averageTicket: fromCalculationDto(dto.calculos?.ticketPromedio),
+        guests: fromCalculationDto(dto.calculos?.comensales),
+        waste: fromCalculationDto(dto.calculos?.mermas),
+      },
       openRegisters: dto.cajasAbiertas.map((c) => ({
         id: c.id,
         cashier: c.cajero ?? undefined,

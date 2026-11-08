@@ -43,8 +43,9 @@ export class OrderRemoteDataSource {
     return this.http.get<OrderDetailDto>(`pedidos/${id(orderId)}`);
   }
 
-  cancel(orderId: string): Promise<OrderActionResponseDto> {
-    return this.http.patch<OrderActionResponseDto>(`pedidos/cancelar/${id(orderId)}`);
+  /** El API exige el motivo (Prioridad 3.3); lo ve el administrador. */
+  cancel(orderId: string, motivo: string): Promise<OrderActionResponseDto> {
+    return this.http.patch<OrderActionResponseDto>(`pedidos/cancelar/${id(orderId)}`, { motivo });
   }
 
   removeItem(itemId: number): Promise<OrderActionResponseDto> {

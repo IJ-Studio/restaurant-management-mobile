@@ -80,8 +80,8 @@ export class OrderRepositoryImpl implements OrderRepository {
     }
   }
 
-  async cancel(orderId: string): Promise<string> {
-    const response = await this.remote.cancel(orderId);
+  async cancel(orderId: string, reason: string): Promise<string> {
+    const response = await this.remote.cancel(orderId, reason);
     return response.message || 'Pedido cancelado.';
   }
 

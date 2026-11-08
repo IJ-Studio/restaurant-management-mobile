@@ -22,6 +22,8 @@ import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { formatTime } from '../../../shared/utils/formatDateTime';
 import { differenceLabel } from '../domain/CashRegister';
 import { useCashRegister } from './useCashRegister';
+import { partOf } from '../../../shared/domain/Calculation';
+import { CalculationToggle } from '../../../shared/presentation/components/CalculationView';
 
 /** Corte de caja: abrir turno con fondo, ver lo cobrado y cerrar contando el efectivo. */
 export function CashRegisterScreen() {
@@ -127,30 +129,60 @@ function OpenSession({ vm }: { vm: Vm }) {
         <Text style={styles.heroHint}>
           {session.payments} cobros en tu turno · propinas {formatCurrency(session.tips)}
         </Text>
+        {session.calculations?.totalSales && (
+          <CalculationToggle
+            title="cobrado en tu turno"
+            result={formatCurrency(session.totalSales)}
+            calculation={session.calculations.totalSales}
+          />
+        )}
+        {session.calculations?.tips && (
+          <CalculationToggle
+            title="propinas"
+            result={formatCurrency(session.tips)}
+            calculation={session.calculations.tips}
+          />
+        )}
       </HeroCard>
 
       <View style={styles.stats}>
         <StatCard
           label="Efectivo"
           value={formatCurrency(session.cashSales)}
+          calculation={partOf(
+            'efectivo = pagos en efectivo de tu turno',
+            session.calculations?.totalSales,
+            'efectivo',
+          )}
           icon="cash-outline"
           style={styles.stat}
         />
         <StatCard
           label="Tarjeta"
           value={formatCurrency(session.cardSales)}
+          calculation={partOf(
+            'tarjeta = pagos con tarjeta de tu turno',
+            session.calculations?.totalSales,
+            'tarjeta',
+          )}
           icon="card-outline"
           style={styles.stat}
         />
         <StatCard
           label="Digital"
           value={formatCurrency(session.digitalSales)}
+          calculation={partOf(
+            'digital = pagos digitales de tu turno',
+            session.calculations?.totalSales,
+            'digital',
+          )}
           icon="phone-portrait-outline"
           style={styles.stat}
         />
         <StatCard
           label="Debe haber en caja"
           value={formatCurrency(session.expectedCash)}
+          calculation={session.calculations?.expectedCash}
           hint={`fondo ${formatCurrency(session.openingFloat)}`}
           icon="wallet-outline"
           tone="brand"

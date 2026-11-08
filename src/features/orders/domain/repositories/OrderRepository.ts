@@ -25,7 +25,7 @@ export interface OrderRepository {
   listActive(): Promise<ActiveOrder[]>;
   getDetail(orderId: string): Promise<OrderDetail>;
   /** Cancela un pedido que está en cocina; devuelve el mensaje del API. */
-  cancel(orderId: string): Promise<string>;
+  cancel(orderId: string, reason: string): Promise<string>;
   /** Quita un platillo de un pedido que sigue pendiente; devuelve el mensaje del API. */
   removeItem(itemId: number): Promise<string>;
   /** Avanza el pedido en cocina o lo marca entregado; devuelve el mensaje del API. */

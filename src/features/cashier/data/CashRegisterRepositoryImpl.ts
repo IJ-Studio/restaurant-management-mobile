@@ -1,5 +1,6 @@
 import { AppError } from '../../../core/errors/AppError';
 import type { HttpClient } from '../../../core/http/httpClient';
+import { fromCalculationDto, type CalculationDto } from '../../../shared/domain/Calculation';
 import { toIsoTimestamp } from '../../../shared/utils/apiDate';
 import type { CashRegisterRepository, CashSession, CloseResult } from '../domain/CashRegister';
 
@@ -19,6 +20,7 @@ export interface CashSessionDto {
   efectivoEsperado?: string;
   efectivoContado?: string | null;
   diferencia?: string | null;
+  calculos?: Record<string, CalculationDto>;
 }
 
 const amount = (value: string | null | undefined) => {
@@ -42,6 +44,11 @@ export function toCashSession(dto: CashSessionDto): CashSession {
     expectedCash: amount(dto.efectivoEsperado),
     countedCash: dto.efectivoContado != null ? amount(dto.efectivoContado) : undefined,
     difference: dto.diferencia != null ? amount(dto.diferencia) : undefined,
+    calculations: dto.calculos && {
+      totalSales: fromCalculationDto(dto.calculos.totalVentas),
+      tips: fromCalculationDto(dto.calculos.propinas),
+      expectedCash: fromCalculationDto(dto.calculos.efectivoEsperado),
+    },
   };
 }
 
