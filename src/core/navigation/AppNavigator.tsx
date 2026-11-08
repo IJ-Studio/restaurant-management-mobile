@@ -6,6 +6,7 @@ import type { Ref } from 'react';
 import { sectionsFor, type Section } from '../../features/auth/domain/entities/permissions';
 import { RequireSection } from '../../features/auth/presentation/components/RequireSection';
 import { useSession } from '../../features/auth/presentation/viewmodels/useSession';
+import { useNotificationPermission } from '../../features/notifications/presentation/viewmodels/useNotificationPermission';
 import { navigationTheme, tabScreenOptions } from './navigationTheme';
 import { SECTION_CONFIG } from './sections';
 
@@ -36,6 +37,8 @@ interface Props {
 export function AppNavigator({ navigationRef }: Props) {
   const role = useSession((state) => state.session?.user.role);
   const sections = sectionsFor(role);
+  // Al entrar con sesión se pide el permiso de notificaciones (una sola vez; HU-07).
+  useNotificationPermission({ askOnMount: true });
 
   return (
     <NavigationContainer ref={navigationRef} theme={navigationTheme}>

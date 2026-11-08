@@ -7,6 +7,7 @@ import { Card } from '../../../../shared/presentation/components/Card';
 import { HeroCard } from '../../../../shared/presentation/components/HeroCard';
 import { colors, opacity, radius, spacing, typography } from '../../../../shared/presentation/theme';
 import { formatTime } from '../../../../shared/utils/formatDateTime';
+import { NotificationSettings } from '../../../notifications/presentation/components/NotificationSettings';
 import type { Role } from '../../domain/entities/Role';
 import { useLogout } from '../viewmodels/useLogout';
 import { useSession } from '../viewmodels/useSession';
@@ -122,6 +123,8 @@ export function ProfileScreen({ onEditProfile, onChangePassword }: Props = {}) {
           )}
         </Card>
       )}
+
+      <NotificationSettings />
 
       <Button
         label="Cerrar sesión"
