@@ -140,6 +140,7 @@ gitGraph
 | `stress-tests.yml` | `stress-tests` | p95 o memoria fuera de límite, o la app no se recupera de 5xx/timeouts. Nocturno, manual y PRs a `main`/`release/**` | `stress-report` |
 | `codeql.yml` | `codeql` | Alertas High/Critical de CodeQL (SAST) | Security → Code scanning |
 | `cd-preview.yml` / `cd-release.yml` | `build-preview` / release | APK por tag `sprint-*` / `v*`; esperan `quality-gate` en verde | — |
+| `cd-play-store.yml` | `play-store` | AAB firmado a Google Play (pista de pruebas internas, borrador) por tag `vX.Y.Z` en `main`; espera `quality-gate` en verde | [docs/deployment-google-play.md](docs/deployment-google-play.md) |
 
 Cada etapa de `ci.yml` solo corre si la anterior pasó (`needs:`). Detalle de etapas, umbrales y
 reportes: [docs/ci-cd.md](docs/ci-cd.md) y [docs/testing-strategy.md](docs/testing-strategy.md).

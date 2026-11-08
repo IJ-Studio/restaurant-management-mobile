@@ -9,6 +9,7 @@
 | `codeql.yml` | Cada push y PR, y los lunes | SAST de GitHub; publica el check `CodeQL` y las alertas en Security |
 | `cd-preview.yml` | Tag `sprint-*` | APK de prueba con EAS (perfil `preview`) |
 | `cd-release.yml` | Tag `v*` en `main` | APK firmado y GitHub Release en borrador |
+| `cd-play-store.yml` | Tag `v*` en `main` (sin `-rc`) | AAB firmado y subida a Google Play, pista de pruebas internas como borrador ([guía](deployment-google-play.md)) |
 | `dependabot.yml` | Lunes | PRs de actualización de npm y GitHub Actions |
 | `project-*.yml` | Diario y al abrir PRs | Mantienen el tablero del proyecto |
 
@@ -63,7 +64,7 @@ flowchart LR
 | Una operación rebasa su p95, el heap crece de más o la app no se recupera de una falla | `stress-tests` falla (bloquea los PRs hacia `main` y `release/**`) |
 | Vulnerabilidad High o un secreto en el historial | `security` falla y `quality-gate` reprueba (las pruebas sí corren) |
 | Todo en verde | `quality-gate` aprueba y el PR se puede mergear (con la aprobación de un revisor) |
-| Tag `sprint-*` o `v*` sobre un commit con `quality-gate` en rojo | Los workflows de CD abortan y no generan APK ni AAB |
+| Tag `sprint-*` o `v*` sobre un commit con `quality-gate` en rojo | Los workflows de CD (`cd-preview`, `cd-release`, `cd-play-store`) abortan y no generan APK ni AAB |
 
 `quality-gate` siempre corre (`if: always()`) y deja una tabla con el resultado de cada etapa en la pestaña
 **Summary** del run. Las etapas de pruebas también publican cuántas pruebas pasaron y la cobertura, y
