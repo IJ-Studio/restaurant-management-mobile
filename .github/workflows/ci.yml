@@ -16,7 +16,7 @@
 #   (fail fast). Si el análisis estático falla, las demás quedan en "skipped".
 # - `quality-gate` es el check obligatorio de main y develop. Falla si cualquier etapa falló, se
 #   canceló o se saltó, así que un PR en rojo no se puede mergear.
-# - cd-preview.yml y cd-release.yml esperan a que `quality-gate` esté en verde antes de compilar.
+# - cd-preview.yml, cd-release.yml y cd-play-store.yml esperan a que `quality-gate` esté en verde antes de compilar.
 # - Las pruebas de esfuerzo corren en su propio workflow (stress-tests.yml).
 #
 # Reportes de cada etapa (artefactos, 30 días): static-analysis-report, unit-tests-report,

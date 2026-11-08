@@ -422,3 +422,6 @@ reports/
 # Generadas por expo prebuild
 /android
 /ios
+
+# Llave de la cuenta de servicio de Google Play (la escribe cd-play-store.yml desde un secreto)
+google-service-account.json
