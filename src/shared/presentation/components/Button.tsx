@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
 
 import { colors, opacity, pressScale, radius, shadows, sizes, spacing, typography } from '../theme';
@@ -26,7 +27,8 @@ const SPINNER_COLOR: Record<ButtonVariant, string> = {
 };
 
 /** Botón de la app, con los estilos `btn-primary` y `btn-secondary` de la web. */
-export function Button({
+// memo: solo se vuelve a pintar si cambian sus props.
+export const Button = memo(function Button({
   label,
   onPress,
   variant = 'primary',
@@ -64,7 +66,7 @@ export function Button({
       )}
     </Pressable>
   );
-}
+});
 
 const styles = StyleSheet.create({
   base: {

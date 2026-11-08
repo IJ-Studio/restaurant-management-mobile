@@ -19,6 +19,7 @@ describe('DashboardScreen', () => {
     expect(screen.getByLabelText('En cocina, 2')).toBeOnTheScreen();
     expect(screen.getByLabelText('Por confirmar, 1')).toBeOnTheScreen();
     expect(screen.getByLabelText('Mesas ocupadas, 1, de 3 mesas')).toBeOnTheScreen();
+    expect(screen.getByLabelText('Ocupación, 33%')).toBeOnTheScreen();
 
     expect(screen.getByLabelText('Mesa 2, Reservada, 4 lugares')).toBeOnTheScreen();
     expect(screen.getByLabelText('Mesa 5, Ocupada, 2 lugares')).toBeOnTheScreen();

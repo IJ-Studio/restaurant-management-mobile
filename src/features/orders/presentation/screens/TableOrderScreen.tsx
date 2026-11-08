@@ -1,10 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useState } from 'react';
+import { memo, useCallback, useState } from 'react';
 import { KeyboardAvoidingView, Platform, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../../../../shared/presentation/components/Button';
 import { Card } from '../../../../shared/presentation/components/Card';
-import { FloorMap } from '../../../../shared/presentation/components/FloorMap';
+import { FloorMap, type FloorTable } from '../../../../shared/presentation/components/FloorMap';
 import { Notice } from '../../../../shared/presentation/components/Notice';
 import { ScreenState } from '../../../../shared/presentation/components/ScreenState';
 import { TextField } from '../../../../shared/presentation/components/TextField';
@@ -56,14 +56,15 @@ function QuantityStepper({ line, onChange }: { line: OrderLine; onChange: (quant
   );
 }
 
-function LineRow({
+// memo: al cambiar una cantidad o elegir mesa solo se vuelve a pintar la fila afectada.
+const LineRow = memo(function LineRow({
   line,
   onQuantity,
   onNotes,
 }: {
   line: OrderLine;
-  onQuantity: (quantity: number) => void;
-  onNotes: (notes: string) => void;
+  onQuantity: (dishId: number, quantity: number) => void;
+  onNotes: (dishId: number, notes: string) => void;
 }) {
   const [editing, setEditing] = useState(Boolean(line.notes));
   return (
@@ -73,14 +74,14 @@ function LineRow({
           <Text style={styles.lineName}>{line.name}</Text>
           <Text style={styles.linePrice}>{formatCurrency(line.unitPrice * line.quantity)}</Text>
         </View>
-        <QuantityStepper line={line} onChange={onQuantity} />
+        <QuantityStepper line={line} onChange={(quantity) => onQuantity(line.dishId, quantity)} />
       </View>
       {editing ? (
         <TextField
           label="Nota para cocina"
           accessibilityLabel={`Nota de ${line.name}`}
           value={line.notes ?? ''}
-          onChangeText={onNotes}
+          onChangeText={(notes) => onNotes(line.dishId, notes)}
           placeholder="Sin cebolla, término medio…"
           maxLength={MAX_LINE_NOTE}
           style={styles.noteField}
@@ -99,10 +100,12 @@ function LineRow({
       )}
     </View>
   );
-}
+});
 
 export function TableOrderScreen() {
   const vm = useTableOrder();
+  const { selectTable } = vm;
+  const onSelectTable = useCallback((table: FloorTable) => selectTable(table.number), [selectTable]);
 
   if (vm.sentMessage && vm.order.lines.length === 0) {
     return (
@@ -123,11 +126,7 @@ export function TableOrderScreen() {
         {vm.tablesError ? (
           <Text style={styles.tablesError}>{vm.tablesError}</Text>
         ) : (
-          <FloorMap
-            tables={vm.floor}
-            selectedNumber={vm.order.tableNumber}
-            onSelect={(table) => vm.selectTable(table.number)}
-          />
+          <FloorMap tables={vm.floor} selectedNumber={vm.order.tableNumber} onSelect={onSelectTable} />
         )}
 
         <Text style={styles.sectionTitle}>Comensales</Text>
@@ -150,12 +149,7 @@ export function TableOrderScreen() {
         <Text style={styles.sectionTitle}>Platillos</Text>
         <View style={styles.lines}>
           {vm.order.lines.map((line) => (
-            <LineRow
-              key={line.dishId}
-              line={line}
-              onQuantity={(quantity) => vm.setQuantity(line.dishId, quantity)}
-              onNotes={(notes) => vm.setLineNotes(line.dishId, notes)}
-            />
+            <LineRow key={line.dishId} line={line} onQuantity={vm.setQuantity} onNotes={vm.setLineNotes} />
           ))}
         </View>
 

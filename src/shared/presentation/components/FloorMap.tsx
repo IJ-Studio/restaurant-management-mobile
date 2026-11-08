@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, pressScale, radius, spacing, typography } from '../theme';
@@ -53,7 +54,8 @@ function chairPositions(width: number, height: number, count: number) {
   });
 }
 
-function TableSeat({
+// memo: al elegir otra mesa solo cambian la anterior y la nueva.
+const TableSeat = memo(function TableSeat({
   table,
   selected,
   onSelect,
@@ -112,10 +114,15 @@ function TableSeat({
       </View>
     </Pressable>
   );
-}
+});
 
 /** Plano del salón: las mesas agrupadas por área, con su forma, sus sillas y su estado. */
-export function FloorMap({ tables, onSelect, selectedNumber, showLegend = true }: Props) {
+export const FloorMap = memo(function FloorMap({
+  tables,
+  onSelect,
+  selectedNumber,
+  showLegend = true,
+}: Props) {
   const areas = new Map<string, FloorTable[]>();
   for (const table of tables) {
     const area = table.area ?? 'Salón';
@@ -165,7 +172,7 @@ export function FloorMap({ tables, onSelect, selectedNumber, showLegend = true }
       )}
     </View>
   );
-}
+});
 
 const styles = StyleSheet.create({
   area: { marginBottom: spacing.lg },

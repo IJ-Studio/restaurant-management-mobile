@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useState, type ComponentProps } from 'react';
+import { memo, useState, type ComponentProps } from 'react';
 import { Pressable, StyleSheet } from 'react-native';
 
 import { colors, sizes } from '../theme';
@@ -8,7 +8,8 @@ import { TextField } from './TextField';
 type Props = Omit<ComponentProps<typeof TextField>, 'secureTextEntry' | 'right'>;
 
 /** Campo de contraseña con botón para mostrarla u ocultarla (como `PasswordToggleButton` de la web). */
-export function PasswordField(props: Props) {
+// memo: solo se vuelve a pintar si cambian sus props.
+export const PasswordField = memo(function PasswordField(props: Props) {
   const [visible, setVisible] = useState(false);
   const name = props.accessibilityLabel ?? props.label;
 
@@ -35,7 +36,7 @@ export function PasswordField(props: Props) {
       }
     />
   );
-}
+});
 
 const styles = StyleSheet.create({
   toggle: {
