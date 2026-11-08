@@ -418,3 +418,7 @@ AGENTS.md
 # Reportes de pruebas generados en local y en CI
 reports/
 .reassure/
+
+# Generadas por expo prebuild
+/android
+/ios
