@@ -35,6 +35,8 @@ import { MenuRemoteDataSource } from '../../features/menu/data/datasources/MenuR
 import { MenuRepositoryImpl } from '../../features/menu/data/repositories/MenuRepositoryImpl';
 import { GetDishUseCase } from '../../features/menu/domain/usecases/GetDishUseCase';
 import { GetMenuUseCase } from '../../features/menu/domain/usecases/GetMenuUseCase';
+import { ExpoPushNotifications } from '../../features/notifications/data/gateways/ExpoPushNotifications';
+import { EnableNotificationsUseCase } from '../../features/notifications/domain/usecases/EnableNotificationsUseCase';
 import { OrderRemoteDataSource } from '../../features/orders/data/datasources/OrderRemoteDataSource';
 import { OrderRepositoryImpl } from '../../features/orders/data/repositories/OrderRepositoryImpl';
 import { CancelOrderUseCase } from '../../features/orders/domain/usecases/CancelOrderUseCase';
@@ -108,6 +110,7 @@ export interface Dependencies {
   correctPayrollMovementUseCase: Pick<CorrectPayrollMovementUseCase, 'execute'>;
   tablesRepository: TablesRepository;
   saveTableUseCase: Pick<SaveTableUseCase, 'execute'>;
+  enableNotificationsUseCase: Pick<EnableNotificationsUseCase, 'execute'>;
 }
 
 /**
@@ -190,5 +193,6 @@ export function createDependencies({
     correctPayrollMovementUseCase: new CorrectPayrollMovementUseCase(payrollRepository),
     tablesRepository,
     saveTableUseCase: new SaveTableUseCase(tablesRepository),
+    enableNotificationsUseCase: new EnableNotificationsUseCase(new ExpoPushNotifications()),
   };
 }
