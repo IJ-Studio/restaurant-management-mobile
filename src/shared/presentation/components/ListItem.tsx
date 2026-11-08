@@ -1,6 +1,7 @@
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, spacing } from '../theme';
+import { colors, opacity, radius, sizes, spacing, typography } from '../theme';
+import { StatusBadge, type StatusTone } from './StatusBadge';
 
 interface Props {
   title: string;
@@ -10,13 +11,24 @@ interface Props {
   imageUrl?: string;
   /** Etiqueta corta junto al título (p. ej. "Agotado"). */
   badge?: string;
+  badgeTone?: StatusTone;
   disabled?: boolean;
   onPress?: () => void;
   testID?: string;
 }
 
 /** Fila de lista con imagen opcional, título, subtítulo y valor a la derecha. */
-export function ListItem({ title, subtitle, trailing, imageUrl, badge, disabled, onPress, testID }: Props) {
+export function ListItem({
+  title,
+  subtitle,
+  trailing,
+  imageUrl,
+  badge,
+  badgeTone = 'danger',
+  disabled,
+  onPress,
+  testID,
+}: Props) {
   return (
     <Pressable
       onPress={onPress}
@@ -32,17 +44,15 @@ export function ListItem({ title, subtitle, trailing, imageUrl, badge, disabled,
         <View style={[styles.image, styles.imagePlaceholder]} />
       )}
       <View style={styles.body}>
-        <View style={styles.titleRow}>
-          <Text style={styles.title} numberOfLines={1}>
-            {title}
-          </Text>
-          {badge && <Text style={styles.badge}>{badge}</Text>}
-        </View>
+        <Text style={styles.title} numberOfLines={1}>
+          {title}
+        </Text>
         {subtitle && (
           <Text style={styles.subtitle} numberOfLines={2}>
             {subtitle}
           </Text>
         )}
+        {badge && <StatusBadge label={badge} tone={badgeTone} style={styles.badge} />}
       </View>
       {trailing && <Text style={styles.trailing}>{trailing}</Text>}
     </Pressable>
@@ -53,24 +63,23 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
+    minHeight: sizes.touchTarget,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     backgroundColor: colors.surface,
   },
-  pressed: { backgroundColor: colors.background },
-  disabled: { opacity: 0.5 },
-  image: { width: 56, height: 56, borderRadius: 8, marginRight: spacing.md },
-  imagePlaceholder: { backgroundColor: colors.border },
-  body: { flex: 1 },
-  titleRow: { flexDirection: 'row', alignItems: 'center' },
-  title: { fontSize: 16, fontWeight: '600', color: colors.text, flexShrink: 1 },
-  badge: {
-    marginLeft: spacing.sm,
-    fontSize: 11,
-    fontWeight: '700',
-    color: colors.danger,
-    textTransform: 'uppercase',
+  pressed: { backgroundColor: colors.elevated },
+  disabled: { opacity: opacity.dimmed },
+  image: {
+    width: sizes.thumbnail,
+    height: sizes.thumbnail,
+    borderRadius: radius.md,
+    marginRight: spacing.md,
   },
-  subtitle: { fontSize: 13, color: colors.muted, marginTop: 2 },
-  trailing: { fontSize: 15, fontWeight: '600', color: colors.text, marginLeft: spacing.md },
+  imagePlaceholder: { backgroundColor: colors.subtle },
+  body: { flex: 1 },
+  title: { ...typography.subheading, color: colors.text },
+  subtitle: { ...typography.small, color: colors.textSecondary, marginTop: spacing.xxs },
+  badge: { marginTop: spacing.xs },
+  trailing: { ...typography.price, color: colors.brandStrong, marginLeft: spacing.md },
 });

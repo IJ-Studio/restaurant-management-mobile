@@ -1,3 +1,20 @@
+import { DashboardRemoteDataSource } from '../../features/admin/data/datasources/DashboardRemoteDataSource';
+import { DashboardRepositoryImpl } from '../../features/admin/data/repositories/DashboardRepositoryImpl';
+import { GetDashboardUseCase } from '../../features/admin/domain/usecases/GetDashboardUseCase';
+import { CashRegisterRepositoryImpl } from '../../features/cashier/data/CashRegisterRepositoryImpl';
+import {
+  CloseCashRegisterUseCase,
+  GetCashSessionUseCase,
+  OpenCashRegisterUseCase,
+} from '../../features/cashier/domain/CashRegister';
+import { KitchenRepositoryImpl } from '../../features/kitchen/data/KitchenRepositoryImpl';
+import {
+  ListIncidentsUseCase,
+  ListInventoryProductsUseCase,
+  ListWasteTodayUseCase,
+  ReportIncidentUseCase,
+  ReportWasteUseCase,
+} from '../../features/kitchen/domain/Kitchen';
 import { AuthRemoteDataSource } from '../../features/auth/data/datasources/AuthRemoteDataSource';
 import { AuthRepositoryImpl } from '../../features/auth/data/repositories/AuthRepositoryImpl';
 import { SecureSessionStorage } from '../../features/auth/data/storage/SecureSessionStorage';
@@ -12,7 +29,20 @@ import { GetDishUseCase } from '../../features/menu/domain/usecases/GetDishUseCa
 import { GetMenuUseCase } from '../../features/menu/domain/usecases/GetMenuUseCase';
 import { OrderRemoteDataSource } from '../../features/orders/data/datasources/OrderRemoteDataSource';
 import { OrderRepositoryImpl } from '../../features/orders/data/repositories/OrderRepositoryImpl';
+import { CancelOrderUseCase } from '../../features/orders/domain/usecases/CancelOrderUseCase';
+import { ChargeOrderUseCase } from '../../features/orders/domain/usecases/ChargeOrderUseCase';
+import { ConfirmOrderUseCase } from '../../features/orders/domain/usecases/ConfirmOrderUseCase';
+import { GetOrderDetailUseCase } from '../../features/orders/domain/usecases/GetOrderDetailUseCase';
+import { ListActiveOrdersUseCase } from '../../features/orders/domain/usecases/ListActiveOrdersUseCase';
+import { ListPaymentMethodsUseCase } from '../../features/orders/domain/usecases/ListPaymentMethodsUseCase';
 import { ListTablesUseCase } from '../../features/orders/domain/usecases/ListTablesUseCase';
+import { RemoveOrderItemUseCase } from '../../features/orders/domain/usecases/RemoveOrderItemUseCase';
+import { UpdateOrderStatusUseCase } from '../../features/orders/domain/usecases/UpdateOrderStatusUseCase';
+import { ProfileRemoteDataSource } from '../../features/profile/data/datasources/ProfileRemoteDataSource';
+import { ProfileRepositoryImpl } from '../../features/profile/data/repositories/ProfileRepositoryImpl';
+import { ChangePasswordUseCase } from '../../features/profile/domain/usecases/ChangePasswordUseCase';
+import { GetProfileUseCase } from '../../features/profile/domain/usecases/GetProfileUseCase';
+import { UpdateProfileUseCase } from '../../features/profile/domain/usecases/UpdateProfileUseCase';
 import { SendOrderToKitchenUseCase } from '../../features/orders/domain/usecases/SendOrderToKitchenUseCase';
 import {
   createCurrentOrderStore,
@@ -22,6 +52,7 @@ import { ReservationRemoteDataSource } from '../../features/reservations/data/da
 import { ReservationRepositoryImpl } from '../../features/reservations/data/repositories/ReservationRepositoryImpl';
 import { CreateReservationUseCase } from '../../features/reservations/domain/usecases/CreateReservationUseCase';
 import { ListActiveReservationsUseCase } from '../../features/reservations/domain/usecases/ListActiveReservationsUseCase';
+import { ListRecentReservationsUseCase } from '../../features/reservations/domain/usecases/ListRecentReservationsUseCase';
 import { SESSION_EXPIRED_MESSAGE } from '../errors/AppError';
 import { httpClient, type HttpClient } from '../http/httpClient';
 
@@ -40,9 +71,30 @@ export interface Dependencies {
   getDishUseCase: Pick<GetDishUseCase, 'execute'>;
   createReservationUseCase: Pick<CreateReservationUseCase, 'execute'>;
   listActiveReservationsUseCase: Pick<ListActiveReservationsUseCase, 'execute'>;
+  listRecentReservationsUseCase: Pick<ListRecentReservationsUseCase, 'execute'>;
   currentOrderStore: CurrentOrderStore;
   listTablesUseCase: Pick<ListTablesUseCase, 'execute'>;
   sendOrderToKitchenUseCase: Pick<SendOrderToKitchenUseCase, 'execute'>;
+  listActiveOrdersUseCase: Pick<ListActiveOrdersUseCase, 'execute'>;
+  getOrderDetailUseCase: Pick<GetOrderDetailUseCase, 'execute'>;
+  confirmOrderUseCase: Pick<ConfirmOrderUseCase, 'execute'>;
+  cancelOrderUseCase: Pick<CancelOrderUseCase, 'execute'>;
+  removeOrderItemUseCase: Pick<RemoveOrderItemUseCase, 'execute'>;
+  getDashboardUseCase: Pick<GetDashboardUseCase, 'execute'>;
+  updateOrderStatusUseCase: Pick<UpdateOrderStatusUseCase, 'execute'>;
+  listPaymentMethodsUseCase: Pick<ListPaymentMethodsUseCase, 'execute'>;
+  chargeOrderUseCase: Pick<ChargeOrderUseCase, 'execute'>;
+  getProfileUseCase: Pick<GetProfileUseCase, 'execute'>;
+  updateProfileUseCase: Pick<UpdateProfileUseCase, 'execute'>;
+  changePasswordUseCase: Pick<ChangePasswordUseCase, 'execute'>;
+  getCashSessionUseCase: Pick<GetCashSessionUseCase, 'execute'>;
+  openCashRegisterUseCase: Pick<OpenCashRegisterUseCase, 'execute'>;
+  closeCashRegisterUseCase: Pick<CloseCashRegisterUseCase, 'execute'>;
+  listIncidentsUseCase: Pick<ListIncidentsUseCase, 'execute'>;
+  reportIncidentUseCase: Pick<ReportIncidentUseCase, 'execute'>;
+  listInventoryProductsUseCase: Pick<ListInventoryProductsUseCase, 'execute'>;
+  reportWasteUseCase: Pick<ReportWasteUseCase, 'execute'>;
+  listWasteTodayUseCase: Pick<ListWasteTodayUseCase, 'execute'>;
 }
 
 /**
@@ -79,6 +131,10 @@ export function createDependencies({
   const menuRepository = new MenuRepositoryImpl(new MenuRemoteDataSource(http));
   const reservationRepository = new ReservationRepositoryImpl(new ReservationRemoteDataSource(http));
   const orderRepository = new OrderRepositoryImpl(new OrderRemoteDataSource(http));
+  const dashboardRepository = new DashboardRepositoryImpl(new DashboardRemoteDataSource(http));
+  const profileRepository = new ProfileRepositoryImpl(new ProfileRemoteDataSource(http));
+  const cashRepository = new CashRegisterRepositoryImpl(http);
+  const kitchenRepository = new KitchenRepositoryImpl(http);
 
   return {
     httpClient: http,
@@ -90,8 +146,29 @@ export function createDependencies({
     getDishUseCase: new GetDishUseCase(menuRepository),
     createReservationUseCase: new CreateReservationUseCase(reservationRepository),
     listActiveReservationsUseCase: new ListActiveReservationsUseCase(reservationRepository),
+    listRecentReservationsUseCase: new ListRecentReservationsUseCase(reservationRepository),
     currentOrderStore,
     listTablesUseCase: new ListTablesUseCase(orderRepository),
     sendOrderToKitchenUseCase: new SendOrderToKitchenUseCase(orderRepository),
+    listActiveOrdersUseCase: new ListActiveOrdersUseCase(orderRepository),
+    getOrderDetailUseCase: new GetOrderDetailUseCase(orderRepository),
+    confirmOrderUseCase: new ConfirmOrderUseCase(orderRepository),
+    cancelOrderUseCase: new CancelOrderUseCase(orderRepository),
+    removeOrderItemUseCase: new RemoveOrderItemUseCase(orderRepository),
+    getDashboardUseCase: new GetDashboardUseCase(dashboardRepository, orderRepository),
+    updateOrderStatusUseCase: new UpdateOrderStatusUseCase(orderRepository),
+    listPaymentMethodsUseCase: new ListPaymentMethodsUseCase(orderRepository),
+    chargeOrderUseCase: new ChargeOrderUseCase(orderRepository),
+    getProfileUseCase: new GetProfileUseCase(profileRepository),
+    updateProfileUseCase: new UpdateProfileUseCase(profileRepository, sessionStorage),
+    changePasswordUseCase: new ChangePasswordUseCase(profileRepository),
+    getCashSessionUseCase: new GetCashSessionUseCase(cashRepository),
+    openCashRegisterUseCase: new OpenCashRegisterUseCase(cashRepository),
+    closeCashRegisterUseCase: new CloseCashRegisterUseCase(cashRepository),
+    listIncidentsUseCase: new ListIncidentsUseCase(kitchenRepository),
+    reportIncidentUseCase: new ReportIncidentUseCase(kitchenRepository),
+    listInventoryProductsUseCase: new ListInventoryProductsUseCase(kitchenRepository),
+    reportWasteUseCase: new ReportWasteUseCase(kitchenRepository),
+    listWasteTodayUseCase: new ListWasteTodayUseCase(kitchenRepository),
   };
 }

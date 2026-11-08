@@ -181,4 +181,45 @@ describe('Reservaciones', () => {
     await waitFor(() => expect(screen.queryByTestId('picker-date')).toBeNull());
     expect(screen.getByRole('button', { name: 'Elegir fecha' })).toBeOnTheScreen();
   });
+
+  it('sin reservaciones activas lleva a las recientes, con cualquier estatus', async () => {
+    const recent = jest.fn().mockResolvedValue([
+      makeReservation({ id: 'r1', customerName: 'Paola Chávez', status: 'no_show', tableId: 5 }),
+      makeReservation({
+        id: 'r2',
+        customerName: 'Raúl Vega',
+        status: 'completada',
+        occasion: 'Cumpleaños',
+      }),
+    ]);
+    await renderReservations(
+      makeTestDependencies({
+        listActiveReservationsUseCase: { execute: jest.fn().mockResolvedValue([]) },
+        listRecentReservationsUseCase: { execute: recent },
+      }),
+    );
+
+    expect(await screen.findByText('No hay reservaciones activas.')).toBeOnTheScreen();
+    expect(recent).not.toHaveBeenCalled();
+    await fireEvent.press(screen.getByRole('button', { name: 'Ver las recientes' }));
+
+    expect(await screen.findByText('Paola Chávez')).toBeOnTheScreen();
+    expect(screen.getByText('4 personas · Mesa 5 · No se presentó')).toBeOnTheScreen();
+    expect(screen.getByText('· Cumpleaños')).toBeOnTheScreen();
+    expect(screen.getByRole('radio', { name: 'Recientes' })).toBeSelected();
+
+    await fireEvent.press(screen.getByRole('radio', { name: 'Próximas' }));
+    expect(await screen.findByText('No hay reservaciones activas.')).toBeOnTheScreen();
+  });
+
+  it('avisa cuando tampoco hubo reservaciones recientes', async () => {
+    await renderReservations(
+      makeTestDependencies({
+        listActiveReservationsUseCase: { execute: jest.fn().mockResolvedValue([]) },
+        listRecentReservationsUseCase: { execute: jest.fn().mockResolvedValue([]) },
+      }),
+    );
+    await fireEvent.press(await screen.findByRole('radio', { name: 'Recientes' }));
+    expect(await screen.findByText('No hubo reservaciones en los últimos 30 días.')).toBeOnTheScreen();
+  });
 });

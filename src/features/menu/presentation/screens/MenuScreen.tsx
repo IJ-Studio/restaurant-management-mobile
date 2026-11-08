@@ -1,10 +1,12 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useNavigation } from '@react-navigation/native';
 import type { NativeStackNavigationProp } from '@react-navigation/native-stack';
 import { RefreshControl, SectionList, StyleSheet, Text, TextInput, View } from 'react-native';
 
 import { ListItem } from '../../../../shared/presentation/components/ListItem';
+import { Notice } from '../../../../shared/presentation/components/Notice';
 import { ScreenState } from '../../../../shared/presentation/components/ScreenState';
-import { colors, spacing } from '../../../../shared/presentation/theme';
+import { colors, radius, sizes, spacing, typography } from '../../../../shared/presentation/theme';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { dishSubtitle } from '../components/dishLabels';
 import type { MenuStackParamList } from '../navigation/MenuNavigator';
@@ -19,15 +21,22 @@ export function MenuScreen() {
 
   return (
     <View style={styles.container}>
-      <TextInput
-        style={styles.search}
-        value={search}
-        onChangeText={setSearch}
-        placeholder="Buscar platillo"
-        accessibilityLabel="Buscar platillo"
-        autoCorrect={false}
-        clearButtonMode="while-editing"
-      />
+      <View style={styles.searchBar}>
+        <Ionicons name="search" size={18} color={colors.textSecondary} />
+        <TextInput
+          style={styles.search}
+          value={search}
+          onChangeText={setSearch}
+          placeholder="Buscar platillo"
+          placeholderTextColor={colors.textMuted}
+          selectionColor={colors.brand}
+          accessibilityLabel="Buscar platillo"
+          autoCorrect={false}
+          clearButtonMode="while-editing"
+          returnKeyType="search"
+        />
+      </View>
+      {errorMessage && <Notice message={`No se pudo actualizar: ${errorMessage}`} style={styles.notice} />}
       <SectionList
         sections={sections.map((category) => ({
           key: String(category.id),
@@ -36,9 +45,14 @@ export function MenuScreen() {
         }))}
         keyExtractor={(dish) => String(dish.id)}
         renderSectionHeader={({ section }) => (
-          <Text style={styles.header} accessibilityRole="header">
-            {section.title}
-          </Text>
+          <View style={styles.header}>
+            <Text style={styles.headerTitle} accessibilityRole="header">
+              {section.title}
+            </Text>
+            <Text style={styles.headerCount}>
+              {section.data.length} {section.data.length === 1 ? 'platillo' : 'platillos'}
+            </Text>
+          </View>
         )}
         renderItem={({ item: dish }) => (
           <ListItem
@@ -58,31 +72,53 @@ export function MenuScreen() {
             message={search ? `Sin resultados para "${search}".` : 'El menú está vacío.'}
           />
         }
-        refreshControl={<RefreshControl refreshing={isRefreshing} onRefresh={refresh} />}
+        refreshControl={
+          <RefreshControl
+            refreshing={isRefreshing}
+            tintColor={colors.brand}
+            onRefresh={async () => {
+              await refresh();
+            }}
+          />
+        }
         stickySectionHeadersEnabled
+        keyboardDismissMode="on-drag"
       />
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: colors.surface },
-  search: {
-    margin: spacing.md,
+  container: { flex: 1, backgroundColor: colors.background },
+  searchBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: spacing.sm,
+    margin: spacing.lg,
+    marginBottom: spacing.sm,
     paddingHorizontal: spacing.md,
-    paddingVertical: spacing.sm,
-    borderRadius: 8,
-    backgroundColor: colors.background,
-    fontSize: 16,
+    minHeight: sizes.touchTarget + spacing.xs,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
   },
+  search: { flex: 1, ...typography.body, color: colors.text, paddingVertical: spacing.sm },
+  notice: { marginHorizontal: spacing.lg, marginBottom: spacing.sm },
   header: {
+    flexDirection: 'row',
+    alignItems: 'baseline',
+    justifyContent: 'space-between',
     paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.sm,
+    paddingTop: spacing.lg,
+    paddingBottom: spacing.sm,
     backgroundColor: colors.background,
-    fontSize: 13,
-    fontWeight: '700',
-    color: colors.muted,
-    textTransform: 'uppercase',
   },
-  separator: { height: StyleSheet.hairlineWidth, backgroundColor: colors.border, marginLeft: 84 },
+  headerTitle: { ...typography.overline, color: colors.brandStrong },
+  headerCount: { ...typography.caption, color: colors.textSecondary },
+  separator: {
+    height: StyleSheet.hairlineWidth,
+    backgroundColor: colors.border,
+    marginLeft: spacing.lg + sizes.thumbnail + spacing.md,
+  },
 });

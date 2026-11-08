@@ -4,6 +4,9 @@ import {
   addDish,
   EMPTY_ORDER,
   removeLine,
+  setGuests,
+  setKitchenNote,
+  setLineNotes,
   setQuantity,
   setTable,
   type OrderLine,
@@ -16,6 +19,9 @@ export interface CurrentOrderState {
   setQuantity: (dishId: number, quantity: number) => void;
   remove: (dishId: number) => void;
   setTable: (tableNumber: string) => void;
+  setGuests: (guests: number) => void;
+  setKitchenNote: (note: string) => void;
+  setLineNotes: (dishId: number, notes: string) => void;
   clear: () => void;
 }
 
@@ -29,6 +35,9 @@ export function createCurrentOrderStore(): CurrentOrderStore {
     setQuantity: (dishId, quantity) => set(({ order }) => ({ order: setQuantity(order, dishId, quantity) })),
     remove: (dishId) => set(({ order }) => ({ order: removeLine(order, dishId) })),
     setTable: (tableNumber) => set(({ order }) => ({ order: setTable(order, tableNumber) })),
+    setGuests: (guests) => set(({ order }) => ({ order: setGuests(order, guests) })),
+    setKitchenNote: (note) => set(({ order }) => ({ order: setKitchenNote(order, note) })),
+    setLineNotes: (dishId, notes) => set(({ order }) => ({ order: setLineNotes(order, dishId, notes) })),
     clear: () => set({ order: EMPTY_ORDER }),
   }));
 }

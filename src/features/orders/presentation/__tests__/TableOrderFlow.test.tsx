@@ -54,9 +54,12 @@ describe('Pedido de la mesa (mesero)', () => {
     await fireEvent.press(screen.getByRole('button', { name: 'Enviar a cocina' }));
 
     expect(await screen.findByText(/Tu pedido fue enviado a cocina\./)).toBeOnTheScreen();
-    expect(repository.createTableOrder).toHaveBeenCalledWith(7, '5', [
-      { dishId: 1, name: 'Enchiladas suizas', unitPrice: 145.5, quantity: 3 },
-    ]);
+    expect(repository.createTableOrder).toHaveBeenCalledWith(
+      7,
+      '5',
+      [{ dishId: 1, name: 'Enchiladas suizas', unitPrice: 145.5, quantity: 3 }],
+      { guests: undefined, kitchenNote: undefined },
+    );
     expect(repository.confirm).toHaveBeenCalledWith('orden-uuid');
     expect(deps.currentOrderStore.getState().order.lines).toEqual([]);
   });
