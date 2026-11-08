@@ -1,3 +1,4 @@
+import { properName } from '../../../../shared/utils/formatCase';
 import { AppError } from '../../../../core/errors/AppError';
 import type { Role } from '../../domain/entities/Role';
 import type { Session } from '../../domain/entities/Session';
@@ -21,8 +22,8 @@ export function toSession(dto: SignInResponseDto, now: number = Date.now()): Ses
     expiresAt: jwtExpiration(dto.accessToken) ?? now + DEFAULT_TTL_MS,
     user: {
       id: String(dto.user.id),
-      name: dto.user.name,
-      lastname: dto.user.lastname,
+      name: properName(dto.user.name),
+      lastname: properName(dto.user.lastname),
       email: dto.user.email,
       role,
     },

@@ -10,6 +10,7 @@ import { StatusBadge } from '../../../shared/presentation/components/StatusBadge
 import { colors, spacing, typography } from '../../../shared/presentation/theme';
 import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { formatTime } from '../../../shared/utils/formatDateTime';
+import { useSession } from '../../auth/presentation/viewmodels/useSession';
 import { wasteReasonLabel } from '../domain/Kitchen';
 import { incidentSummary, useIncidents, useWasteToday } from './viewmodels';
 
@@ -20,6 +21,8 @@ export function KitchenReportsScreen() {
   const navigation = useNavigation<Nav>();
   const incidents = useIncidents();
   const waste = useWasteToday();
+  // Las mermas las registra el personal operativo; el admin solo ve el registro (el API también lo impide).
+  const canReportWaste = useSession((state) => state.session?.user.role) !== 'admin';
 
   return (
     <ScrollView
@@ -43,11 +46,13 @@ export function KitchenReportsScreen() {
           onPress={() => navigation.navigate('ReportIncident')}
           style={styles.action}
         />
-        <Button
-          label="Registrar merma"
-          onPress={() => navigation.navigate('ReportWaste')}
-          style={styles.action}
-        />
+        {canReportWaste && (
+          <Button
+            label="Registrar merma"
+            onPress={() => navigation.navigate('ReportWaste')}
+            style={styles.action}
+          />
+        )}
       </View>
 
       <SectionTitle

@@ -25,15 +25,24 @@ describe('casos de uso de la gestión de pedidos', () => {
     expect(repository.getDetail).toHaveBeenCalledWith('orden-uuid');
   });
 
+  it('cancelar sin motivo no llama al API (Prioridad 3.3)', async () => {
+    const repository = makeOrderRepository();
+    await expect(new CancelOrderUseCase(repository).execute('orden-uuid', '  ')).rejects.toThrow(
+      'Escribe el motivo de la cancelación.',
+    );
+    expect(repository.cancel).not.toHaveBeenCalled();
+  });
+
   it('confirmar, cancelar, quitar platillo y avanzar el estatus delegan en el repositorio', async () => {
     const repository = makeOrderRepository();
 
     await expect(new ConfirmOrderUseCase(repository).execute('orden-uuid')).resolves.toMatchObject({
       orderId: 'orden-uuid',
     });
-    await expect(new CancelOrderUseCase(repository).execute('orden-uuid')).resolves.toBe(
-      'Tu comanda ha sido cancelada con éxito.',
-    );
+    await expect(
+      new CancelOrderUseCase(repository).execute('orden-uuid', '  Cambió de opinión '),
+    ).resolves.toBe('Tu comanda ha sido cancelada con éxito.');
+    expect(repository.cancel).toHaveBeenCalledWith('orden-uuid', 'Cambió de opinión');
     await expect(new RemoveOrderItemUseCase(repository).execute(101)).resolves.toBe(
       'Producto eliminado de tu pedido.',
     );

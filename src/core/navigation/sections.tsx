@@ -1,7 +1,7 @@
 import type Ionicons from '@expo/vector-icons/Ionicons';
 import type { ComponentProps, ComponentType } from 'react';
 
-import { DashboardScreen } from '../../features/admin/presentation/screens/DashboardScreen';
+import { AdminNavigator } from '../../features/admin/presentation/navigation/AdminNavigator';
 import type { Section } from '../../features/auth/domain/entities/permissions';
 import { MenuNavigator } from '../../features/menu/presentation/navigation/MenuNavigator';
 import { CheckoutNavigator } from '../../features/orders/presentation/navigation/CheckoutNavigator';
@@ -23,7 +23,8 @@ interface SectionConfig {
 export const SECTION_CONFIG: Record<Section, SectionConfig> = {
   dashboard: {
     title: 'Dashboard',
-    component: DashboardScreen,
+    component: AdminNavigator,
+    headerShown: false,
     icon: { active: 'grid', inactive: 'grid-outline' },
   },
   // Menú, Pedidos, Reservaciones, Cobros y Perfil tienen su propio stack con su encabezado.

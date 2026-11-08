@@ -1,4 +1,12 @@
 import { DashboardRemoteDataSource } from '../../features/admin/data/datasources/DashboardRemoteDataSource';
+import { PayrollRepositoryImpl } from '../../features/admin/payroll/data/PayrollRepositoryImpl';
+import { TablesRepositoryImpl } from '../../features/admin/tables/data/TablesRepositoryImpl';
+import { SaveTableUseCase, type TablesRepository } from '../../features/admin/tables/domain/Tables';
+import {
+  AddPayrollMovementUseCase,
+  CorrectPayrollMovementUseCase,
+  type PayrollRepository,
+} from '../../features/admin/payroll/domain/Payroll';
 import { DashboardRepositoryImpl } from '../../features/admin/data/repositories/DashboardRepositoryImpl';
 import { GetDashboardUseCase } from '../../features/admin/domain/usecases/GetDashboardUseCase';
 import { CashRegisterRepositoryImpl } from '../../features/cashier/data/CashRegisterRepositoryImpl';
@@ -95,6 +103,11 @@ export interface Dependencies {
   listInventoryProductsUseCase: Pick<ListInventoryProductsUseCase, 'execute'>;
   reportWasteUseCase: Pick<ReportWasteUseCase, 'execute'>;
   listWasteTodayUseCase: Pick<ListWasteTodayUseCase, 'execute'>;
+  payrollRepository: Pick<PayrollRepository, 'summary' | 'movements'>;
+  addPayrollMovementUseCase: Pick<AddPayrollMovementUseCase, 'execute'>;
+  correctPayrollMovementUseCase: Pick<CorrectPayrollMovementUseCase, 'execute'>;
+  tablesRepository: TablesRepository;
+  saveTableUseCase: Pick<SaveTableUseCase, 'execute'>;
 }
 
 /**
@@ -135,6 +148,8 @@ export function createDependencies({
   const profileRepository = new ProfileRepositoryImpl(new ProfileRemoteDataSource(http));
   const cashRepository = new CashRegisterRepositoryImpl(http);
   const kitchenRepository = new KitchenRepositoryImpl(http);
+  const payrollRepository = new PayrollRepositoryImpl(http);
+  const tablesRepository = new TablesRepositoryImpl(http);
 
   return {
     httpClient: http,
@@ -170,5 +185,10 @@ export function createDependencies({
     listInventoryProductsUseCase: new ListInventoryProductsUseCase(kitchenRepository),
     reportWasteUseCase: new ReportWasteUseCase(kitchenRepository),
     listWasteTodayUseCase: new ListWasteTodayUseCase(kitchenRepository),
+    payrollRepository,
+    addPayrollMovementUseCase: new AddPayrollMovementUseCase(payrollRepository),
+    correctPayrollMovementUseCase: new CorrectPayrollMovementUseCase(payrollRepository),
+    tablesRepository,
+    saveTableUseCase: new SaveTableUseCase(tablesRepository),
   };
 }

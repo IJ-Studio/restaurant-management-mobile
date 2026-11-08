@@ -227,7 +227,7 @@ describe('KitchenRepositoryImpl', () => {
         reason: 'otro',
         justification: 'xyz',
       }),
-    ).rejects.toThrow('Solo cocina y administración');
+    ).rejects.toThrow('Solo el personal operativo puede registrar mermas');
     const offline = new Error('offline');
     await expect(repo({ get: jest.fn().mockRejectedValue(offline) }).listProducts()).rejects.toBe(offline);
   });
@@ -321,11 +321,34 @@ describe('Pantallas de cocina', () => {
     );
   });
 
+  it('el admin ve las mermas del día pero no puede registrarlas (P1.2)', async () => {
+    const deps = setup('admin', {
+      listWasteTodayUseCase: {
+        execute: jest.fn().mockResolvedValue([
+          {
+            id: 1,
+            productName: 'Aguacate',
+            quantity: 1,
+            unit: 'kg',
+            reason: 'derrame',
+            justification: 'Se cayó',
+            reportedBy: 'Diego',
+            cost: 120,
+          },
+        ]),
+      },
+    });
+    await render(deps);
+    await fireEvent.press(await screen.findByRole('button', { name: 'Incidencias y mermas' }));
+    expect(await screen.findByText('1 kg de Aguacate')).toBeOnTheScreen();
+    expect(screen.queryByRole('button', { name: 'Registrar merma' })).toBeNull();
+  });
+
   it('una merma fuera del inventario y el error del API', async () => {
     const report = jest
       .fn()
       .mockRejectedValue(new AppError('validation', 'Ese producto no está en el inventario.'));
-    const deps = setup('admin', {
+    const deps = setup('cocina', {
       listInventoryProductsUseCase: { execute: jest.fn().mockResolvedValue([]) },
       reportWasteUseCase: { execute: report },
       listWasteTodayUseCase: {

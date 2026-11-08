@@ -1,3 +1,4 @@
+import { sentenceCase } from '../../../../shared/utils/formatCase';
 import { AppError } from '../../../../core/errors/AppError';
 import type { Dish, DishTag, MenuCategory } from '../../domain/entities/Dish';
 import type { CategoryWithDishesDto, DishDto } from '../dtos/MenuDto';
@@ -27,9 +28,9 @@ export function toDish(dto: DishDto): Dish {
   return {
     id: dto.id,
     categoryId: dto.categoriaId,
-    name: dto.nombre,
-    description: dto.descripcion ?? '',
-    shortDescription: dto.descripcionCorta ?? undefined,
+    name: sentenceCase(dto.nombre),
+    description: sentenceCase(dto.descripcion),
+    shortDescription: dto.descripcionCorta ? sentenceCase(dto.descripcionCorta) : undefined,
     imageUrl: safeImageUrl(dto.imagenUrl),
     price,
     prepTimeMinutes: dto.tiempoPreparacion ?? undefined,
@@ -45,7 +46,7 @@ export function toMenu(dtos: CategoryWithDishesDto[]): MenuCategory[] {
     .sort(byOrder)
     .map((category) => ({
       id: category.id,
-      name: category.nombre,
+      name: sentenceCase(category.nombre),
       dishes: [...(category.platillos ?? [])].sort(byOrder).map(toDish),
     }));
 }
