@@ -13,7 +13,7 @@ completa el equipo. Las respuestas de privacidad están en
 | Paquete | `com.ijstudio.restaurantmanagement` |
 | Categoría | Empresa |
 | Correo de contacto | `elquijote.atencion@gmail.com` |
-| Desarrollador (cuenta de Play) | Angel Uriel Hernandez Martinez |
+| Desarrollador (cuenta de Play) | Angel Uriel Martinez Hernandez |
 | Sitio web | `https://el-quijote.vercel.app` |
 | Política de privacidad | `https://el-quijote.vercel.app/privacidad` |
 
