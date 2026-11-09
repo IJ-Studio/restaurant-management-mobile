@@ -1,6 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { ComponentProps } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+
+import { legalLinks } from '../../../../core/config/legalLinks';
 
 import { Button } from '../../../../shared/presentation/components/Button';
 import { Card } from '../../../../shared/presentation/components/Card';
@@ -53,23 +55,32 @@ function ActionRow({
   icon,
   label,
   onPress,
+  external = false,
 }: {
   icon: ComponentProps<typeof Ionicons>['name'];
   label: string;
   onPress: () => void;
+  /** Abre una página web: se anuncia como enlace y lleva el ícono de "abrir fuera". */
+  external?: boolean;
 }) {
   return (
     <Pressable
       onPress={onPress}
-      accessibilityRole="button"
+      accessibilityRole={external ? 'link' : 'button'}
       accessibilityLabel={label}
+      accessibilityHint={external ? 'Se abre en el navegador' : undefined}
       style={({ pressed }) => [styles.infoRow, pressed && styles.pressed]}
     >
       <Ionicons name={icon} size={20} color={colors.brandStrong} />
       <Text style={[styles.infoValue, styles.infoText]}>{label}</Text>
-      <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
+      <Ionicons name={external ? 'open-outline' : 'chevron-forward'} size={18} color={colors.textSecondary} />
     </Pressable>
   );
+}
+
+/** Abre una página legal de la web. Si el teléfono no puede abrirla, no rompe la pantalla. */
+function openLegalPage(url: string) {
+  Linking.openURL(url).catch(() => undefined);
 }
 
 interface Props {
@@ -125,6 +136,23 @@ export function ProfileScreen({ onEditProfile, onChangePassword }: Props = {}) {
       )}
 
       <NotificationSettings />
+
+      <Card style={styles.info}>
+        <ActionRow
+          icon="shield-checkmark-outline"
+          label="Aviso de privacidad"
+          external
+          onPress={() => openLegalPage(legalLinks.privacy)}
+        />
+        <View style={styles.divider}>
+          <ActionRow
+            icon="trash-outline"
+            label="Eliminar cuenta"
+            external
+            onPress={() => openLegalPage(legalLinks.deleteAccount)}
+          />
+        </View>
+      </Card>
 
       <Button
         label="Cerrar sesión"

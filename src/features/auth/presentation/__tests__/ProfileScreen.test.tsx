@@ -1,4 +1,5 @@
-import { screen } from '@testing-library/react-native';
+import { fireEvent, screen } from '@testing-library/react-native';
+import { Linking } from 'react-native';
 
 import { makeTestDependencies } from '../../../../core/testing/makeTestDependencies';
 import { renderWithProviders } from '../../../../core/testing/renderWithProviders';
@@ -21,6 +22,33 @@ describe('ProfileScreen', () => {
     expect(screen.getByLabelText('Correo: ana@quijote.mx')).toBeOnTheScreen();
     expect(screen.getByLabelText(/^Tu sesión vence: a las 09:30/)).toBeOnTheScreen();
     expect(screen.getByRole('button', { name: 'Cerrar sesión' })).toBeOnTheScreen();
+  });
+
+  it('enlaza al aviso de privacidad y a eliminar la cuenta en la web (requisito de Google Play)', async () => {
+    const openURL = jest.spyOn(Linking, 'openURL').mockResolvedValue(undefined);
+    const deps = makeTestDependencies();
+    deps.sessionStore.getState().setSession(makeSession());
+
+    await renderWithProviders(<ProfileScreen />, deps);
+
+    await fireEvent.press(screen.getByRole('link', { name: 'Aviso de privacidad' }));
+    expect(openURL).toHaveBeenLastCalledWith('https://el-quijote.vercel.app/privacidad');
+    await fireEvent.press(screen.getByRole('link', { name: 'Eliminar cuenta' }));
+    expect(openURL).toHaveBeenLastCalledWith('https://el-quijote.vercel.app/eliminar-cuenta');
+    openURL.mockRestore();
+  });
+
+  it('si el teléfono no puede abrir el enlace, la pantalla sigue funcionando', async () => {
+    const openURL = jest.spyOn(Linking, 'openURL').mockRejectedValue(new Error('sin navegador'));
+    const deps = makeTestDependencies();
+    deps.sessionStore.getState().setSession(makeSession());
+
+    await renderWithProviders(<ProfileScreen />, deps);
+    await fireEvent.press(screen.getByRole('link', { name: 'Eliminar cuenta' }));
+
+    await expect(openURL.mock.results[0]?.value).rejects.toThrow('sin navegador');
+    expect(screen.getByRole('button', { name: 'Cerrar sesión' })).toBeOnTheScreen();
+    openURL.mockRestore();
   });
 
   it('sin sesión no muestra nada', async () => {
