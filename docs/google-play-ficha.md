@@ -12,7 +12,8 @@ completa el equipo. Las respuestas de privacidad están en
 | Nombre (máx. 30) | Restaurante El Quijote |
 | Paquete | `com.ijstudio.restaurantmanagement` |
 | Categoría | Empresa |
-| Correo de contacto | [correo de soporte] **CONFIRMAR** |
+| Correo de contacto | `elquijote.atencion@gmail.com` |
+| Desarrollador (cuenta de Play) | Angel Uriel Hernandez Martinez |
 | Sitio web | `https://el-quijote.vercel.app` |
 | Política de privacidad | `https://el-quijote.vercel.app/privacidad` |
 

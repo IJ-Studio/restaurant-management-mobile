@@ -58,7 +58,7 @@ historial web, apps instaladas, ni datos de pago (tarjetas). La app no tiene anu
 
 ## Lo que falta antes de enviar
 
-- [ ] Llenar `config/legal.ts` en la web (correo de privacidad, responsable, desarrollador de Play). Sin
-      correo, las páginas muestran «Dato por confirmar» y Google puede rechazar la política.
+- [x] `config/legal.ts` de la web con el responsable (Alejandro Daniel Monterrubio Caballero), el correo
+      `elquijote.atencion@gmail.com` y el desarrollador de Play (Angel Uriel Hernandez Martinez).
 - [ ] Publicar la web con esas páginas (rama `developer` → producción en Vercel).
 - [ ] Revisar las filas marcadas con **CONFIRMAR**.
