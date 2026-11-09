@@ -104,6 +104,9 @@ Si falta `GOOGLE_SERVICE_ACCOUNT_KEY`, `cd-play-store` termina con un aviso y no
 
 ## Checklist antes de la primera publicación
 
+Los textos de la ficha, el cuestionario de contenido y las respuestas de «Seguridad de los datos» están
+en [`google-play-ficha.md`](google-play-ficha.md) y [`google-play-seguridad-datos.md`](google-play-seguridad-datos.md).
+
 - [ ] `EXPO_PUBLIC_API_URL` de producción con HTTPS, en el entorno `production` de EAS.
 - [ ] Llave de FCM V1 subida a EAS y una notificación de prueba recibida en un Android real.
 - [ ] `android.allowBackup` y `debuggable` revisados en el APK (MobSF, issue de release).
