@@ -52,7 +52,7 @@ o en EAS (**expo.dev → proyecto → Credentials / Environment variables**).
 La app usa `expo-notifications` (HU-07). En Expo Go las push funcionan con la infraestructura de Expo,
 pero en un AAB propio Android las entrega por **Firebase Cloud Messaging**:
 
-1. Crear un proyecto en Firebase con el paquete `com.ijstudio.restaurantmanagement`.
+1. Crear un proyecto en Firebase con el paquete de Android `quijote.mobile`.
 2. En Google Cloud, crear una cuenta de servicio con el rol *Firebase Cloud Messaging API Admin* y una llave JSON.
 3. Subirla a EAS: `eas credentials` → Android → `production` → Google Service Account → *FCM V1*.
    (Es otra llave distinta de `GOOGLE_SERVICE_ACCOUNT_KEY`: una es para FCM y la otra para subir a Play.)
@@ -74,7 +74,7 @@ distribución final: no hace falta publicarla en producción para el público.
 1. **Cuenta de Google Play Console.** Pago único de 25 USD y verificación de identidad.
    Las cuentas **personales** nuevas deben hacer una prueba cerrada con al menos **12 testers durante 14 días**
    antes de poder pedir acceso a producción. Las cuentas de organización no tienen ese requisito.
-2. **Crear la app** en Play Console con el paquete `com.ijstudio.restaurantmanagement` (el de `app.json`).
+2. **Crear la app** en Play Console con el paquete `quijote.mobile` (el de `app.json`, `android.package`). Google lo fija al crear la app y no se puede cambiar.
 3. **Primera subida manual.** Google exige que el primer AAB se suba a mano:
    - `eas build --platform android --profile store` (o lanzar el workflow con un tag).
    - Descargar el `.aab` desde expo.dev y subirlo en Play Console → Testing → Internal testing → Create release.

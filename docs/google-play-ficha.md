@@ -10,7 +10,7 @@ completa el equipo. Las respuestas de privacidad están en
 | Campo | Valor |
 |---|---|
 | Nombre (máx. 30) | Restaurante El Quijote |
-| Paquete | `com.ijstudio.restaurantmanagement` |
+| Paquete (Android) | `quijote.mobile` |
 | Categoría | Empresa |
 | Correo de contacto | `elquijote.atencion@gmail.com` |
 | Desarrollador (cuenta de Play) | Angel Uriel Martinez Hernandez |
