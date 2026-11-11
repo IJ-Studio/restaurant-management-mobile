@@ -11,7 +11,7 @@
       "bundleIdentifier": "com.ijstudio.restaurantmanagement"
     },
     "android": {
-      "package": "com.ijstudio.restaurantmanagement",
+      "package": "quijote.mobile",
       "adaptiveIcon": {
         "backgroundColor": "#14100C",
         "foregroundImage": "./assets/android-icon-foreground.png",
