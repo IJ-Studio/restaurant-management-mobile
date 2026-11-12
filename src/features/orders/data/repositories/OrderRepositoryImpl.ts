@@ -36,13 +36,11 @@ export class OrderRepositoryImpl implements OrderRepository {
 
   /** Solo se mandan id y cantidad: el precio lo toma el servidor de la base de datos. */
   async createTableOrder(
-    waiterId: number,
     tableNumber: string,
     lines: OrderLine[],
     details: { guests?: number; kitchenNote?: string } = {},
   ): Promise<string> {
     const response = await this.remote.createTableOrder({
-      usuarioId: waiterId,
       mesa: tableNumber,
       items: lines.map((line) => ({
         platilloId: line.dishId,

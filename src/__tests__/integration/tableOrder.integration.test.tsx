@@ -29,7 +29,7 @@ describe('Integración: pedido de la mesa con datos de prueba', () => {
     expect(await screen.findByText(/Pedido enviado a cocina/)).toBeOnTheScreen();
 
     const created = api.requests.find((r) => r.method === 'POST' && r.path === 'pedidos/mesa');
-    expect(created?.body).toEqual({ usuarioId: 3, mesa: '5', items: [{ platilloId: 201, cantidad: 2 }] });
+    expect(created?.body).toEqual({ mesa: '5', items: [{ platilloId: 201, cantidad: 2 }] });
     expect(created?.authorization).toMatch(/^Bearer /);
     expect(api.requests.some((r) => r.path === 'pedidos/confirmar/orden-1')).toBe(true);
     expect(api.orders.get('orden-1')).toMatchObject({ estado: 'abierta', total: 291 });

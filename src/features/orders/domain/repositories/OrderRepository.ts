@@ -12,9 +12,11 @@ export type OrderStep = 'en_preparacion' | 'lista' | 'entregada';
 
 export interface OrderRepository {
   listTables(): Promise<Table[]>;
-  /** Registra los platillos en la orden de la mesa a nombre del mesero y devuelve su id. */
+  /**
+   * Registra los platillos en la orden de la mesa y devuelve su id. El API la asigna al usuario
+   * del token (DT-04): la app no manda quién la toma.
+   */
   createTableOrder(
-    waiterId: number,
     tableNumber: string,
     lines: OrderLine[],
     details?: { guests?: number; kitchenNote?: string },

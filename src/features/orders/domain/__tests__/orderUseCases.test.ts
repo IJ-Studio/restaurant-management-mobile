@@ -11,7 +11,7 @@ describe('SendOrderToKitchenUseCase', () => {
       orderId: 'orden-uuid',
       message: 'Tu pedido fue enviado a cocina.',
     });
-    expect(repository.createTableOrder).toHaveBeenCalledWith(7, '5', order.lines, {
+    expect(repository.createTableOrder).toHaveBeenCalledWith('5', order.lines, {
       guests: undefined,
       kitchenNote: undefined,
     });
@@ -23,7 +23,7 @@ describe('SendOrderToKitchenUseCase', () => {
       makeOrder({ guests: 4, kitchenNote: '  Alergia a la nuez ' }),
       7,
     );
-    expect(repository.createTableOrder).toHaveBeenCalledWith(7, '5', expect.any(Array), {
+    expect(repository.createTableOrder).toHaveBeenCalledWith('5', expect.any(Array), {
       guests: 4,
       kitchenNote: 'Alergia a la nuez',
     });
