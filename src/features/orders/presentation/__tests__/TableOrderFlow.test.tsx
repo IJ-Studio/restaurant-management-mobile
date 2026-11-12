@@ -55,7 +55,6 @@ describe('Pedido de la mesa (mesero)', () => {
 
     expect(await screen.findByText(/Tu pedido fue enviado a cocina\./)).toBeOnTheScreen();
     expect(repository.createTableOrder).toHaveBeenCalledWith(
-      7,
       '5',
       [{ dishId: 1, name: 'Enchiladas suizas', unitPrice: 145.5, quantity: 3 }],
       { guests: undefined, kitchenNote: undefined },

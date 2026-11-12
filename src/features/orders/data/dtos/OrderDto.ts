@@ -1,6 +1,5 @@
-/** Body de POST /pedidos/mesa (CreateOrderMesaDto del API). */
+/** Body de POST /pedidos/mesa (CreateOrderMesaDto del API). El usuario sale del token, no del body. */
 export interface CreateTableOrderRequestDto {
-  usuarioId: number;
   mesa: string;
   items: { platilloId: number; cantidad: number; notas?: string }[];
   numComensales?: number;

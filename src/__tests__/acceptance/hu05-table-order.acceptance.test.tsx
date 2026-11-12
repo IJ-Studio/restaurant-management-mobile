@@ -59,7 +59,7 @@ describe('HU-05 Tomar pedido y cobrar', () => {
 
     // Assert
     const created = api.requests.find((r) => r.method === 'POST' && r.path === 'pedidos/mesa');
-    expect(created?.body).toEqual({ usuarioId: 3, mesa: '2', items: [{ platilloId: 301, cantidad: 3 }] });
+    expect(created?.body).toEqual({ mesa: '2', items: [{ platilloId: 301, cantidad: 3 }] });
   });
 
   it('HU-05 CA-4: un platillo agotado no se puede agregar al pedido', async () => {

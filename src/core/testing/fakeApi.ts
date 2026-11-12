@@ -151,9 +151,12 @@ export function createFakeApi(options: FakeApiOptions = {}) {
 
   let nextItemId = 1;
 
-  const createOrder: Handler = (body) => {
-    const { usuarioId, mesa, items } = body as {
-      usuarioId: number;
+  const createOrder: Handler = (body, _param, _query, user) => {
+    // Como el API real (DT-04): el pedido es del usuario del token; un usuarioId en el body se rechaza.
+    if (body && typeof body === 'object' && 'usuarioId' in body)
+      return [400, { message: 'Datos inválidos.' }];
+    const usuarioId = user!.id;
+    const { mesa, items } = body as {
       mesa: string;
       items: { platilloId: number; cantidad: number }[];
     };

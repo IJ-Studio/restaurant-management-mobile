@@ -48,9 +48,8 @@ describe('OrderRepositoryImpl', () => {
       .fn()
       .mockResolvedValue({ success: true, message: 'ok', ordenId: 'uuid-9', total: '336.00' });
 
-    await expect(setup({ post }).createTableOrder(7, '5', makeOrder().lines)).resolves.toBe('uuid-9');
+    await expect(setup({ post }).createTableOrder('5', makeOrder().lines)).resolves.toBe('uuid-9');
     expect(post).toHaveBeenCalledWith('pedidos/mesa', {
-      usuarioId: 7,
       mesa: '5',
       items: [
         { platilloId: 1, cantidad: 2 },
@@ -61,9 +60,7 @@ describe('OrderRepositoryImpl', () => {
 
   it('falla si el servidor no devuelve el id de la orden', async () => {
     const post = jest.fn().mockResolvedValue({ success: true, message: 'ok' });
-    await expect(setup({ post }).createTableOrder(7, '5', makeOrder().lines)).rejects.toThrow(
-      'número de orden',
-    );
+    await expect(setup({ post }).createTableOrder('5', makeOrder().lines)).rejects.toThrow('número de orden');
   });
 
   it('confirma la orden y devuelve el mensaje del API', async () => {
