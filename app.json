@@ -2,6 +2,7 @@
   "expo": {
     "name": "Restaurante El Quijote",
     "slug": "restaurant-management-mobile",
+    "owner": "ij-studio",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
@@ -49,7 +50,6 @@
       "eas": {
         "projectId": "c63e0e6d-265d-42d1-ac04-5ff93777dba7"
       }
-    },
-    "owner": "irvingaldahirangelesromero"
+    }
   }
 }
