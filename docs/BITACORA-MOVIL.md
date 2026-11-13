@@ -212,3 +212,12 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
 - Pruebas: evento, lector SSE (bloques partidos, eventos inválidos, reconexión, 401/403, cierre),
   observer y una integración (un cambio en otro teléfono hace que la lista se pida al momento).
 - Pendiente para la tanda: dos teléfonos o web + teléfono; un cambio en uno aparece en el otro sin refrescar.
+
+## B-013 · 2026-11-13 · SAST con Semgrep y mobsfscan; patrones documentados [rubrica] [seguridad]
+
+- El job `security` de `ci.yml` suma Semgrep 1.182.1 (reglas de JavaScript, TypeScript, React y
+  secretos) y mobsfscan 1.1.0 (reglas móviles de MobSF). Fallan con hallazgos de severidad ERROR y suben
+  sus informes SARIF como artefacto `sast-report`. En local: 0 hallazgos en los dos.
+- Se mantienen CodeQL, ESLint con `eslint-plugin-security`, `npm audit` y Gitleaks.
+- `docs/architecture.md` tiene la tabla de patrones (Singleton, Factory, DI, Repository, Adapter,
+  Observer, Facade y MVVM) con la ruta de cada uno.

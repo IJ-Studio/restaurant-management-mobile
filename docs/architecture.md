@@ -88,6 +88,19 @@ render(
 );
 ```
 
+## Patrones de diseño
+
+| Patrón | Dónde | Para qué |
+|---|---|---|
+| **Singleton** | `src/core/http/httpClient.ts` (`export const httpClient`) | Un solo cliente HTTP: el token, el refresco de sesión y la traducción de errores viven en un lugar |
+| **Factory** | `src/core/di/dependencies.ts` (`createDependencies`), `src/features/auth/presentation/store/sessionStore.ts` (`createSessionStore`) | Arma el grafo de objetos de la app; las pruebas piden otro grafo con dobles |
+| **Dependency Injection** | `src/core/di/DependenciesProvider.tsx`, `useDependencies()` | Las pantallas reciben los casos de uso; las pruebas los sustituyen sin tocar componentes |
+| **Repository** | `src/features/*/data/repositories/*RepositoryImpl.ts` (p. ej. `OrderRepositoryImpl`, `ProfileRepositoryImpl`) | El dominio pide datos por una interfaz (`domain/repositories`) sin saber del API |
+| **Adapter** | `src/features/notifications/data/gateways/ExpoPushNotifications.ts`, `src/features/orders/data/gateways/SseOrderEvents.ts` | Adaptan `expo-notifications` y el flujo SSE del API a puertos del dominio (`PushNotifications`, `OrderEventsSource`) |
+| **Observer** | `OrderEventsSource.subscribe` + `useOrderEvents` (pedidos en tiempo real), `PushNotifications.onNotification` / `onNotificationOpened` | Quien se suscribe reacciona a cada cambio sin sondear; devuelven cómo desuscribirse |
+| **Facade** | `src/features/orders/domain/usecases/SendOrderToKitchenUseCase.ts` | Un solo método para un proceso de varios pasos (validar, crear el pedido de mesa y mandarlo a cocina) |
+| **MVVM** | `src/features/*/presentation/viewmodels/use*.ts` | La pantalla solo pinta; el ViewModel tiene el estado y las acciones |
+
 ## Manejo de estado
 
 | Herramienta | Para qué | Ejemplo |

@@ -172,6 +172,28 @@ jobs:
           echo "${GITLEAKS_SHA256}  ${FILE}" | sha256sum -c -
           tar -xzf "$FILE" gitleaks
           ./gitleaks git --redact --verbose --no-banner .
+      # SAST que pide la rúbrica: Semgrep (reglas de JavaScript, TypeScript, React y secretos) y
+      # mobsfscan (reglas móviles de MobSF). Falla con cualquier hallazgo de severidad ERROR.
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Instalar Semgrep y mobsfscan (versiones fijas)
+        run: pip install --quiet semgrep==1.182.1 mobsfscan==1.1.0
+      - name: Semgrep (SAST)
+        run: |
+          mkdir -p reports/sast
+          semgrep scan --metrics off --error --severity ERROR \
+            --config p/javascript --config p/typescript --config p/react --config p/secrets \
+            --sarif -o reports/sast/semgrep.sarif src App.tsx app.config.js
+      - name: mobsfscan (SAST móvil)
+        run: mobsfscan --sarif -o reports/sast/mobsfscan.sarif src App.tsx app.json
+      - name: Subir informes de SAST
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sast-report
+          path: reports/sast/
+          retention-days: 30
 
   # ---------------------------------------------------------------------------------------------------
   # ETAPA 2 · Pruebas unitarias. Solo corre si el análisis estático pasó.
