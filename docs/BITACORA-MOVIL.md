@@ -97,3 +97,20 @@ Los issues nombran `unit-tests.yml` y `acceptance-tests.yml`; en el repositorio 
 | Play Console, llave de FCM y cuenta de servicio | José | Lista de lo que falta en `docs/deployment-google-play.md` |
 
 No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y la publicación en Play Console.
+
+## B-007 · 2026-11-13 · Ofuscación R8, reducción de recursos y permisos mínimos [rubrica] [movil] [seguridad]
+
+- `app.json` configura `expo-build-properties`: `minifyEnabled` y `shrinkResources` en release, más dos
+  reglas de ProGuard (conservar números de línea y ocultar el nombre de los archivos fuente). Sin reglas
+  `-keep` propias: las de React Native, Expo y Sentry vienen en cada librería.
+- Build local de release descompilado con jadx: 83 % de las clases renombradas, 11 311 eliminadas, la
+  lógica de la app en bytecode de Hermes y ningún secreto en el bundle. Detalle en
+  [`reporte-ofuscacion-jadx.md`](reporte-ofuscacion-jadx.md).
+- Permisos: se retiran almacenamiento, `SYSTEM_ALERT_WINDOW` y biometría, que la app no usa, y se
+  desactiva `allowBackup`. Tabla con el motivo de cada permiso en [`permisos.md`](permisos.md).
+- `app.config.js` permite un identificador de paquete distinto en builds locales de prueba
+  (`APP_ANDROID_PACKAGE`); los builds de EAS no cambian.
+- Decisión: `android/` sigue sin versionarse. La evidencia de `build.gradle` es la configuración de
+  `app.json`, que es la que genera ese archivo en cada build.
+- Pendiente para la tanda en el teléfono: recorrer la app en el build de release (inicio de sesión,
+  navegación por rol, selector de fecha, avisos) para confirmar que la reducción no rompe nada.
