@@ -3,10 +3,12 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { stackScreenOptions } from '../../../../core/navigation/navigationTheme';
 import { NewReservationScreen } from '../screens/NewReservationScreen';
 import { ReservationsScreen } from '../screens/ReservationsScreen';
+import { ReservationStatusScreen } from '../screens/ReservationStatusScreen';
 
 export type ReservationsStackParamList = {
   ReservationsList: { notice?: string } | undefined;
   NewReservation: undefined;
+  ReservationStatus: { id: string; customerName: string; status: string; summary: string };
 };
 
 const Stack = createNativeStackNavigator<ReservationsStackParamList>();
@@ -23,6 +25,11 @@ export function ReservationsNavigator() {
         name="NewReservation"
         component={NewReservationScreen}
         options={{ title: 'Nueva reservación' }}
+      />
+      <Stack.Screen
+        name="ReservationStatus"
+        component={ReservationStatusScreen}
+        options={{ title: 'Cambiar estado' }}
       />
     </Stack.Navigator>
   );
