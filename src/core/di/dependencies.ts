@@ -43,6 +43,7 @@ import { GetMenuUseCase } from '../../features/menu/domain/usecases/GetMenuUseCa
 import { StripePaymentGateway } from '../../features/orders/data/gateways/StripePaymentGateway';
 import type { PaymentGateway } from '../../features/orders/domain/ports/PaymentGateway';
 import { CheckoutUseCase } from '../../features/orders/domain/usecases/CheckoutUseCase';
+import type { ReservationRepository } from '../../features/reservations/domain/repositories/ReservationRepository';
 import { ChangeReservationStatusUseCase } from '../../features/reservations/domain/usecases/ChangeReservationStatusUseCase';
 import { OperationRulesRemoteDataSource } from '../../features/reservations/data/datasources/OperationRulesRemoteDataSource';
 import { SseOrderEvents } from '../../features/orders/data/gateways/SseOrderEvents';
@@ -137,6 +138,7 @@ export interface Dependencies {
   orderEvents: OrderEventsSource;
   operationRules: Pick<OperationRulesRemoteDataSource, 'get'>;
   changeReservationStatusUseCase: Pick<ChangeReservationStatusUseCase, 'execute'>;
+  reservationTables: Pick<ReservationRepository, 'freeTables'>;
   checkoutUseCase: Pick<CheckoutUseCase, 'execute' | 'isAvailable'>;
 }
 
@@ -255,6 +257,7 @@ export function createDependencies({
     checkoutUseCase: new CheckoutUseCase(orderRepository, paymentGateway),
     operationRules: new OperationRulesRemoteDataSource(http),
     changeReservationStatusUseCase: new ChangeReservationStatusUseCase(reservationRepository),
+    reservationTables: reservationRepository,
     orderEvents:
       orderEvents ??
       new SseOrderEvents({

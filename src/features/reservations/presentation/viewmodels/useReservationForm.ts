@@ -40,7 +40,7 @@ const INITIAL: FormState = {
 
 /** ViewModel del formulario: valida en el cliente antes de enviar y refresca el listado al guardar. */
 export function useReservationForm(onCreated?: (result: CreatedReservation) => void) {
-  const { createReservationUseCase, operationRules } = useDependencies();
+  const { createReservationUseCase, operationRules, reservationTables } = useDependencies();
   const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState>(INITIAL);
   const [fieldErrors, setFieldErrors] = useState<ReservationErrors>({});
@@ -58,17 +58,30 @@ export function useReservationForm(onCreated?: (result: CreatedReservation) => v
     [openedAt, rules.minAdvanceMin],
   );
 
+  // Mesas libres para esa fecha y personas; sin elegir, el API asigna la primera con lugar.
+  const [tableId, setTableId] = useState<number | undefined>();
+  const tablesQuery = useQuery({
+    queryKey: ['free-tables', form.dateTime?.getTime(), form.partySize],
+    queryFn: () => reservationTables.freeTables(form.dateTime as Date, form.partySize, rules.utcOffsetMin),
+    enabled: form.dateTime !== null,
+    staleTime: 30 * 1000,
+  });
+
   const mutation = useMutation({
     mutationFn: (draft: NewReservation) => createReservationUseCase.execute(draft, rules),
     onSuccess: async (result) => {
       await queryClient.invalidateQueries({ queryKey: reservationQueryKeys.all });
       setForm(INITIAL);
+      setTableId(undefined);
       onCreated?.(result);
     },
   });
 
-  const update = <K extends keyof FormState>(field: K, value: FormState[K]) =>
+  const update = <K extends keyof FormState>(field: K, value: FormState[K]) => {
+    // Otra fecha u otro número de personas cambia qué mesas están libres.
+    if (field === 'dateTime' || field === 'partySize') setTableId(undefined);
     setForm((current) => ({ ...current, [field]: value }));
+  };
 
   const changePartySize = (delta: number) =>
     update('partySize', Math.min(rules.maxPartySize, Math.max(1, form.partySize + delta)));
@@ -79,6 +92,7 @@ export function useReservationForm(onCreated?: (result: CreatedReservation) => v
       dateTime: form.dateTime ?? new Date(Number.NaN),
       occasion: form.occasion || undefined,
       specialRequests: form.specialRequests || undefined,
+      tableId,
     };
     const errors = validateReservation(draft, new Date(), rules);
     setFieldErrors(errors);
@@ -94,5 +108,9 @@ export function useReservationForm(onCreated?: (result: CreatedReservation) => v
     submit,
     isSubmitting: mutation.isPending,
     errorMessage: mutation.error ? reservationErrorMessage(mutation.error) : null,
+    freeTables: tablesQuery.data ?? [],
+    tablesLoading: tablesQuery.isFetching,
+    tableId,
+    selectTable: setTableId,
   };
 }

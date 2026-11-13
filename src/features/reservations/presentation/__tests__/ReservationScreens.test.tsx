@@ -105,6 +105,30 @@ describe('Reservaciones', () => {
     expect(deps.createReservationUseCase.execute).not.toHaveBeenCalled();
   });
 
+  it('al elegir fecha y personas ofrece las mesas libres y manda la elegida', async () => {
+    const created = makeReservation({ id: 'nueva', customerName: 'Laura Méndez' });
+    const create = jest
+      .fn()
+      .mockResolvedValue({ reservation: created, requiresConfirmation: false, message: 'Listo' });
+    const freeTables = jest.fn().mockResolvedValue([{ id: 7, number: 'A03', capacity: 4 }]);
+    await renderReservations(
+      makeTestDependencies({
+        listActiveReservationsUseCase: { execute: jest.fn().mockResolvedValue([]) },
+        createReservationUseCase: { execute: create },
+        reservationTables: { freeTables },
+      }),
+    );
+
+    await fireEvent.press(await screen.findByRole('button', { name: 'Nueva reservación' }));
+    await fillValidForm();
+    await fireEvent.press(await screen.findByRole('radio', { name: 'Mesa A03 · 4 lugares' }));
+    expect(screen.getByRole('radio', { name: 'Asignar automáticamente' })).not.toBeChecked();
+    await fireEvent.press(screen.getByRole('button', { name: 'Guardar reservación' }));
+
+    expect(freeTables).toHaveBeenCalledWith(tomorrowAt(20), 2, -360);
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ tableId: 7 }), expect.anything());
+  });
+
   it('crea la reservación y aparece de inmediato en el listado', async () => {
     const created = makeReservation({ id: 'nueva', customerName: 'Laura Méndez' });
     const list = jest.fn().mockResolvedValueOnce([]).mockResolvedValue([created]);

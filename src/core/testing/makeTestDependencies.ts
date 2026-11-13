@@ -83,6 +83,7 @@ export function makeTestDependencies(overrides: Partial<Dependencies> = {}): Dep
       isAvailable: jest.fn().mockReturnValue(false),
     },
     // Sin respuesta: los formularios usan las reglas por defecto, iguales a las del servidor.
+    reservationTables: { freeTables: jest.fn().mockResolvedValue([]) },
     changeReservationStatusUseCase: { execute: jest.fn().mockResolvedValue(undefined) },
     operationRules: { get: jest.fn().mockRejectedValue(new Error('sin configurar')) },
     orderEvents: { subscribe: jest.fn(() => () => undefined) },

@@ -273,3 +273,12 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
   estados y pasos que la web («Cambiar estado» → estado → motivo obligatorio al cancelar → «Guardar
   estado»), con `PATCH /reservations/:id`. Los demás roles solo consultan (el API lo exige).
 - **Texto igualado:** el estado `pendiente` se muestra «Pendiente», como en la web (antes «Por confirmar»).
+
+## B-018 · 2026-11-14 · Elegir mesa al reservar y disponibilidad en la hora del restaurante [movil] [api] [decision]
+
+- **API** (PR #145): `GET /reservations/availability` interpretaba la fecha con la zona del servidor; en
+  Render buscaba mesas libres seis horas antes. Ahora usa la zona y la duración del restaurante.
+- **Móvil:** al elegir fecha y personas, el formulario muestra «Mesa» con «Asignar automáticamente» y las
+  mesas libres con su capacidad, y manda `mesaId`. Cambiar la fecha o las personas reinicia la elección.
+- **Decisión (administración):** se conserva «Asignar automáticamente» como opción por defecto: por
+  teléfono, el personal no siempre sabe qué mesa conviene y el API elige una libre con lugar.

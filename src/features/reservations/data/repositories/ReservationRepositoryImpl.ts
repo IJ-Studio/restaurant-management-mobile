@@ -1,5 +1,6 @@
 import { AppError } from '../../../../core/errors/AppError';
 import type {
+  FreeTable,
   CreatedReservation,
   NewReservation,
   Reservation,
@@ -33,6 +34,16 @@ export class ReservationRepositoryImpl implements ReservationRepository {
       }
       throw error;
     }
+  }
+
+  async freeTables(dateTime: Date, partySize: number, utcOffsetMin: number): Promise<FreeTable[]> {
+    const local = new Date(dateTime.getTime() + utcOffsetMin * 60_000).toISOString();
+    const { mesasDisponibles } = await this.remote.availability(
+      local.slice(0, 10),
+      local.slice(11, 16),
+      partySize,
+    );
+    return mesasDisponibles.map((m) => ({ id: m.id, number: m.numero, capacity: m.capacidad }));
   }
 
   async listFrom(from: Date): Promise<Reservation[]> {

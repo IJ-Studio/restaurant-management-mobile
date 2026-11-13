@@ -129,4 +129,18 @@ describe('ReservationRepositoryImpl', () => {
       ).rejects.toBe(offline);
     });
   });
+
+  it('pide las mesas libres con la fecha y hora del restaurante', async () => {
+    const get = jest.fn().mockResolvedValue({
+      mesasDisponibles: [{ id: 3, numero: 'A03', capacidad: 4 }],
+    });
+
+    // 02:00 UTC del sábado = 20:00 del viernes en México (−360).
+    const tables = await setup({ get }).freeTables(new Date('2026-11-14T02:00:00Z'), 4, -360);
+
+    expect(get).toHaveBeenCalledWith(
+      'reservations/availability?fecha=2026-11-13&hora=20%3A00&numComensales=4',
+    );
+    expect(tables).toEqual([{ id: 3, number: 'A03', capacity: 4 }]);
+  });
 });

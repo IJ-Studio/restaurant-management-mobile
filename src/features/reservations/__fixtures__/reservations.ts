@@ -41,5 +41,6 @@ export function makeReservationRepository(
     })),
     listFrom: jest.fn().mockResolvedValue(list),
     changeStatus: jest.fn().mockResolvedValue(undefined),
+    freeTables: jest.fn().mockResolvedValue([]),
   };
 }
