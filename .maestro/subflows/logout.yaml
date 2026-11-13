@@ -1,0 +1,7 @@
+appId: ${APP_ID || 'com.ijstudio.restaurantmanagement'}
+---
+- tapOn: "Perfil"
+- scrollUntilVisible:
+    element: "Cerrar sesión"
+- tapOn: "Cerrar sesión"
+- assertVisible: "Entrar"
