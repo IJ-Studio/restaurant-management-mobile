@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 import { DashboardRemoteDataSource } from '../../features/admin/data/datasources/DashboardRemoteDataSource';
 import { PayrollRepositoryImpl } from '../../features/admin/payroll/data/PayrollRepositoryImpl';
 import { TablesRepositoryImpl } from '../../features/admin/tables/data/TablesRepositoryImpl';
@@ -28,6 +30,7 @@ import { AuthRepositoryImpl } from '../../features/auth/data/repositories/AuthRe
 import { SecureSessionStorage } from '../../features/auth/data/storage/SecureSessionStorage';
 import { LoginUseCase } from '../../features/auth/domain/usecases/LoginUseCase';
 import { LogoutUseCase } from '../../features/auth/domain/usecases/LogoutUseCase';
+import { RefreshSessionUseCase } from '../../features/auth/domain/usecases/RefreshSessionUseCase';
 import type { SessionStorage } from '../../features/auth/domain/repositories/SessionStorage';
 import { RestoreSessionUseCase } from '../../features/auth/domain/usecases/RestoreSessionUseCase';
 import { createSessionStore, type SessionStore } from '../../features/auth/presentation/store/sessionStore';
@@ -35,7 +38,10 @@ import { MenuRemoteDataSource } from '../../features/menu/data/datasources/MenuR
 import { MenuRepositoryImpl } from '../../features/menu/data/repositories/MenuRepositoryImpl';
 import { GetDishUseCase } from '../../features/menu/domain/usecases/GetDishUseCase';
 import { GetMenuUseCase } from '../../features/menu/domain/usecases/GetMenuUseCase';
+import { DeviceRemoteDataSource } from '../../features/notifications/data/datasources/DeviceRemoteDataSource';
 import { ExpoPushNotifications } from '../../features/notifications/data/gateways/ExpoPushNotifications';
+import type { PushNotifications } from '../../features/notifications/domain/ports/PushNotifications';
+import { DeviceRegistrationUseCase } from '../../features/notifications/domain/usecases/DeviceRegistrationUseCase';
 import { EnableNotificationsUseCase } from '../../features/notifications/domain/usecases/EnableNotificationsUseCase';
 import { OrderRemoteDataSource } from '../../features/orders/data/datasources/OrderRemoteDataSource';
 import { OrderRepositoryImpl } from '../../features/orders/data/repositories/OrderRepositoryImpl';
@@ -49,6 +55,10 @@ import { ListTablesUseCase } from '../../features/orders/domain/usecases/ListTab
 import { RemoveOrderItemUseCase } from '../../features/orders/domain/usecases/RemoveOrderItemUseCase';
 import { UpdateOrderStatusUseCase } from '../../features/orders/domain/usecases/UpdateOrderStatusUseCase';
 import { ProfileRemoteDataSource } from '../../features/profile/data/datasources/ProfileRemoteDataSource';
+import { PrivacyRemoteDataSource } from '../../features/privacy/data/datasources/PrivacyRemoteDataSource';
+import { PrivacyRepositoryImpl } from '../../features/privacy/data/repositories/PrivacyRepositoryImpl';
+import type { PrivacyRepository } from '../../features/privacy/domain/repositories/PrivacyRepository';
+import { DeleteAccountUseCase } from '../../features/privacy/domain/usecases/DeleteAccountUseCase';
 import { ProfileRepositoryImpl } from '../../features/profile/data/repositories/ProfileRepositoryImpl';
 import { ChangePasswordUseCase } from '../../features/profile/domain/usecases/ChangePasswordUseCase';
 import { GetProfileUseCase } from '../../features/profile/domain/usecases/GetProfileUseCase';
@@ -97,6 +107,8 @@ export interface Dependencies {
   getProfileUseCase: Pick<GetProfileUseCase, 'execute'>;
   updateProfileUseCase: Pick<UpdateProfileUseCase, 'execute'>;
   changePasswordUseCase: Pick<ChangePasswordUseCase, 'execute'>;
+  privacyRepository: Pick<PrivacyRepository, 'get' | 'acceptNotice' | 'setPreference'>;
+  deleteAccountUseCase: Pick<DeleteAccountUseCase, 'execute'>;
   getCashSessionUseCase: Pick<GetCashSessionUseCase, 'execute'>;
   openCashRegisterUseCase: Pick<OpenCashRegisterUseCase, 'execute'>;
   closeCashRegisterUseCase: Pick<CloseCashRegisterUseCase, 'execute'>;
@@ -111,6 +123,8 @@ export interface Dependencies {
   tablesRepository: TablesRepository;
   saveTableUseCase: Pick<SaveTableUseCase, 'execute'>;
   enableNotificationsUseCase: Pick<EnableNotificationsUseCase, 'execute'>;
+  deviceRegistrationUseCase: Pick<DeviceRegistrationUseCase, 'register'>;
+  pushNotifications: Pick<PushNotifications, 'onNotificationOpened'>;
 }
 
 /**
@@ -120,11 +134,13 @@ export interface Dependencies {
 export interface Infrastructure {
   httpClient?: HttpClient;
   sessionStorage?: SessionStorage;
+  pushNotifications?: PushNotifications;
 }
 
 export function createDependencies({
   httpClient: http = httpClient,
   sessionStorage = new SecureSessionStorage(),
+  pushNotifications = new ExpoPushNotifications(),
 }: Infrastructure = {}): Dependencies {
   const sessionStore = createSessionStore();
   http.setTokenProvider(() => sessionStore.getState().session?.token ?? null);
@@ -144,21 +160,42 @@ export function createDependencies({
   });
 
   const authRepository = new AuthRepositoryImpl(new AuthRemoteDataSource(http));
+  const refreshSessionUseCase = new RefreshSessionUseCase(authRepository, sessionStorage);
+  http.setSessionRefresher(async () => {
+    const session = await refreshSessionUseCase.execute(sessionStore.getState().session);
+    if (session) sessionStore.getState().setSession(session);
+    return session !== null;
+  });
   const menuRepository = new MenuRepositoryImpl(new MenuRemoteDataSource(http));
   const reservationRepository = new ReservationRepositoryImpl(new ReservationRemoteDataSource(http));
   const orderRepository = new OrderRepositoryImpl(new OrderRemoteDataSource(http));
   const dashboardRepository = new DashboardRepositoryImpl(new DashboardRemoteDataSource(http));
   const profileRepository = new ProfileRepositoryImpl(new ProfileRemoteDataSource(http));
+  const privacyRepository = new PrivacyRepositoryImpl(new PrivacyRemoteDataSource(http));
   const cashRepository = new CashRegisterRepositoryImpl(http);
   const kitchenRepository = new KitchenRepositoryImpl(http);
   const payrollRepository = new PayrollRepositoryImpl(http);
   const tablesRepository = new TablesRepositoryImpl(http);
 
+  const deviceRegistrationUseCase = new DeviceRegistrationUseCase(
+    pushNotifications,
+    new DeviceRemoteDataSource(http),
+    Platform.OS === 'android' || Platform.OS === 'ios' ? Platform.OS : null,
+  );
+  // Al salir, el teléfono deja de recibir los avisos de esta persona (con su sesión todavía válida).
+  const logout = new LogoutUseCase(authRepository, sessionStorage);
+  const logoutUseCase = {
+    execute: async () => {
+      await deviceRegistrationUseCase.unregister();
+      await logout.execute();
+    },
+  };
+
   return {
     httpClient: http,
     sessionStore,
     loginUseCase: new LoginUseCase(authRepository, sessionStorage),
-    logoutUseCase: new LogoutUseCase(authRepository, sessionStorage),
+    logoutUseCase,
     restoreSessionUseCase: new RestoreSessionUseCase(sessionStorage),
     getMenuUseCase: new GetMenuUseCase(menuRepository),
     getDishUseCase: new GetDishUseCase(menuRepository),
@@ -180,6 +217,8 @@ export function createDependencies({
     getProfileUseCase: new GetProfileUseCase(profileRepository),
     updateProfileUseCase: new UpdateProfileUseCase(profileRepository, sessionStorage),
     changePasswordUseCase: new ChangePasswordUseCase(profileRepository),
+    privacyRepository,
+    deleteAccountUseCase: new DeleteAccountUseCase(privacyRepository, sessionStorage),
     getCashSessionUseCase: new GetCashSessionUseCase(cashRepository),
     openCashRegisterUseCase: new OpenCashRegisterUseCase(cashRepository),
     closeCashRegisterUseCase: new CloseCashRegisterUseCase(cashRepository),
@@ -193,6 +232,8 @@ export function createDependencies({
     correctPayrollMovementUseCase: new CorrectPayrollMovementUseCase(payrollRepository),
     tablesRepository,
     saveTableUseCase: new SaveTableUseCase(tablesRepository),
-    enableNotificationsUseCase: new EnableNotificationsUseCase(new ExpoPushNotifications()),
+    enableNotificationsUseCase: new EnableNotificationsUseCase(pushNotifications),
+    deviceRegistrationUseCase,
+    pushNotifications,
   };
 }

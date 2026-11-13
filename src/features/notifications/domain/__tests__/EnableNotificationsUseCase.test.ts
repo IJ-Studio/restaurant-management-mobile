@@ -7,6 +7,8 @@ function makePort(current: PermissionState, afterRequest?: PermissionState): jes
     getPermission: jest.fn().mockResolvedValue(current),
     requestPermission: jest.fn().mockResolvedValue(afterRequest ?? current),
     onNotification: jest.fn(),
+    onNotificationOpened: jest.fn(),
+    getDeviceToken: jest.fn().mockResolvedValue(null),
   };
 }
 

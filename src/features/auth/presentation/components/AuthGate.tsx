@@ -3,6 +3,7 @@ import { useEffect, type ReactNode } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
 import { colors } from '../../../../shared/presentation/theme';
+import { PrivacyConsentGate } from '../../../privacy/presentation/components/PrivacyConsentGate';
 import { LoginScreen } from '../screens/LoginScreen';
 import { useSession } from '../viewmodels/useSession';
 import { useSessionBootstrap } from '../viewmodels/useSessionBootstrap';
@@ -26,7 +27,7 @@ export function AuthGate({ children }: { children: ReactNode }) {
     );
   }
   if (status === 'unauthenticated') return <LoginScreen />;
-  return <>{children}</>;
+  return <PrivacyConsentGate>{children}</PrivacyConsentGate>;
 }
 
 const styles = StyleSheet.create({
