@@ -221,3 +221,14 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
 - Se mantienen CodeQL, ESLint con `eslint-plugin-security`, `npm audit` y Gitleaks.
 - `docs/architecture.md` tiene la tabla de patrones (Singleton, Factory, DI, Repository, Adapter,
   Observer, Facade y MVVM) con la ruta de cada uno.
+
+## B-014 · 2026-11-13 · Caja negra con Maestro y registro de errores [rubrica] [pruebas] [gh-project]
+
+- `.maestro/`: nueve flujos de aceptación (HU-01 a HU-08 y ARCO), subflujos de login y logout, y
+  `scripts/api.js`, que hace de «otro teléfono» por el API para probar el tiempo real. `npm run test:device`
+  los corre y deja `reports/maestro/junit.xml` y capturas.
+- `docs/pruebas-caja-negra.md`: matriz CN-01 a CN-21 con columnas Debug y Release, y el registro de
+  errores corregidos (E-01 a E-05, defectos reales de la versión 1.0.0 publicada).
+- Decisión: la reservación válida (selector nativo de fecha), el reinicio del API y el pin erróneo se
+  marcan como pruebas manuales en la matriz.
+- Pendiente: ejecutar la matriz en la Tanda 1 (16-nov) y ajustar los textos de los flujos que no coincidan.
