@@ -91,6 +91,8 @@ export function makeTestDependencies(overrides: Partial<Dependencies> = {}): Dep
       reactivate: pending(),
     },
     saveStaffUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
+    payrollEmployeesRepository: { list: pending(), create: pending(), update: pending(), remove: pending() },
+    saveEmployeeUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
     checkoutUseCase: {
       execute: jest.fn().mockRejectedValue(new Error('sin configurar')),
       isAvailable: jest.fn().mockReturnValue(false),

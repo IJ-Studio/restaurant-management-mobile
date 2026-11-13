@@ -311,3 +311,14 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
   filtro, alta (mismos campos y mensajes que la web), edición con cambio de rol y desactivar o activar con
   confirmación. **Decisión:** el correo y la contraseña no se editan aquí (el API no lo admite en
   `PATCH /users/:id`); cada persona cambia su contraseña desde su perfil.
+
+## B-022 · 2026-11-14 · Nómina con periodo libre y empleados en la móvil [movil] [decision]
+
+- «Nómina» ya no está fija en la semana actual: «Semana anterior», «Semana siguiente» y «Desde»/«Hasta»
+  libres (AAAA-MM-DD, fechas reales y en orden), como el periodo de la web.
+- Dashboard → «Empleados de la nómina»: añadir, editar (nombre, puesto, pago semanal, activo), activar o
+  desactivar y quitar con confirmación, con los mismos mensajes que la web. Al cambiar un empleado se
+  recalcula el neto del periodo.
+- **Decisión:** fechas como texto en lugar del selector nativo: la web usa campos de fecha libres y
+  el selector nativo no se puede automatizar en Maestro (ver CN-09); la semana anterior o siguiente cubre
+  el uso diario.

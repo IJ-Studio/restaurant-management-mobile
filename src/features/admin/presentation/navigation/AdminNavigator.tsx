@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { stackScreenOptions } from '../../../../core/navigation/navigationTheme';
 import { Button } from '../../../../shared/presentation/components/Button';
 import { spacing } from '../../../../shared/presentation/theme';
+import { PayrollEmployeesScreen } from '../../payroll/presentation/PayrollEmployeesScreen';
 import { PayrollScreen } from '../../payroll/presentation/PayrollScreen';
 import { StaffScreen } from '../../staff/presentation/StaffScreen';
 import { TablesScreen } from '../../tables/presentation/TablesScreen';
@@ -13,6 +14,7 @@ import { DashboardScreen } from '../screens/DashboardScreen';
 export type AdminStackParamList = {
   AdminHome: undefined;
   Payroll: undefined;
+  PayrollEmployees: undefined;
   Tables: undefined;
   Staff: undefined;
 };
@@ -26,6 +28,11 @@ function AdminHome() {
     <View style={styles.home}>
       <View style={styles.modules}>
         <Button label="Nómina" variant="outline" onPress={() => navigation.navigate('Payroll')} />
+        <Button
+          label="Empleados de la nómina"
+          variant="outline"
+          onPress={() => navigation.navigate('PayrollEmployees')}
+        />
         <Button label="Mesas" variant="outline" onPress={() => navigation.navigate('Tables')} />
         <Button label="Personal" variant="outline" onPress={() => navigation.navigate('Staff')} />
       </View>
@@ -40,6 +47,11 @@ export function AdminNavigator() {
     <Stack.Navigator screenOptions={stackScreenOptions}>
       <Stack.Screen name="AdminHome" component={AdminHome} options={{ title: 'Dashboard' }} />
       <Stack.Screen name="Payroll" component={PayrollScreen} options={{ title: 'Nómina' }} />
+      <Stack.Screen
+        name="PayrollEmployees"
+        component={PayrollEmployeesScreen}
+        options={{ title: 'Empleados de la nómina' }}
+      />
       <Stack.Screen name="Tables" component={TablesScreen} options={{ title: 'Mesas' }} />
       <Stack.Screen name="Staff" component={StaffScreen} options={{ title: 'Personal' }} />
     </Stack.Navigator>

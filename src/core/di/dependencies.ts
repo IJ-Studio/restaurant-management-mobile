@@ -4,6 +4,11 @@ import { env } from '../config/env';
 
 import { DashboardRemoteDataSource } from '../../features/admin/data/datasources/DashboardRemoteDataSource';
 import { PayrollRepositoryImpl } from '../../features/admin/payroll/data/PayrollRepositoryImpl';
+import { PayrollEmployeesRepositoryImpl } from '../../features/admin/payroll/data/PayrollEmployeesRepositoryImpl';
+import {
+  SaveEmployeeUseCase,
+  type PayrollEmployeesRepository,
+} from '../../features/admin/payroll/domain/Employees';
 import { StaffRepositoryImpl } from '../../features/admin/staff/data/StaffRepositoryImpl';
 import { SaveStaffUseCase, type StaffRepository } from '../../features/admin/staff/domain/Staff';
 import { TablesRepositoryImpl } from '../../features/admin/tables/data/TablesRepositoryImpl';
@@ -137,6 +142,8 @@ export interface Dependencies {
   tablesRepository: TablesRepository;
   saveTableUseCase: Pick<SaveTableUseCase, 'execute'>;
   staffRepository: StaffRepository;
+  payrollEmployeesRepository: PayrollEmployeesRepository;
+  saveEmployeeUseCase: Pick<SaveEmployeeUseCase, 'execute'>;
   saveStaffUseCase: Pick<SaveStaffUseCase, 'execute'>;
   enableNotificationsUseCase: Pick<EnableNotificationsUseCase, 'execute'>;
   deviceRegistrationUseCase: Pick<DeviceRegistrationUseCase, 'register'>;
@@ -202,6 +209,7 @@ export function createDependencies({
   const payrollRepository = new PayrollRepositoryImpl(http);
   const tablesRepository = new TablesRepositoryImpl(http);
   const staffRepository = new StaffRepositoryImpl(http);
+  const payrollEmployeesRepository = new PayrollEmployeesRepositoryImpl(http);
 
   const deviceRegistrationUseCase = new DeviceRegistrationUseCase(
     pushNotifications,
@@ -261,6 +269,8 @@ export function createDependencies({
     saveTableUseCase: new SaveTableUseCase(tablesRepository),
     staffRepository,
     saveStaffUseCase: new SaveStaffUseCase(staffRepository),
+    payrollEmployeesRepository,
+    saveEmployeeUseCase: new SaveEmployeeUseCase(payrollEmployeesRepository),
     enableNotificationsUseCase: new EnableNotificationsUseCase(pushNotifications),
     deviceRegistrationUseCase,
     pushNotifications,
