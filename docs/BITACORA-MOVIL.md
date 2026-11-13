@@ -247,3 +247,19 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
 - **Hallazgo y decisión (administración):** el API limita a 40 peticiones por minuto **por IP** y todo
   el personal comparte la IP del módem. Se hace configurable (`THROTTLE_LIMIT`) y se recomienda 300 en
   producción.
+
+## B-016 · 2026-11-14 · Reglas de negocio centralizadas en el API (Fase 3) [api] [movil] [decision]
+
+- **Error real corregido** (PR #144 del API): las reservas se validaban con la zona horaria del servidor.
+  En Render (UTC) una reserva a las 20:00 de México se evaluaba como las 02:00 del día siguiente.
+- `GET /reglas` (público): horario semanal con cierre de cocina, días especiales, desfase UTC y límites
+  (antelación 60 min, margen de cierre 30 min, 50 personas, 99 por platillo). El administrador los puede
+  ajustar sin desplegar con la clave `reglas_operacion` de `system_settings`.
+- El API valida reservas (pasada, antelación, horario, días especiales, personas) y pedidos de mesa
+  (platillo agotado o fuera de la carta, cantidad, cocina abierta); el pago a domicilio exige cocina abierta.
+- **Móvil:** el formulario de reservación lee esas reglas y avisa antes de enviar con **el mismo texto**
+  que el servidor; sin conexión usa los mismos valores por defecto y el servidor vuelve a validar.
+- **Decisión:** la hora del restaurante se calcula con el desfase que manda el API, no con la zona del
+  teléfono ni con `Intl` (Hermes no garantiza zonas horarias).
+- Pendiente para la tanda: reservar a las 2 a. m. y 15 min antes del cierre (rechazo con el texto), y
+  pedir un platillo agotado.

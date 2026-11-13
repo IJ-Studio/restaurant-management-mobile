@@ -82,6 +82,8 @@ export function makeTestDependencies(overrides: Partial<Dependencies> = {}): Dep
       execute: jest.fn().mockRejectedValue(new Error('sin configurar')),
       isAvailable: jest.fn().mockReturnValue(false),
     },
+    // Sin respuesta: los formularios usan las reglas por defecto, iguales a las del servidor.
+    operationRules: { get: jest.fn().mockRejectedValue(new Error('sin configurar')) },
     orderEvents: { subscribe: jest.fn(() => () => undefined) },
     deviceRegistrationUseCase: { register: jest.fn().mockResolvedValue(false) },
     pushNotifications: { onNotificationOpened: jest.fn(() => () => undefined) },

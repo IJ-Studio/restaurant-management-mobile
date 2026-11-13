@@ -135,6 +135,8 @@ describe('Reservaciones', () => {
         channel: 'presencial',
         dateTime: tomorrowAt(20),
       }),
+      // Sin respuesta de GET /reglas se valida con las reglas por defecto del servidor.
+      expect.objectContaining({ minAdvanceMin: 60, maxPartySize: 50 }),
     );
     expect(list).toHaveBeenCalledTimes(2);
   });

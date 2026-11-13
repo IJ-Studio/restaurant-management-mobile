@@ -1,5 +1,5 @@
-import { useMutation, useQueryClient } from '@tanstack/react-query';
-import { useState } from 'react';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMemo, useState } from 'react';
 
 import { useDependencies } from '../../../../core/di/DependenciesProvider';
 import type {
@@ -7,10 +7,9 @@ import type {
   NewReservation,
   ReservationChannel,
 } from '../../domain/entities/Reservation';
+import { DEFAULT_RULES } from '../../domain/entities/OperationRules';
 import {
   hasErrors,
-  MAX_PARTY_SIZE,
-  MIN_ADVANCE_MS,
   validateReservation,
   type ReservationErrors,
 } from '../../domain/entities/reservationRules';
@@ -41,15 +40,26 @@ const INITIAL: FormState = {
 
 /** ViewModel del formulario: valida en el cliente antes de enviar y refresca el listado al guardar. */
 export function useReservationForm(onCreated?: (result: CreatedReservation) => void) {
-  const { createReservationUseCase } = useDependencies();
+  const { createReservationUseCase, operationRules } = useDependencies();
   const queryClient = useQueryClient();
   const [form, setForm] = useState<FormState>(INITIAL);
   const [fieldErrors, setFieldErrors] = useState<ReservationErrors>({});
-  // Primer horario que acepta el API, calculado una sola vez al abrir el formulario.
-  const [minimumDate] = useState(() => new Date(Date.now() + MIN_ADVANCE_MS));
+  // Reglas del API (horario, antelación, personas); sin conexión, los valores por defecto del servidor.
+  const rulesQuery = useQuery({
+    queryKey: ['operation-rules'],
+    queryFn: () => operationRules.get(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const rules = rulesQuery.data ?? DEFAULT_RULES;
+  // Primer horario que acepta el API, desde que se abre el formulario.
+  const [openedAt] = useState(() => Date.now());
+  const minimumDate = useMemo(
+    () => new Date(openedAt + rules.minAdvanceMin * 60_000),
+    [openedAt, rules.minAdvanceMin],
+  );
 
   const mutation = useMutation({
-    mutationFn: (draft: NewReservation) => createReservationUseCase.execute(draft),
+    mutationFn: (draft: NewReservation) => createReservationUseCase.execute(draft, rules),
     onSuccess: async (result) => {
       await queryClient.invalidateQueries({ queryKey: reservationQueryKeys.all });
       setForm(INITIAL);
@@ -61,7 +71,7 @@ export function useReservationForm(onCreated?: (result: CreatedReservation) => v
     setForm((current) => ({ ...current, [field]: value }));
 
   const changePartySize = (delta: number) =>
-    update('partySize', Math.min(MAX_PARTY_SIZE, Math.max(1, form.partySize + delta)));
+    update('partySize', Math.min(rules.maxPartySize, Math.max(1, form.partySize + delta)));
 
   const submit = () => {
     const draft: NewReservation = {
@@ -70,7 +80,7 @@ export function useReservationForm(onCreated?: (result: CreatedReservation) => v
       occasion: form.occasion || undefined,
       specialRequests: form.specialRequests || undefined,
     };
-    const errors = validateReservation(draft);
+    const errors = validateReservation(draft, new Date(), rules);
     setFieldErrors(errors);
     if (!hasErrors(errors)) mutation.mutate(draft);
   };

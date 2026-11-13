@@ -43,6 +43,7 @@ import { GetMenuUseCase } from '../../features/menu/domain/usecases/GetMenuUseCa
 import { StripePaymentGateway } from '../../features/orders/data/gateways/StripePaymentGateway';
 import type { PaymentGateway } from '../../features/orders/domain/ports/PaymentGateway';
 import { CheckoutUseCase } from '../../features/orders/domain/usecases/CheckoutUseCase';
+import { OperationRulesRemoteDataSource } from '../../features/reservations/data/datasources/OperationRulesRemoteDataSource';
 import { SseOrderEvents } from '../../features/orders/data/gateways/SseOrderEvents';
 import type { OrderEventsSource } from '../../features/orders/domain/ports/OrderEventsSource';
 import { DeviceRemoteDataSource } from '../../features/notifications/data/datasources/DeviceRemoteDataSource';
@@ -133,6 +134,7 @@ export interface Dependencies {
   deviceRegistrationUseCase: Pick<DeviceRegistrationUseCase, 'register'>;
   pushNotifications: Pick<PushNotifications, 'onNotificationOpened'>;
   orderEvents: OrderEventsSource;
+  operationRules: Pick<OperationRulesRemoteDataSource, 'get'>;
   checkoutUseCase: Pick<CheckoutUseCase, 'execute' | 'isAvailable'>;
 }
 
@@ -249,6 +251,7 @@ export function createDependencies({
     deviceRegistrationUseCase,
     pushNotifications,
     checkoutUseCase: new CheckoutUseCase(orderRepository, paymentGateway),
+    operationRules: new OperationRulesRemoteDataSource(http),
     orderEvents:
       orderEvents ??
       new SseOrderEvents({
