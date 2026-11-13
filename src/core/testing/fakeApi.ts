@@ -8,6 +8,21 @@
  */
 import type { Session } from '../../features/auth/domain/entities/Session';
 import type { SessionStorage } from '../../features/auth/domain/repositories/SessionStorage';
+import type {
+  IncomingNotification,
+  PermissionState,
+  PushNotifications,
+} from '../../features/notifications/domain/ports/PushNotifications';
+import type {
+  PrivacyChangesDto,
+  PrivacyDto,
+} from '../../features/privacy/data/datasources/PrivacyRemoteDataSource';
+import type { OrderEvent } from '../../features/orders/domain/entities/OrderEvent';
+import type {
+  OrderEventsListener,
+  OrderEventsSource,
+} from '../../features/orders/domain/ports/OrderEventsSource';
+import { PRIVACY_NOTICE_VERSION } from '../../features/privacy/domain/entities/PrivacySettings';
 import type { CategoryWithDishesDto } from '../../features/menu/data/dtos/MenuDto';
 import type { TableDto } from '../../features/orders/data/dtos/OrderDto';
 import type { ReservationDto } from '../../features/reservations/data/dtos/ReservationDto';
@@ -44,11 +59,15 @@ type Handler = (
 const json = (status: number, body?: unknown) =>
   new Response(body === undefined ? null : JSON.stringify(body), { status });
 
+let nextTokenId = 1;
+
 /** JWT con el formato real (header.payload.firma). La firma es falsa: la app no la valida. */
 function makeToken(userId: number): string {
   const encode = (value: object) => btoa(JSON.stringify(value)).replace(/=+$/, '');
   const exp = Math.floor(Date.now() / 1000) + 60 * 60;
-  return `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode({ id: String(userId), exp })}.firma-de-prueba`;
+  // `tokenId` distinto en cada emisión, como en el API: un token renovado nunca repite al anterior.
+  const payload = { id: String(userId), exp, tokenId: `tok-${nextTokenId++}` };
+  return `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode(payload)}.firma-de-prueba`;
 }
 
 export interface FakeApiOptions {
@@ -58,6 +77,8 @@ export interface FakeApiOptions {
   reservations?: ReservationDto[];
   /** Tiempo límite del HttpClient (ms). */
   timeoutMs?: number;
+  /** `false`: nadie ha aceptado todavía el aviso de privacidad (primer inicio de sesión). */
+  privacyNoticeAccepted?: boolean;
 }
 
 /**
@@ -131,6 +152,21 @@ export function createFakeApi(options: FakeApiOptions = {}) {
   const reservations: ReservationDto[] = options.reservations ?? makeTestReservations();
   /** Token → usuario: las rutas con roles saben quién llama, como el JWT del API. */
   const tokens = new Map<string, TestUser>();
+  /** Tokens de refresco vigentes (de un solo uso, como en el API). */
+  const refreshTokens = new Map<string, TestUser>();
+  let nextRefreshToken = 1;
+  const openSession = (user: TestUser) => {
+    const accessToken = makeToken(user.id);
+    const refreshToken = `refresco-${nextRefreshToken++}`;
+    tokens.set(accessToken, user);
+    refreshTokens.set(refreshToken, user);
+    // Como el API real antes del arreglo de seguridad: manda columnas que la app no debe guardar.
+    return {
+      accessToken,
+      refreshToken,
+      user: { ...user, password: '$2b$10$hash-de-prueba', loginAttempts: 0 },
+    };
+  };
   // Copias: editar el perfil en una prueba no debe cambiar los datos de las demás.
   const users: TestUser[] = Object.values(testUsers).map((user) => ({ ...user }));
   const phones = new Map<number, string>();
@@ -143,10 +179,15 @@ export function createFakeApi(options: FakeApiOptions = {}) {
     const user = users.find((u) => u.email === email);
     if (!user || password !== (passwords.get(user.id) ?? TEST_PASSWORD))
       return [401, { message: 'Correo o contraseña incorrectos.' }];
-    const accessToken = makeToken(user.id);
-    tokens.set(accessToken, user);
-    // Como el API real antes del arreglo de seguridad: manda columnas que la app no debe guardar.
-    return [200, { accessToken, user: { ...user, password: '$2b$10$hash-de-prueba', loginAttempts: 0 } }];
+    return [200, openSession(user)];
+  };
+
+  const refresh: Handler = (body) => {
+    const { refreshToken } = body as { refreshToken?: string };
+    const user = refreshTokens.get(refreshToken ?? '');
+    if (!user) return [401, { message: 'La sesión expiró. Vuelve a iniciar sesión.' }];
+    refreshTokens.delete(refreshToken ?? '');
+    return [200, openSession(user)];
   };
 
   let nextItemId = 1;
@@ -352,6 +393,52 @@ export function createFakeApi(options: FakeApiOptions = {}) {
     return [200, userDto(found)];
   };
 
+  /** Privacidad por usuario (GET/PUT /profile/privacidad). Por defecto el aviso ya está aceptado. */
+  const privacy = new Map<number, PrivacyDto>();
+  const privacyOf = (user: TestUser): PrivacyDto => {
+    const accepted = options.privacyNoticeAccepted ?? true;
+    const stored = privacy.get(user.id) ?? {
+      avisoPrivacidad: accepted
+        ? { aceptado: true, version: PRIVACY_NOTICE_VERSION, fecha: '2026-11-01T10:00:00.000Z' }
+        : { aceptado: false, version: null, fecha: null },
+      notificacionesPush: true,
+      reportesErrores: true,
+    };
+    privacy.set(user.id, stored);
+    return stored;
+  };
+
+  const updatePrivacy: Handler = (body, _param, _query, user) => {
+    const { origen, avisoPrivacidad, notificacionesPush, reportesErrores } = body as PrivacyChangesDto & {
+      origen?: string;
+    };
+    if (origen !== 'movil' && origen !== 'web') return [400, { message: 'Datos inválidos.' }];
+    const current = privacyOf(user!);
+    if (avisoPrivacidad) current.avisoPrivacidad = { ...avisoPrivacidad, fecha: '2026-11-13T12:00:00.000Z' };
+    if (notificacionesPush !== undefined) current.notificacionesPush = notificacionesPush;
+    if (reportesErrores !== undefined) current.reportesErrores = reportesErrores;
+    return [200, current];
+  };
+
+  const deleteAccount: Handler = (body, _param, _query, user) => {
+    const { password: given } = body as { password?: string };
+    if (given !== (passwords.get(user!.id) ?? TEST_PASSWORD))
+      return [400, { message: 'La contraseña no es correcta' }];
+    if (user!.roleId === 1 && users.filter((u) => u.roleId === 1).length <= 1)
+      return [
+        409,
+        {
+          message:
+            'Eres el único administrador activo. Nombra a otro administrador antes de eliminar tu cuenta.',
+        },
+      ];
+    // La cuenta deja de existir: ni su token ni su contraseña vuelven a servir.
+    users.splice(users.indexOf(user!), 1);
+    for (const [token, owner] of tokens) if (owner === user) tokens.delete(token);
+    for (const [token, owner] of refreshTokens) if (owner === user) refreshTokens.delete(token);
+    return [204];
+  };
+
   const changePassword: Handler = (body, id, _query, user) => {
     if (!user || String(user.id) !== id)
       return [403, { message: 'Solo puedes cambiar tu propia contraseña' }];
@@ -457,6 +544,9 @@ export function createFakeApi(options: FakeApiOptions = {}) {
   /** [método, ruta, ¿pide JWT?, handler]. `:id` toma el último segmento de la ruta. */
   const routes: [string, RegExp, boolean, Handler][] = [
     ['POST', /^auth\/sign-in$/, false, signIn],
+    ['POST', /^auth\/refresh$/, false, refresh],
+    ['POST', /^notifications\/devices$/, true, () => [204]],
+    ['DELETE', /^notifications\/devices\/[^/]+$/, true, () => [204]],
     ['POST', /^auth\/sign-out$/, true, () => [200, { message: 'Sesión cerrada' }]],
     ['GET', /^menu\/categories\/with-products$/, false, () => [200, menu]],
     ['GET', /^menu\/items\/([^/]+)$/, false, dishById],
@@ -473,6 +563,21 @@ export function createFakeApi(options: FakeApiOptions = {}) {
     ['POST', /^cocina\/incidencias$/, true, reportIncident],
     ['GET', /^inventario\/mermas$/, true, () => [200, []]],
     ['GET', /^caja\/actual$/, true, () => [200, { abierta: false }]],
+    [
+      'GET',
+      /^profile$/,
+      true,
+      (_body, _param, query, user) => getUser(undefined, String(user!.id), query, user),
+    ],
+    [
+      'PUT',
+      /^profile$/,
+      true,
+      (body, _param, query, user) => updateUser(body, String(user!.id), query, user),
+    ],
+    ['GET', /^profile\/privacidad$/, true, (_body, _param, _query, user) => [200, privacyOf(user!)]],
+    ['PUT', /^profile\/privacidad$/, true, updatePrivacy],
+    ['DELETE', /^account$/, true, deleteAccount],
     ['GET', /^users\/([^/]+)$/, true, getUser],
     ['PATCH', /^users\/([^/]+)\/password$/, true, changePassword],
     ['PATCH', /^users\/([^/]+)$/, true, updateUser],
@@ -518,7 +623,62 @@ export function createFakeApi(options: FakeApiOptions = {}) {
     fetchFn: fetchFn as typeof fetch,
   });
 
-  return { httpClient, requests, orders, reservations, faults: faults as FaultInjector };
+  return {
+    httpClient,
+    requests,
+    orders,
+    reservations,
+    faults: faults as FaultInjector,
+    /** Simula que el token de acceso venció o que el servidor se reinició: ningún token de acceso sirve ya. */
+    expireAccessTokens: () => tokens.clear(),
+    /** Simula que además el refresco fue revocado (p. ej. cuenta desactivada). */
+    revokeRefreshTokens: () => refreshTokens.clear(),
+  };
+}
+
+/**
+ * Sustituto de expo-notifications: permiso y token en memoria. `open` simula que la persona toca
+ * un aviso; `permission` se puede cambiar para probar el diálogo previo.
+ */
+export function createFakePushNotifications(
+  initial: PermissionState = { status: 'granted', canAskAgain: true },
+): PushNotifications & { open: (notification: IncomingNotification) => void; permission: PermissionState } {
+  const listeners = new Set<(notification: IncomingNotification) => void>();
+  const fake = {
+    permission: initial,
+    configure: async () => undefined,
+    getPermission: async () => fake.permission,
+    requestPermission: async () => {
+      fake.permission = { status: 'granted' as const, canAskAgain: true };
+      return fake.permission;
+    },
+    onNotification: () => () => undefined,
+    onNotificationOpened: (listener: (notification: IncomingNotification) => void) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    getDeviceToken: async () => 'ExponentPushToken[telefono-de-prueba]',
+    open: (notification: IncomingNotification) => listeners.forEach((listener) => listener(notification)),
+  };
+  return fake;
+}
+
+/** Sustituto del flujo en tiempo real de pedidos: `emit` simula un evento que llega del API. */
+export function createFakeOrderEvents(): OrderEventsSource & {
+  emit: (event: OrderEvent) => void;
+  ready: () => void;
+  subscribers: () => number;
+} {
+  const listeners = new Set<OrderEventsListener>();
+  return {
+    subscribe: (listener) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    emit: (event) => listeners.forEach((listener) => listener.onEvent(event)),
+    ready: () => listeners.forEach((listener) => listener.onReady()),
+    subscribers: () => listeners.size,
+  };
 }
 
 /** Sustituto de SecureSessionStorage: guarda la sesión en memoria y permite revisar qué se guardó. */

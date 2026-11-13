@@ -1,16 +1,26 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { NavigationContainer, type NavigationContainerRef } from '@react-navigation/native';
-import type { Ref } from 'react';
+import {
+  NavigationContainer,
+  type LinkingOptions,
+  type NavigationContainerRef,
+} from '@react-navigation/native';
+import { useMemo, type Ref } from 'react';
 
 import { sectionsFor, type Section } from '../../features/auth/domain/entities/permissions';
 import { RequireSection } from '../../features/auth/presentation/components/RequireSection';
 import { useSession } from '../../features/auth/presentation/viewmodels/useSession';
-import { useNotificationPermission } from '../../features/notifications/presentation/viewmodels/useNotificationPermission';
+import { orderIdFromNotification } from '../../features/notifications/domain/entities/notificationTarget';
+import { useOrderEvents } from '../../features/orders/presentation/viewmodels/useOrderEvents';
+import { NotificationPermissionPrompt } from '../../features/notifications/presentation/components/NotificationPermissionPrompt';
+import { useDependencies } from '../di/DependenciesProvider';
 import { navigationTheme, tabScreenOptions } from './navigationTheme';
 import { SECTION_CONFIG } from './sections';
 
 export type TabParamList = Record<Section, undefined>;
+
+/** Esquema interno para convertir un aviso en una ruta; la app no registra enlaces externos. */
+const NOTIFICATION_URL = 'elquijote://';
 
 const Tab = createBottomTabNavigator<TabParamList>();
 
@@ -37,11 +47,36 @@ interface Props {
 export function AppNavigator({ navigationRef }: Props) {
   const role = useSession((state) => state.session?.user.role);
   const sections = sectionsFor(role);
-  // Al entrar con sesión se pide el permiso de notificaciones (una sola vez; HU-07).
-  useNotificationPermission({ askOnMount: true });
+  const { pushNotifications } = useDependencies();
+  // Pedidos en tiempo real mientras hay sesión (HU-06).
+  useOrderEvents();
+  // Tocar un aviso de pedido abre ese pedido (HU-07). La lista queda debajo para poder volver.
+  const linking = useMemo<LinkingOptions<TabParamList>>(
+    () => ({
+      prefixes: [NOTIFICATION_URL],
+      // Las pantallas internas de cada pestaña no están en `TabParamList`: la ruta se declara sin ese tipo.
+      config: {
+        screens: {
+          orders: { initialRouteName: 'OrdersList', screens: { OrderDetail: 'pedidos/:orderId' } },
+        },
+      } as unknown as LinkingOptions<TabParamList>['config'],
+      getInitialURL: () => null,
+      subscribe: (open) =>
+        pushNotifications.onNotificationOpened((notification) => {
+          const orderId = orderIdFromNotification(notification);
+          if (!orderId) return;
+          const { place } = notification.data;
+          const query = `place=${encodeURIComponent(typeof place === 'string' ? place : 'Pedido')}`;
+          open(`${NOTIFICATION_URL}pedidos/${orderId}?${query}`);
+        }),
+    }),
+    [pushNotifications],
+  );
 
   return (
-    <NavigationContainer ref={navigationRef} theme={navigationTheme}>
+    <NavigationContainer ref={navigationRef} theme={navigationTheme} linking={linking}>
+      {/* Con sesión se explica para qué son los avisos antes de pedir el permiso del sistema. */}
+      <NotificationPermissionPrompt />
       {/* key: si cambia el rol se reconstruye el navegador y no queda historial de otro rol. */}
       <Tab.Navigator key={role} screenOptions={tabScreenOptions}>
         {sections.map((section) => (
