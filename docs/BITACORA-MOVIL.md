@@ -335,3 +335,9 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
   entrega.
 - Fondos suaves de estados: mezcla al 12 % sobre la superficie, como `color-mix` de las insignias web.
 - Pendiente en el teléfono (Tanda 1): revisar contraste y radios en pantallas reales.
+
+## B-024 · 2026-11-13 · Escribir al cliente de una reservación [movil] [web]
+
+- Fase 4.6: en «Cambiar estado» de una reservación, «WhatsApp» y «Correo» con el saludo listo; sin
+  teléfono o correo válido, el botón queda desactivado y lo dice. La web suma «Correo» junto a
+  «WhatsApp» (web #21). Mismas reglas de número que la web (`contact.ts`).

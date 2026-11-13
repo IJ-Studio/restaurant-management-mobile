@@ -8,7 +8,16 @@ import { ReservationStatusScreen } from '../screens/ReservationStatusScreen';
 export type ReservationsStackParamList = {
   ReservationsList: { notice?: string } | undefined;
   NewReservation: undefined;
-  ReservationStatus: { id: string; customerName: string; status: string; summary: string };
+  ReservationStatus: {
+    id: string;
+    customerName: string;
+    status: string;
+    summary: string;
+    /** Para escribir al cliente (Fase 4.6). */
+    when?: string;
+    phone?: string;
+    email?: string;
+  };
 };
 
 const Stack = createNativeStackNavigator<ReservationsStackParamList>();

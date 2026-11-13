@@ -70,6 +70,9 @@ export function ReservationsScreen() {
                     customerName: item.customerName,
                     status: item.status,
                     summary: `${formatDateTime(item.dateTime)} · ${reservationSummary(item)}`,
+                    when: formatDateTime(item.dateTime),
+                    phone: item.customerPhone,
+                    email: item.customerEmail,
                   })
                 }
               />
