@@ -4,7 +4,7 @@ import { AuthGate } from '../../features/auth/presentation/components/AuthGate';
 import { createDependencies } from '../di/dependencies';
 import { AppNavigator } from '../navigation/AppNavigator';
 import { TEST_PASSWORD } from './data/testData';
-import { createFakeApi, createMemorySessionStorage } from './fakeApi';
+import { createFakeApi, createFakePushNotifications, createMemorySessionStorage } from './fakeApi';
 import { renderWithProviders } from './renderWithProviders';
 
 interface StartOptions {
@@ -12,24 +12,32 @@ interface StartOptions {
   api?: ReturnType<typeof createFakeApi>;
   /** Almacenamiento ya usado: simula cerrar y volver a abrir la app en el mismo celular. */
   storage?: ReturnType<typeof createMemorySessionStorage>;
+  /** Avisos del teléfono: por defecto con el permiso ya concedido. */
+  push?: ReturnType<typeof createFakePushNotifications>;
 }
 
 /**
  * Arranca la app completa (AuthGate + navegación por rol) con el grafo de dependencias real,
- * conectado al API falso con los datos de prueba. Solo se sustituyen la red y el almacenamiento seguro.
+ * conectado al API falso con los datos de prueba. Solo se sustituyen la red, el almacenamiento seguro
+ * y las notificaciones del teléfono.
  */
 export async function startTestApp({
   api = createFakeApi(),
   storage = createMemorySessionStorage(),
+  push = createFakePushNotifications(),
 }: StartOptions = {}) {
-  const deps = createDependencies({ httpClient: api.httpClient, sessionStorage: storage });
+  const deps = createDependencies({
+    httpClient: api.httpClient,
+    sessionStorage: storage,
+    pushNotifications: push,
+  });
   const view = await renderWithProviders(
     <AuthGate>
       <AppNavigator />
     </AuthGate>,
     deps,
   );
-  return { api, storage, deps, unmount: view.unmount };
+  return { api, storage, push, deps, unmount: view.unmount };
 }
 
 /** Llena el formulario de Login y lo envía. */

@@ -18,6 +18,28 @@ noviembre de 2026.
 El único permiso sensible es el de notificaciones. La app no usa cámara, ubicación, micrófono, contactos
 ni almacenamiento compartido.
 
+## Cómo se pide el permiso de notificaciones
+
+El permiso del sistema nunca aparece solo. `NotificationPermissionPrompt` (se monta al entrar con sesión)
+sigue este orden:
+
+1. Consulta el permiso **sin** mostrar el diálogo del sistema.
+2. Si nunca se ha preguntado, muestra un diálogo propio que explica para qué es:
+
+   > **Avisos de pedidos**
+   > El Quijote te avisa cuando un pedido está listo para entregar o para cobrar, aunque tengas la app
+   > cerrada. Para eso necesita tu permiso para mostrar notificaciones. Solo se usan para avisos del
+   > servicio y puedes apagarlos cuando quieras en Perfil → Privacidad.
+
+3. «Activar avisos» abre el permiso del sistema. «Ahora no» cierra el diálogo sin pedirlo; no se vuelve a
+   mostrar hasta abrir la app otra vez.
+4. Con el permiso concedido, la app registra el teléfono en el API (`POST /notifications/devices`) para
+   que le lleguen los avisos de esa persona. Al cerrar sesión lo da de baja.
+5. Si la persona ya lo negó, la app no insiste: en Perfil aparece el estado y un botón para activarlo o
+   para abrir Ajustes.
+
+La app funciona completa sin este permiso: los pedidos se siguen viendo en su lista.
+
 ## Permisos retirados
 
 Vienen en la plantilla de Expo o en alguna librería, la app no los usa y se bloquean en `app.json`

@@ -9,6 +9,11 @@
 import type { Session } from '../../features/auth/domain/entities/Session';
 import type { SessionStorage } from '../../features/auth/domain/repositories/SessionStorage';
 import type {
+  IncomingNotification,
+  PermissionState,
+  PushNotifications,
+} from '../../features/notifications/domain/ports/PushNotifications';
+import type {
   PrivacyChangesDto,
   PrivacyDto,
 } from '../../features/privacy/data/datasources/PrivacyRemoteDataSource';
@@ -535,6 +540,8 @@ export function createFakeApi(options: FakeApiOptions = {}) {
   const routes: [string, RegExp, boolean, Handler][] = [
     ['POST', /^auth\/sign-in$/, false, signIn],
     ['POST', /^auth\/refresh$/, false, refresh],
+    ['POST', /^notifications\/devices$/, true, () => [204]],
+    ['DELETE', /^notifications\/devices\/[^/]+$/, true, () => [204]],
     ['POST', /^auth\/sign-out$/, true, () => [200, { message: 'Sesión cerrada' }]],
     ['GET', /^menu\/categories\/with-products$/, false, () => [200, menu]],
     ['GET', /^menu\/items\/([^/]+)$/, false, dishById],
@@ -622,6 +629,33 @@ export function createFakeApi(options: FakeApiOptions = {}) {
     /** Simula que además el refresco fue revocado (p. ej. cuenta desactivada). */
     revokeRefreshTokens: () => refreshTokens.clear(),
   };
+}
+
+/**
+ * Sustituto de expo-notifications: permiso y token en memoria. `open` simula que la persona toca
+ * un aviso; `permission` se puede cambiar para probar el diálogo previo.
+ */
+export function createFakePushNotifications(
+  initial: PermissionState = { status: 'granted', canAskAgain: true },
+): PushNotifications & { open: (notification: IncomingNotification) => void; permission: PermissionState } {
+  const listeners = new Set<(notification: IncomingNotification) => void>();
+  const fake = {
+    permission: initial,
+    configure: async () => undefined,
+    getPermission: async () => fake.permission,
+    requestPermission: async () => {
+      fake.permission = { status: 'granted' as const, canAskAgain: true };
+      return fake.permission;
+    },
+    onNotification: () => () => undefined,
+    onNotificationOpened: (listener: (notification: IncomingNotification) => void) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    getDeviceToken: async () => 'ExponentPushToken[telefono-de-prueba]',
+    open: (notification: IncomingNotification) => listeners.forEach((listener) => listener(notification)),
+  };
+  return fake;
 }
 
 /** Sustituto de SecureSessionStorage: guarda la sesión en memoria y permite revisar qué se guardó. */

@@ -1,3 +1,5 @@
+import { Platform } from 'react-native';
+
 import { DashboardRemoteDataSource } from '../../features/admin/data/datasources/DashboardRemoteDataSource';
 import { PayrollRepositoryImpl } from '../../features/admin/payroll/data/PayrollRepositoryImpl';
 import { TablesRepositoryImpl } from '../../features/admin/tables/data/TablesRepositoryImpl';
@@ -36,7 +38,10 @@ import { MenuRemoteDataSource } from '../../features/menu/data/datasources/MenuR
 import { MenuRepositoryImpl } from '../../features/menu/data/repositories/MenuRepositoryImpl';
 import { GetDishUseCase } from '../../features/menu/domain/usecases/GetDishUseCase';
 import { GetMenuUseCase } from '../../features/menu/domain/usecases/GetMenuUseCase';
+import { DeviceRemoteDataSource } from '../../features/notifications/data/datasources/DeviceRemoteDataSource';
 import { ExpoPushNotifications } from '../../features/notifications/data/gateways/ExpoPushNotifications';
+import type { PushNotifications } from '../../features/notifications/domain/ports/PushNotifications';
+import { DeviceRegistrationUseCase } from '../../features/notifications/domain/usecases/DeviceRegistrationUseCase';
 import { EnableNotificationsUseCase } from '../../features/notifications/domain/usecases/EnableNotificationsUseCase';
 import { OrderRemoteDataSource } from '../../features/orders/data/datasources/OrderRemoteDataSource';
 import { OrderRepositoryImpl } from '../../features/orders/data/repositories/OrderRepositoryImpl';
@@ -118,6 +123,8 @@ export interface Dependencies {
   tablesRepository: TablesRepository;
   saveTableUseCase: Pick<SaveTableUseCase, 'execute'>;
   enableNotificationsUseCase: Pick<EnableNotificationsUseCase, 'execute'>;
+  deviceRegistrationUseCase: Pick<DeviceRegistrationUseCase, 'register'>;
+  pushNotifications: Pick<PushNotifications, 'onNotificationOpened'>;
 }
 
 /**
@@ -127,11 +134,13 @@ export interface Dependencies {
 export interface Infrastructure {
   httpClient?: HttpClient;
   sessionStorage?: SessionStorage;
+  pushNotifications?: PushNotifications;
 }
 
 export function createDependencies({
   httpClient: http = httpClient,
   sessionStorage = new SecureSessionStorage(),
+  pushNotifications = new ExpoPushNotifications(),
 }: Infrastructure = {}): Dependencies {
   const sessionStore = createSessionStore();
   http.setTokenProvider(() => sessionStore.getState().session?.token ?? null);
@@ -168,11 +177,25 @@ export function createDependencies({
   const payrollRepository = new PayrollRepositoryImpl(http);
   const tablesRepository = new TablesRepositoryImpl(http);
 
+  const deviceRegistrationUseCase = new DeviceRegistrationUseCase(
+    pushNotifications,
+    new DeviceRemoteDataSource(http),
+    Platform.OS === 'android' || Platform.OS === 'ios' ? Platform.OS : null,
+  );
+  // Al salir, el teléfono deja de recibir los avisos de esta persona (con su sesión todavía válida).
+  const logout = new LogoutUseCase(authRepository, sessionStorage);
+  const logoutUseCase = {
+    execute: async () => {
+      await deviceRegistrationUseCase.unregister();
+      await logout.execute();
+    },
+  };
+
   return {
     httpClient: http,
     sessionStore,
     loginUseCase: new LoginUseCase(authRepository, sessionStorage),
-    logoutUseCase: new LogoutUseCase(authRepository, sessionStorage),
+    logoutUseCase,
     restoreSessionUseCase: new RestoreSessionUseCase(sessionStorage),
     getMenuUseCase: new GetMenuUseCase(menuRepository),
     getDishUseCase: new GetDishUseCase(menuRepository),
@@ -209,6 +232,8 @@ export function createDependencies({
     correctPayrollMovementUseCase: new CorrectPayrollMovementUseCase(payrollRepository),
     tablesRepository,
     saveTableUseCase: new SaveTableUseCase(tablesRepository),
-    enableNotificationsUseCase: new EnableNotificationsUseCase(new ExpoPushNotifications()),
+    enableNotificationsUseCase: new EnableNotificationsUseCase(pushNotifications),
+    deviceRegistrationUseCase,
+    pushNotifications,
   };
 }

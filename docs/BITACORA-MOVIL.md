@@ -171,3 +171,26 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
 - Mapa de derechos, pantallas y endpoints en [`privacidad-arco.md`](privacidad-arco.md).
 - Pendiente para la tanda en el teléfono: primer inicio de sesión con el aviso, switches, eliminar una
   cuenta de prueba y comprobar en la web que esa cuenta ya no entra.
+
+## B-011 · 2026-11-13 · Notificaciones: aviso al cambiar el estado, permiso explicado y registro del teléfono [rubrica] [gh-project] [api] [movil]
+
+- **API** (PRs #139 y #140 del API; cierra api#75): al marcar un pedido como listo se avisa a los meseros
+  y al entregarlo se avisa a caja. El aviso lleva solo la mesa y, en `data`, `{ type, orderId, place }`:
+  nunca nombres de clientes ni importes. Sale sin esperar la respuesta y no deshace el cambio si falla.
+- **Móvil:**
+  - El permiso de notificaciones ya no aparece solo al entrar: primero un diálogo propio explica para
+    qué es y la persona decide («Activar avisos» o «Ahora no»).
+  - Con el permiso concedido, la app obtiene el token de Expo y registra el teléfono en el API; al cerrar
+    sesión lo da de baja, antes de invalidar la sesión.
+  - Tocar un aviso abre ese pedido, con la lista debajo para poder volver. Solo se aceptan tipos de aviso
+    conocidos y un id con forma de identificador.
+- **Decisión:** el aviso va por rol, como pide la tarea. Avisar solo al mesero que atiende la mesa queda
+  como mejora.
+- **Decisión:** si el teléfono no puede dar un token (sin servicios de Google o sin la llave de FCM en el
+  build), la app sigue funcionando sin avisos.
+- **Dependencia con José:** HU-07 (#345 y #346) estaba a su cargo; queda implementada y probada para que
+  solo la revise. La entrega real en un build propio necesita la llave de FCM en EAS.
+- Pruebas: unitarias del diálogo, del registro del teléfono, del destino del aviso y del adapter, y
+  cuatro de integración (registro al entrar, explicación previa, baja al salir y abrir el pedido).
+- Pendiente para la tanda en el teléfono: ver el diálogo en una instalación limpia, aceptar el permiso y
+  comprobar el token en la base; un aviso real solo se puede probar con la llave de FCM.
