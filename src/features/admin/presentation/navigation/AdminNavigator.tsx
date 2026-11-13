@@ -5,6 +5,7 @@ import { StyleSheet, View } from 'react-native';
 import { stackScreenOptions } from '../../../../core/navigation/navigationTheme';
 import { Button } from '../../../../shared/presentation/components/Button';
 import { spacing } from '../../../../shared/presentation/theme';
+import { InvoicesScreen } from '../../invoices/presentation/InvoicesScreen';
 import { PayrollEmployeesScreen } from '../../payroll/presentation/PayrollEmployeesScreen';
 import { PayrollScreen } from '../../payroll/presentation/PayrollScreen';
 import { StaffScreen } from '../../staff/presentation/StaffScreen';
@@ -17,6 +18,7 @@ export type AdminStackParamList = {
   PayrollEmployees: undefined;
   Tables: undefined;
   Staff: undefined;
+  Invoices: undefined;
 };
 
 const Stack = createNativeStackNavigator<AdminStackParamList>();
@@ -35,6 +37,7 @@ function AdminHome() {
         />
         <Button label="Mesas" variant="outline" onPress={() => navigation.navigate('Tables')} />
         <Button label="Personal" variant="outline" onPress={() => navigation.navigate('Staff')} />
+        <Button label="Facturas" variant="outline" onPress={() => navigation.navigate('Invoices')} />
       </View>
       <DashboardScreen />
     </View>
@@ -54,6 +57,7 @@ export function AdminNavigator() {
       />
       <Stack.Screen name="Tables" component={TablesScreen} options={{ title: 'Mesas' }} />
       <Stack.Screen name="Staff" component={StaffScreen} options={{ title: 'Personal' }} />
+      <Stack.Screen name="Invoices" component={InvoicesScreen} options={{ title: 'Facturas' }} />
     </Stack.Navigator>
   );
 }

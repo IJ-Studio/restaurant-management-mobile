@@ -341,3 +341,11 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
 - Fase 4.6: en «Cambiar estado» de una reservación, «WhatsApp» y «Correo» con el saludo listo; sin
   teléfono o correo válido, el botón queda desactivado y lo dice. La web suma «Correo» junto a
   «WhatsApp» (web #21). Mismas reglas de número que la web (`contact.ts`).
+
+## B-025 · 2026-11-13 · Facturas del administrador en la móvil [movil] [decision]
+
+- Dashboard → «Facturas»: solicitudes pendientes con cliente, RFC, razón social, total y si el pago está
+  confirmado; «Emitir» (solo con el pago confirmado; avisa si el correo no salió) y «Rechazar» con
+  motivo de 5 a 300 caracteres (mismo mensaje que el API). Mismas rutas que la web.
+- **Decisión:** en la móvil solo la bandeja de pendientes; el historial de facturas emitidas y su
+  descarga se quedan en la web.

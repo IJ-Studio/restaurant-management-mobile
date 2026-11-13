@@ -82,6 +82,7 @@ export function makeTestDependencies(overrides: Partial<Dependencies> = {}): Dep
       remove: pending(),
     },
     saveTableUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
+    invoicesRepository: { pending: pending(), issue: pending(), reject: pending() },
     staffRepository: {
       list: pending(),
       create: pending(),
