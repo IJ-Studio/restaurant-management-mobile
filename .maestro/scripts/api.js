@@ -1,3 +1,5 @@
+/* global API_URL, PASSWORD, ROLE_EMAIL, ACTION, ORDER_ID, ESTATUS, http, output */
+// Globales que inyecta Maestro en `runScript` (variables `env` del flujo, `http` y `output`).
 // Simula «otro teléfono»: cambia un pedido por el API, como lo haría cocina desde su app.
 // Entradas (env): API_URL, ROLE_EMAIL, PASSWORD, ACTION ('crear' | 'estatus'), ORDER_ID, ESTATUS.
 // Salidas: output.orderId.
