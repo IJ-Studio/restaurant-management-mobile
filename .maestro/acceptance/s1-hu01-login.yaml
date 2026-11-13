@@ -1,0 +1,20 @@
+# HU-01 · CA-1 y CA-3: login válido entra a su sección; credenciales inválidas dan un mensaje genérico.
+appId: ${APP_ID || 'com.ijstudio.restaurantmanagement'}
+tags: [sprint-1, hu-01]
+---
+- launchApp:
+    clearState: true
+- tapOn: "Correo"
+- inputText: "mesero@prueba.local"
+- tapOn: "Contraseña"
+- inputText: "Incorrecta#1"
+- hideKeyboard
+- tapOn: "Entrar"
+- assertVisible: "Correo o contraseña incorrectos."
+- assertNotVisible: "Pedidos"
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: mesero@prueba.local
+- assertVisible: "Menú"
+- takeScreenshot: reports/maestro/s1-hu01-login
