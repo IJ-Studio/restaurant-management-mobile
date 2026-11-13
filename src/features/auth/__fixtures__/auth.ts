@@ -14,6 +14,7 @@ export function makeSession(overrides: Partial<Session> = {}): Session {
 export function makeRepository(session: Session = makeSession()): jest.Mocked<AuthRepository> {
   return {
     signIn: jest.fn().mockResolvedValue(session),
+    refresh: jest.fn().mockResolvedValue(session),
     signOut: jest.fn().mockResolvedValue(undefined),
   };
 }

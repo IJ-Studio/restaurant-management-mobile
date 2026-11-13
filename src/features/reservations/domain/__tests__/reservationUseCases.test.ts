@@ -24,7 +24,7 @@ describe('CreateReservationUseCase', () => {
 
     await expect(
       new CreateReservationUseCase(repository, () => NOW).execute(makeDraft({ partySize: 0 })),
-    ).rejects.toMatchObject({ kind: 'validation', message: 'Debe haber al menos 1 persona.' });
+    ).rejects.toMatchObject({ kind: 'validation', message: 'El número de personas debe ser de 1 a 50.' });
     expect(repository.create).not.toHaveBeenCalled();
   });
 });

@@ -29,6 +29,7 @@ export interface ProductDto {
   category: string;
   unit: string;
   stock: string;
+  minStock?: string | null;
   costPerUnit: string;
 }
 
@@ -97,6 +98,7 @@ export class KitchenRepositoryImpl implements KitchenRepository {
         category: row.category,
         unit: row.unit,
         stock: amount(row.stock),
+        minStock: row.minStock ? amount(row.minStock) : 0,
         costPerUnit: amount(row.costPerUnit),
       }));
     } catch (error) {
