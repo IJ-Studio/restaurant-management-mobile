@@ -31,21 +31,19 @@ const repo = (): jest.Mocked<InvoicesRepository> => ({
 describe('facturas del admin (Fase 2)', () => {
   it('repositorio: mismas rutas que la web', async () => {
     const http = {
-      get: jest
-        .fn()
-        .mockResolvedValue([
-          {
-            id: 4,
-            ordenId: 'o-1',
-            cliente: 'A',
-            rfc: null,
-            razonSocial: null,
-            email: null,
-            totalOrden: '450.00',
-            estatusOrden: 'pagada',
-            creadoEn: 'x',
-          },
-        ]),
+      get: jest.fn().mockResolvedValue([
+        {
+          id: 4,
+          ordenId: 'o-1',
+          cliente: 'A',
+          rfc: null,
+          razonSocial: null,
+          email: null,
+          totalOrden: '450.00',
+          estatusOrden: 'pagada',
+          creadoEn: 'x',
+        },
+      ]),
       post: jest.fn().mockResolvedValue({ folio: 'A-1', correo: { enviado: true } }),
     };
     const r = new InvoicesRepositoryImpl(http as unknown as HttpClient);
