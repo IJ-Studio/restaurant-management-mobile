@@ -15,15 +15,33 @@ Se levantó leyendo el código de `restaurant-management-api` (rama `develop`, c
 
 | Método | Ruta | Acceso | Body / respuesta |
 |---|---|---|---|
-| POST | `/auth/sign-in` | Público | `{ email, password }` (password ≥ 8) → `200 { accessToken, user }` |
+| POST | `/auth/sign-in` | Público | `{ email, password }` (password ≥ 8) → `200 { accessToken, refreshToken, user }`. `refreshToken` puede faltar en un API anterior |
+| POST | `/auth/refresh` | Público | `{ refreshToken }` → `200 { accessToken, refreshToken, user }`. El token de refresco es de un solo uso y dura 30 días; `401` si es desconocido, venció o ya se usó |
 | GET | `/auth/me` | JWT | `{ user: { id, email, roleId, tokenId } }` (payload del JWT) |
-| POST | `/auth/sign-out` | JWT | `200 { message }`: revoca el token en la caché |
+| POST | `/auth/sign-out` | JWT | `{ refreshToken? }` → `200 { message }`: cierra la sesión de este dispositivo y revoca su token de refresco |
 | POST | `/auth/sign-up` | Público | Registro de clientes (rol 5). **La app móvil no lo usa** |
 
 - El JWT trae `{ id: string, email, roleId, tokenId }`. Expira en `JWT_ACCESS_TOKEN_TTL` (3600 s
-  por defecto) y no hay refresh token: con un 401 se cierra la sesión.
+  por defecto). Con un 401 la app renueva la sesión con `/auth/refresh` y repite la petición; si el
+  refresco ya no sirve, cierra la sesión.
+- La sesión es por dispositivo: la misma persona puede estar a la vez en la web y en la app.
 - `user` en la respuesta de sign-in es la fila completa de `users`: `id, name, lastname, email,
   phone, roleId, verified, ...`. El mapper de la app solo toma `id, name, lastname, email, roleId`.
+
+
+## Perfil y privacidad (derechos ARCO)
+
+El API toma al usuario del token: estas rutas solo actúan sobre la cuenta propia. Detalle de las
+pantallas en [`privacidad-arco.md`](privacidad-arco.md).
+
+| Método | Ruta | Acceso | Body / respuesta |
+|---|---|---|---|
+| GET | `/profile` | JWT | Acceso: `200 { id, name, lastname, email, phone, roleId, … }` (sin contraseña) |
+| PUT | `/profile` | JWT | Rectificación: `{ name?, lastname?, phone? }` (teléfono en E.164). Cualquier otro campo → `400` |
+| GET | `/profile/privacidad` | JWT | `200 { avisoPrivacidad: { aceptado, version, fecha }, notificacionesPush, reportesErrores }` |
+| PUT | `/profile/privacidad` | JWT | Oposición y consentimiento: `{ origen: 'movil' \| 'web', avisoPrivacidad?: { aceptado, version }, notificacionesPush?, reportesErrores? }` → el estado nuevo |
+| DELETE | `/account` (o `/profile`) | JWT | Cancelación: `{ password }` → `204`. `400` contraseña incorrecta · `409` único administrador activo · 5 intentos por minuto |
+| PATCH | `/users/:id/password` | JWT | `{ currentPassword, newPassword }` → `200 { message }` |
 
 ## Menú — HU-03
 

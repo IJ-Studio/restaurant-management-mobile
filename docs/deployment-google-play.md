@@ -109,7 +109,7 @@ en [`google-play-ficha.md`](google-play-ficha.md) y [`google-play-seguridad-dato
 
 - [ ] `EXPO_PUBLIC_API_URL` de producción con HTTPS, en el entorno `production` de EAS.
 - [ ] Llave de FCM V1 subida a EAS y una notificación de prueba recibida en un Android real.
-- [ ] `android.allowBackup` y `debuggable` revisados en el APK (MobSF, issue de release).
+- [x] `android.allowBackup` y `debuggable` revisados en el APK: [`reporte-ofuscacion-jadx.md`](reporte-ofuscacion-jadx.md) (la auditoría con MobSF sigue en el issue de release).
 - [ ] Ícono, nombre visible y capturas de pantalla para la ficha.
 - [ ] Política de privacidad publicada y formulario Data safety completo.
 - [ ] Prueba en al menos un Android real instalado desde la pista interna.
