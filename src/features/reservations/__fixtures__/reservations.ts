@@ -40,5 +40,7 @@ export function makeReservationRepository(
       message: 'Reserva confirmada.',
     })),
     listFrom: jest.fn().mockResolvedValue(list),
+    changeStatus: jest.fn().mockResolvedValue(undefined),
+    freeTables: jest.fn().mockResolvedValue([]),
   };
 }

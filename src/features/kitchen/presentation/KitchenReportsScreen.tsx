@@ -12,7 +12,7 @@ import { formatCurrency } from '../../../shared/utils/formatCurrency';
 import { formatTime } from '../../../shared/utils/formatDateTime';
 import { useSession } from '../../auth/presentation/viewmodels/useSession';
 import { wasteReasonLabel } from '../domain/Kitchen';
-import { incidentSummary, useIncidents, useWasteToday } from './viewmodels';
+import { incidentSummary, useIncidents, useLowStock, useWasteToday } from './viewmodels';
 
 type Nav = NativeStackNavigationProp<{ ReportIncident: undefined; ReportWaste: undefined }>;
 
@@ -21,6 +21,7 @@ export function KitchenReportsScreen() {
   const navigation = useNavigation<Nav>();
   const incidents = useIncidents();
   const waste = useWasteToday();
+  const stock = useLowStock();
   // Las mermas las registra el personal operativo; el admin solo ve el registro (el API también lo impide).
   const canReportWaste = useSession((state) => state.session?.user.role) !== 'admin';
 
@@ -35,6 +36,7 @@ export function KitchenReportsScreen() {
           onRefresh={() => {
             void incidents.refresh();
             void waste.refresh();
+            void stock.refresh();
           }}
         />
       }
@@ -54,6 +56,25 @@ export function KitchenReportsScreen() {
           />
         )}
       </View>
+
+      <SectionTitle title="Existencias bajas" style={styles.section} />
+      {stock.errorMessage ? (
+        <Text style={styles.empty}>{stock.errorMessage}</Text>
+      ) : !stock.isLoading && stock.products.length === 0 ? (
+        <Text style={styles.empty}>Nada por debajo de su mínimo.</Text>
+      ) : (
+        stock.products.map((product) => (
+          <Card key={product.id} style={styles.stockRow}>
+            <View style={styles.stockText}>
+              <Text style={styles.stockName}>{product.name}</Text>
+              <Text style={styles.stockHint}>
+                Quedan {product.stock} {product.unit} · mínimo {product.minStock}
+              </Text>
+            </View>
+            <StatusBadge label="Bajo" tone="danger" />
+          </Card>
+        ))
+      )}
 
       <SectionTitle
         title="Incidencias de hoy"
@@ -117,6 +138,10 @@ const styles = StyleSheet.create({
   actions: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   action: { flexGrow: 1, flexBasis: '45%' },
   section: { marginTop: spacing.xl },
+  stockRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, marginTop: spacing.sm },
+  stockText: { flex: 1 },
+  stockName: { ...typography.bodyStrong, color: colors.text },
+  stockHint: { ...typography.caption, color: colors.textSecondary },
   list: { paddingVertical: spacing.xs },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md },
   divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },

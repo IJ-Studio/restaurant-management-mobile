@@ -6,6 +6,7 @@ import { userMessage } from '../../../core/errors/AppError';
 import { feedback } from '../../../shared/presentation/feedback';
 import { parseAmount } from '../../orders/domain/entities/Payment';
 import {
+  lowStock,
   incidentLabel,
   searchProducts,
   type Incident,
@@ -158,6 +159,21 @@ export function useReportWaste(onDone: (message: string) => void) {
 }
 
 /** Mermas de hoy para la pantalla de reportes. */
+/** Existencias bajas para cocina (mismo dato que el panel lateral de la web). */
+export function useLowStock() {
+  const { listInventoryProductsUseCase } = useDependencies();
+  const query = useQuery({
+    queryKey: kitchenQueryKeys.products,
+    queryFn: () => listInventoryProductsUseCase.execute(),
+  });
+  return {
+    products: lowStock(query.data ?? []),
+    isLoading: query.isPending,
+    errorMessage: query.error ? userMessage(query.error, 'No se pudieron cargar las existencias.') : null,
+    refresh: () => query.refetch(),
+  };
+}
+
 export function useWasteToday() {
   const { listWasteTodayUseCase } = useDependencies();
   const query = useQuery({
