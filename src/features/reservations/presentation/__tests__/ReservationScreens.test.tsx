@@ -72,7 +72,7 @@ describe('Reservaciones', () => {
 
     expect(await screen.findByText('Laura Méndez')).toBeOnTheScreen();
     expect(screen.getByText('4 personas · Mesa 7 · Confirmada')).toBeOnTheScreen();
-    expect(screen.getByText('1 persona · Sin mesa · Por confirmar')).toBeOnTheScreen();
+    expect(screen.getByText('1 persona · Sin mesa · Pendiente')).toBeOnTheScreen();
   });
 
   it('avisa cuando no hay reservaciones y cuando el rol no tiene permiso', async () => {

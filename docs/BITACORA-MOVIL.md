@@ -263,3 +263,13 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
   teléfono ni con `Intl` (Hermes no garantiza zonas horarias).
 - Pendiente para la tanda: reservar a las 2 a. m. y 15 min antes del cierre (rechazo con el texto), y
   pedir un platillo agotado.
+
+## B-017 · 2026-11-14 · Paridad: estado de las reservaciones en la móvil [movil] [web]
+
+- Análisis de paridad web ↔ móvil del 13-nov (fuera del repositorio). Lo que más falta en la móvil es de
+  administración; lo que más falta en la web son funciones de operación que la móvil ya tiene (cancelar
+  pedido, notas, incidencias, cuenta dividida, reservas del mesero).
+- **Hecho:** el administrador cambia el estado de una reservación desde la móvil con los mismos cinco
+  estados y pasos que la web («Cambiar estado» → estado → motivo obligatorio al cancelar → «Guardar
+  estado»), con `PATCH /reservations/:id`. Los demás roles solo consultan (el API lo exige).
+- **Texto igualado:** el estado `pendiente` se muestra «Pendiente», como en la web (antes «Por confirmar»).

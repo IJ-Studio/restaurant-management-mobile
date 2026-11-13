@@ -21,7 +21,7 @@ const row: ReservationDto = {
   depositoPagado: '0',
 };
 
-function setup(http: Partial<Record<'get' | 'post', jest.Mock>>) {
+function setup(http: Partial<Record<'get' | 'post' | 'patch', jest.Mock>>) {
   return new ReservationRepositoryImpl(new ReservationRemoteDataSource(http as unknown as HttpClient));
 }
 
@@ -95,5 +95,38 @@ describe('ReservationRepositoryImpl', () => {
   it('deja pasar otros errores', async () => {
     const error = new AppError('network', 'No hay conexión con el servidor.');
     await expect(setup({ get: jest.fn().mockRejectedValue(error) }).listFrom(new Date())).rejects.toBe(error);
+  });
+
+  describe('cambiar el estado', () => {
+    it('manda solo el estado al confirmar', async () => {
+      const patch = jest.fn().mockResolvedValue({});
+
+      await setup({ patch }).changeStatus('r 1', 'confirmada');
+
+      expect(patch).toHaveBeenCalledWith('reservations/r%201', { estatus: 'confirmada' });
+    });
+
+    it('manda el motivo al cancelar', async () => {
+      const patch = jest.fn().mockResolvedValue({});
+
+      await setup({ patch }).changeStatus('r-1', 'cancelada', 'Llamó para cancelar');
+
+      expect(patch).toHaveBeenCalledWith('reservations/r-1', {
+        estatus: 'cancelada',
+        motivoCancelacion: 'Llamó para cancelar',
+      });
+    });
+
+    it('explica un 403 y deja pasar otros errores', async () => {
+      const forbidden = jest.fn().mockRejectedValue(new AppError('forbidden', 'Forbidden resource', 403));
+      await expect(setup({ patch: forbidden }).changeStatus('r-1', 'confirmada')).rejects.toThrow(
+        'Solo el administrador puede cambiar el estado de una reservación.',
+      );
+
+      const offline = new AppError('network', 'Sin conexión');
+      await expect(
+        setup({ patch: jest.fn().mockRejectedValue(offline) }).changeStatus('r-1', 'confirmada'),
+      ).rejects.toBe(offline);
+    });
   });
 });

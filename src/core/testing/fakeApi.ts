@@ -606,6 +606,22 @@ export function createFakeApi(options: FakeApiOptions = {}) {
     ['GET', /^reservations\/map$/, false, tableMap],
     ['GET', /^reservations$/, true, () => [200, reservations]],
     ['POST', /^reservations$/, false, createReservation],
+    [
+      'PATCH',
+      /^reservations\/([^/]+)$/,
+      true,
+      (body, id, _query, user) => {
+        // Como el API: solo el administrador cambia el estado y cancelar exige motivo.
+        if (user?.roleId !== 1) return [403, { message: 'Forbidden resource' }];
+        const { estatus, motivoCancelacion } = body as { estatus: string; motivoCancelacion?: string };
+        if (estatus === 'cancelada' && (motivoCancelacion ?? '').trim().length < 3)
+          return [400, { message: 'Escribe el motivo de la cancelación.' }];
+        const found = reservations.find((r) => r.id === id);
+        if (!found) return [404, { message: 'Reservación no encontrada' }];
+        found.estatus = estatus;
+        return [200, found];
+      },
+    ],
   ];
 
   const fetchFn = async (input: RequestInfo | URL, init: RequestInit = {}): Promise<Response> => {
