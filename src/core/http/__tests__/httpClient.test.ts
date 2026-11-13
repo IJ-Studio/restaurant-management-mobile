@@ -106,6 +106,109 @@ describe('HttpClient', () => {
       expect(onUnauthorized).toHaveBeenCalledTimes(1);
     });
 
+    describe('renovación de la sesión', () => {
+      /** Responde 401 mientras llegue el token viejo y 200 con el nuevo. */
+      const apiThatExpired = () =>
+        jest.fn().mockImplementation(async (_url: string, init: RequestInit) => {
+          const { Authorization } = init.headers as Record<string, string>;
+          return Authorization === 'Bearer nuevo'
+            ? jsonResponse(200, { ok: true })
+            : jsonResponse(401, { message: 'Token no encontrado o expirado' });
+        });
+
+      function clientWithSession(fetchFn: jest.Mock) {
+        let token = 'viejo';
+        const client = makeClient(fetchFn);
+        client.setTokenProvider(() => token);
+        const onUnauthorized = jest.fn();
+        client.setUnauthorizedHandler(onUnauthorized);
+        const renew = (result: boolean) =>
+          jest.fn().mockImplementation(async () => {
+            if (result) token = 'nuevo';
+            return result;
+          });
+        return { client, onUnauthorized, renew };
+      }
+
+      it('ante un 401 renueva y repite la petición con el token nuevo, sin cerrar la sesión', async () => {
+        const fetchFn = apiThatExpired();
+        const { client, onUnauthorized, renew } = clientWithSession(fetchFn);
+        const refresher = renew(true);
+        client.setSessionRefresher(refresher);
+
+        await expect(client.post('pedidos/mesa', { mesaId: 4 })).resolves.toEqual({ ok: true });
+
+        expect(refresher).toHaveBeenCalledTimes(1);
+        expect(fetchFn).toHaveBeenCalledTimes(2);
+        const [, retry] = fetchFn.mock.calls[1];
+        expect(retry.body).toBe('{"mesaId":4}');
+        expect(onUnauthorized).not.toHaveBeenCalled();
+      });
+
+      it('varias peticiones rechazadas a la vez comparten una sola renovación', async () => {
+        const fetchFn = apiThatExpired();
+        const { client, renew } = clientWithSession(fetchFn);
+        const refresher = renew(true);
+        client.setSessionRefresher(refresher);
+
+        await Promise.all([client.get('menu'), client.get('mesas'), client.get('pedidos')]);
+
+        expect(refresher).toHaveBeenCalledTimes(1);
+      });
+
+      it('si el API ya no acepta el refresco, la sesión vence como antes', async () => {
+        const fetchFn = apiThatExpired();
+        const { client, onUnauthorized, renew } = clientWithSession(fetchFn);
+        client.setSessionRefresher(renew(false));
+
+        await expect(client.get('menu')).rejects.toMatchObject({
+          kind: 'unauthorized',
+          message: SESSION_EXPIRED_MESSAGE,
+        });
+        expect(onUnauthorized).toHaveBeenCalledTimes(1);
+        expect(fetchFn).toHaveBeenCalledTimes(1);
+      });
+
+      it('sin red al renovar, la petición falla pero la sesión no se cierra', async () => {
+        const fetchFn = apiThatExpired();
+        const { client, onUnauthorized } = clientWithSession(fetchFn);
+        const offline = new AppError('network', 'No hay conexión con el servidor.');
+        client.setSessionRefresher(jest.fn().mockRejectedValue(offline));
+
+        await expect(client.get('menu')).rejects.toBe(offline);
+        expect(onUnauthorized).not.toHaveBeenCalled();
+      });
+
+      it('la petición repetida no vuelve a renovar si el API la rechaza otra vez', async () => {
+        const fetchFn = jest.fn().mockImplementation(async () => jsonResponse(401, { message: 'x' }));
+        const { client, onUnauthorized, renew } = clientWithSession(fetchFn);
+        const refresher = renew(true);
+        client.setSessionRefresher(refresher);
+
+        await expect(client.get('menu')).rejects.toMatchObject({ kind: 'unauthorized' });
+
+        expect(refresher).toHaveBeenCalledTimes(1);
+        expect(fetchFn).toHaveBeenCalledTimes(2);
+        expect(onUnauthorized).toHaveBeenCalledTimes(1);
+      });
+
+      it('una petición anónima (el propio refresco) va sin token y no renueva', async () => {
+        const fetchFn = jest.fn().mockImplementation(async () => jsonResponse(401, { message: 'expiró' }));
+        const { client, onUnauthorized, renew } = clientWithSession(fetchFn);
+        const refresher = renew(true);
+        client.setSessionRefresher(refresher);
+
+        await expect(
+          client.post('auth/refresh', { refreshToken: 'r' }, { anonymous: true }),
+        ).rejects.toMatchObject({ kind: 'unauthorized' });
+
+        const [, init] = fetchFn.mock.calls[0];
+        expect(init.headers.Authorization).toBeUndefined();
+        expect(refresher).not.toHaveBeenCalled();
+        expect(onUnauthorized).not.toHaveBeenCalled();
+      });
+    });
+
     it('un 401 sin token (credenciales malas) no toca la sesión', async () => {
       const fetchFn = jest
         .fn()

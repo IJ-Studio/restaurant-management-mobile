@@ -44,11 +44,15 @@ type Handler = (
 const json = (status: number, body?: unknown) =>
   new Response(body === undefined ? null : JSON.stringify(body), { status });
 
+let nextTokenId = 1;
+
 /** JWT con el formato real (header.payload.firma). La firma es falsa: la app no la valida. */
 function makeToken(userId: number): string {
   const encode = (value: object) => btoa(JSON.stringify(value)).replace(/=+$/, '');
   const exp = Math.floor(Date.now() / 1000) + 60 * 60;
-  return `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode({ id: String(userId), exp })}.firma-de-prueba`;
+  // `tokenId` distinto en cada emisión, como en el API: un token renovado nunca repite al anterior.
+  const payload = { id: String(userId), exp, tokenId: `tok-${nextTokenId++}` };
+  return `${encode({ alg: 'HS256', typ: 'JWT' })}.${encode(payload)}.firma-de-prueba`;
 }
 
 export interface FakeApiOptions {
@@ -131,6 +135,21 @@ export function createFakeApi(options: FakeApiOptions = {}) {
   const reservations: ReservationDto[] = options.reservations ?? makeTestReservations();
   /** Token → usuario: las rutas con roles saben quién llama, como el JWT del API. */
   const tokens = new Map<string, TestUser>();
+  /** Tokens de refresco vigentes (de un solo uso, como en el API). */
+  const refreshTokens = new Map<string, TestUser>();
+  let nextRefreshToken = 1;
+  const openSession = (user: TestUser) => {
+    const accessToken = makeToken(user.id);
+    const refreshToken = `refresco-${nextRefreshToken++}`;
+    tokens.set(accessToken, user);
+    refreshTokens.set(refreshToken, user);
+    // Como el API real antes del arreglo de seguridad: manda columnas que la app no debe guardar.
+    return {
+      accessToken,
+      refreshToken,
+      user: { ...user, password: '$2b$10$hash-de-prueba', loginAttempts: 0 },
+    };
+  };
   // Copias: editar el perfil en una prueba no debe cambiar los datos de las demás.
   const users: TestUser[] = Object.values(testUsers).map((user) => ({ ...user }));
   const phones = new Map<number, string>();
@@ -143,10 +162,15 @@ export function createFakeApi(options: FakeApiOptions = {}) {
     const user = users.find((u) => u.email === email);
     if (!user || password !== (passwords.get(user.id) ?? TEST_PASSWORD))
       return [401, { message: 'Correo o contraseña incorrectos.' }];
-    const accessToken = makeToken(user.id);
-    tokens.set(accessToken, user);
-    // Como el API real antes del arreglo de seguridad: manda columnas que la app no debe guardar.
-    return [200, { accessToken, user: { ...user, password: '$2b$10$hash-de-prueba', loginAttempts: 0 } }];
+    return [200, openSession(user)];
+  };
+
+  const refresh: Handler = (body) => {
+    const { refreshToken } = body as { refreshToken?: string };
+    const user = refreshTokens.get(refreshToken ?? '');
+    if (!user) return [401, { message: 'La sesión expiró. Vuelve a iniciar sesión.' }];
+    refreshTokens.delete(refreshToken ?? '');
+    return [200, openSession(user)];
   };
 
   let nextItemId = 1;
@@ -457,6 +481,7 @@ export function createFakeApi(options: FakeApiOptions = {}) {
   /** [método, ruta, ¿pide JWT?, handler]. `:id` toma el último segmento de la ruta. */
   const routes: [string, RegExp, boolean, Handler][] = [
     ['POST', /^auth\/sign-in$/, false, signIn],
+    ['POST', /^auth\/refresh$/, false, refresh],
     ['POST', /^auth\/sign-out$/, true, () => [200, { message: 'Sesión cerrada' }]],
     ['GET', /^menu\/categories\/with-products$/, false, () => [200, menu]],
     ['GET', /^menu\/items\/([^/]+)$/, false, dishById],
@@ -518,7 +543,17 @@ export function createFakeApi(options: FakeApiOptions = {}) {
     fetchFn: fetchFn as typeof fetch,
   });
 
-  return { httpClient, requests, orders, reservations, faults: faults as FaultInjector };
+  return {
+    httpClient,
+    requests,
+    orders,
+    reservations,
+    faults: faults as FaultInjector,
+    /** Simula que el token de acceso venció o que el servidor se reinició: ningún token de acceso sirve ya. */
+    expireAccessTokens: () => tokens.clear(),
+    /** Simula que además el refresco fue revocado (p. ej. cuenta desactivada). */
+    revokeRefreshTokens: () => refreshTokens.clear(),
+  };
 }
 
 /** Sustituto de SecureSessionStorage: guarda la sesión en memoria y permite revisar qué se guardó. */

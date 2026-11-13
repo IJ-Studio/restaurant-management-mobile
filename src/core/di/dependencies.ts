@@ -28,6 +28,7 @@ import { AuthRepositoryImpl } from '../../features/auth/data/repositories/AuthRe
 import { SecureSessionStorage } from '../../features/auth/data/storage/SecureSessionStorage';
 import { LoginUseCase } from '../../features/auth/domain/usecases/LoginUseCase';
 import { LogoutUseCase } from '../../features/auth/domain/usecases/LogoutUseCase';
+import { RefreshSessionUseCase } from '../../features/auth/domain/usecases/RefreshSessionUseCase';
 import type { SessionStorage } from '../../features/auth/domain/repositories/SessionStorage';
 import { RestoreSessionUseCase } from '../../features/auth/domain/usecases/RestoreSessionUseCase';
 import { createSessionStore, type SessionStore } from '../../features/auth/presentation/store/sessionStore';
@@ -144,6 +145,12 @@ export function createDependencies({
   });
 
   const authRepository = new AuthRepositoryImpl(new AuthRemoteDataSource(http));
+  const refreshSessionUseCase = new RefreshSessionUseCase(authRepository, sessionStorage);
+  http.setSessionRefresher(async () => {
+    const session = await refreshSessionUseCase.execute(sessionStore.getState().session);
+    if (session) sessionStore.getState().setSession(session);
+    return session !== null;
+  });
   const menuRepository = new MenuRepositoryImpl(new MenuRemoteDataSource(http));
   const reservationRepository = new ReservationRepositoryImpl(new ReservationRemoteDataSource(http));
   const orderRepository = new OrderRepositoryImpl(new OrderRemoteDataSource(http));

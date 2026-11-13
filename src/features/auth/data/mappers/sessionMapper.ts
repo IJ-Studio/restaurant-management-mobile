@@ -20,6 +20,7 @@ export function toSession(dto: SignInResponseDto, now: number = Date.now()): Ses
   return {
     token: dto.accessToken,
     expiresAt: jwtExpiration(dto.accessToken) ?? now + DEFAULT_TTL_MS,
+    ...(typeof dto.refreshToken === 'string' && dto.refreshToken ? { refreshToken: dto.refreshToken } : {}),
     user: {
       id: String(dto.user.id),
       name: properName(dto.user.name),

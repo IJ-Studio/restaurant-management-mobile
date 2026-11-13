@@ -49,7 +49,7 @@ revisan códigos de estado: reciben un `AppError` con un mensaje listo para most
 
 | Respuesta | Qué hace la app |
 |---|---|
-| 401 en una petición **con** token | La sesión venció o se revocó: llama al manejador que registra `createDependencies()`, que borra la sesión de SecureStore, limpia el pedido en curso y la caché de React Query, y vuelve al Login con el aviso "Tu sesión expiró". |
+| 401 en una petición **con** token | Primero intenta renovar la sesión con el token de refresco (`POST /auth/refresh`) y repite la petición una vez; varias peticiones rechazadas a la vez comparten una sola renovación. Si el API ya no acepta el refresco, llama al manejador que registra `createDependencies()`: borra la sesión de SecureStore, limpia el pedido en curso y la caché de React Query, y vuelve al Login con el aviso "Tu sesión expiró". Si la renovación falla por falta de red, la petición falla pero la sesión se conserva. |
 | 401 **sin** token | Es el login con credenciales malas; `AuthRepositoryImpl` pone el mensaje genérico. |
 | 403 | Respeta el mensaje propio del API; el "Forbidden resource" del `RolesGuard` se cambia por "No tienes permiso para realizar esta acción". |
 | 5xx | Mensaje genérico: nunca se muestran detalles internos del servidor. |
@@ -120,7 +120,8 @@ render(
 - **Certificate pinning** (`src/core/http/certificatePinning.ts`): para el API de producción la app solo
   acepta certificados emitidos bajo las autoridades fijadas, aunque el teléfono confíe en otras (un proxy
   instalado en la red, por ejemplo). Detalle en [Certificate pinning](#certificate-pinning).
-- El JWT vive solo en `expo-secure-store` (HU-01) y solo `httpClient` lo agrega a los headers.
+- El JWT y el token de refresco viven solo en `expo-secure-store` (HU-01) y solo `httpClient` agrega el JWT a los headers.
+- El token de refresco es de un solo uso: cada renovación entrega otro, y al cerrar sesión se manda al API para que lo revoque.
 - Sentry filtra tokens, correos y datos personales (`src/core/monitoring/scrub.ts`).
 - En `EXPO_PUBLIC_*` nunca va un secreto: termina en el bundle del APK.
 

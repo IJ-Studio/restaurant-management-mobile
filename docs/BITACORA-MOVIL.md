@@ -129,3 +129,22 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
 - Pruebas unitarias de la configuración (formato y respaldo de los pins), de la activación y del aviso.
 - Pendiente para la tanda en el teléfono: comprobar que el build de release habla con el API de producción
   y que un pin erróneo corta la conexión.
+
+## B-009 · 2026-11-13 · Sesión por dispositivo y refresco de token [rubrica] [api] [movil] [decision]
+
+- **Hallazgo.** El API guardaba la sesión en memoria con una entrada por usuario. Dos efectos en el
+  restaurante: quien entraba en la web sacaba su propia sesión de la app (y al revés), y todas las
+  sesiones se perdían cuando el servidor se reiniciaba o se dormía por falta de uso.
+- **Decisión (administración):** una persona puede estar a la vez en la web y en la app, y nadie debe
+  volver a escribir su contraseña a mitad del servicio. La sesión pasa a ser por dispositivo.
+- **API** (PR #138 del API): `POST /auth/refresh` con token de un solo uso (solo se guarda su hash,
+  caduca a los 30 días, rotación atómica y revocación total si llega uno ya usado). El login devuelve
+  además `refreshToken`. Tabla `refresh_tokens` con migración y reversa.
+- **Móvil:** el token de refresco se guarda en el almacenamiento cifrado. Ante un 401, `httpClient`
+  renueva una sola vez (las peticiones simultáneas comparten la renovación) y repite la petición. Sin
+  red, la sesión se conserva. Si el API no entrega refresco, la app se comporta como antes.
+- Pruebas: unitarias del cliente HTTP, del caso de uso, del mapper y del cierre de sesión, y dos de
+  integración (el servidor se reinicia y el mesero sigue trabajando; el refresco ya no sirve y la app
+  vuelve al Login con el aviso).
+- Pendiente para la tanda en el teléfono: reiniciar el API con la app abierta y comprobar que sigue
+  funcionando sin pedir la contraseña; entrar con el mismo usuario en la web y en la app.
