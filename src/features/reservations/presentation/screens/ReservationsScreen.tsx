@@ -11,6 +11,9 @@ import { LoadingState } from '../../../../shared/presentation/components/Loading
 import { Notice } from '../../../../shared/presentation/components/Notice';
 import { colors, spacing } from '../../../../shared/presentation/theme';
 import { RECENT_RESERVATIONS_DAYS } from '../../domain/usecases/ListRecentReservationsUseCase';
+import { formatDateTime } from '../../../../shared/utils/formatDateTime';
+import { reservationSummary } from '../components/reservationLabels';
+import { useSession } from '../../../auth/presentation/viewmodels/useSession';
 import { ReservationCard } from '../components/ReservationCard';
 import type { ReservationsStackParamList } from '../navigation/ReservationsNavigator';
 import { useActiveReservations } from '../viewmodels/useActiveReservations';
@@ -22,6 +25,8 @@ export function ReservationsScreen() {
   const navigation = useNavigation<NativeStackNavigationProp<ReservationsStackParamList>>();
   const { params } = useRoute<RouteProp<ReservationsStackParamList, 'ReservationsList'>>();
   const [view, setView] = useState<ListView>('active');
+  // Cambiar el estado es solo del administrador (el API lo exige): los demás solo consultan.
+  const isAdmin = useSession((state) => state.session?.user.role === 'admin');
   const active = useActiveReservations();
   const recent = useRecentReservations(view === 'recent');
   const vm = view === 'active' ? active : recent;
@@ -51,7 +56,26 @@ export function ReservationsScreen() {
         data={vm.reservations}
         keyExtractor={(reservation) => reservation.id}
         contentContainerStyle={styles.list}
-        renderItem={({ item }) => <ReservationCard reservation={item} />}
+        renderItem={({ item }) => (
+          <View>
+            <ReservationCard reservation={item} />
+            {isAdmin && (
+              <Button
+                label="Cambiar estado"
+                accessibilityLabel={`Cambiar estado de ${item.customerName}`}
+                variant="ghost"
+                onPress={() =>
+                  navigation.navigate('ReservationStatus', {
+                    id: item.id,
+                    customerName: item.customerName,
+                    status: item.status,
+                    summary: `${formatDateTime(item.dateTime)} · ${reservationSummary(item)}`,
+                  })
+                }
+              />
+            )}
+          </View>
+        )}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListHeaderComponent={
           vm.errorMessage ? (
