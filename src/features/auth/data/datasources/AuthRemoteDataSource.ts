@@ -8,7 +8,12 @@ export class AuthRemoteDataSource {
     return this.http.post<SignInResponseDto>('auth/sign-in', { email, password });
   }
 
-  async signOut(): Promise<void> {
-    await this.http.post('auth/sign-out');
+  /** Va sin el token de acceso (ya venció) y no dispara otra renovación si el API lo rechaza. */
+  refresh(refreshToken: string): Promise<SignInResponseDto> {
+    return this.http.post<SignInResponseDto>('auth/refresh', { refreshToken }, { anonymous: true });
+  }
+
+  async signOut(refreshToken?: string): Promise<void> {
+    await this.http.post('auth/sign-out', refreshToken ? { refreshToken } : undefined);
   }
 }
