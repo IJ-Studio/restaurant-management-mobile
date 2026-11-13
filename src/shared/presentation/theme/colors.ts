@@ -52,6 +52,8 @@ export const colors = {
 
   /** Anillo de enfoque de los inputs (brand al 25 %), como `focus:ring-brand/50` de la web. */
   focusRing: 'rgba(232, 93, 4, 0.25)',
+  /** Velo detrás de un diálogo modal: el pizarra de la marca con transparencia. */
+  overlay: 'rgba(20, 16, 12, 0.6)',
 } as const;
 
 export type ColorToken = keyof typeof colors;

@@ -13,7 +13,7 @@ const dto = {
   isActive: true,
 };
 
-function setup(http: Partial<Record<'get' | 'patch', jest.Mock>>) {
+function setup(http: Partial<Record<'get' | 'put' | 'patch', jest.Mock>>) {
   return new ProfileRepositoryImpl(new ProfileRemoteDataSource(http as unknown as HttpClient));
 }
 
@@ -27,16 +27,17 @@ describe('ProfileRepositoryImpl', () => {
       email: 'admin@quijote.mx',
       phone: '+520000000000',
     });
-    expect(get).toHaveBeenCalledWith('users/59');
+    // Acceso (ARCO): el API toma al usuario del token.
+    expect(get).toHaveBeenCalledWith('profile');
   });
 
-  it('actualiza con PATCH /users/:id; sin teléfono queda undefined', async () => {
-    const patch = jest.fn().mockResolvedValue({ ...dto, name: 'Ana', phone: null });
-    await expect(setup({ patch }).update('59', { name: 'Ana', lastname: 'test' })).resolves.toMatchObject({
+  it('actualiza con PUT /profile (rectificación); sin teléfono queda undefined', async () => {
+    const put = jest.fn().mockResolvedValue({ ...dto, name: 'Ana', phone: null });
+    await expect(setup({ put }).update('59', { name: 'Ana', lastname: 'test' })).resolves.toMatchObject({
       name: 'Ana',
       phone: undefined,
     });
-    expect(patch).toHaveBeenCalledWith('users/59', { name: 'Ana', lastname: 'test' });
+    expect(put).toHaveBeenCalledWith('profile', { name: 'Ana', lastname: 'test' });
   });
 
   it('cambia la contraseña con los nombres de campo del API', async () => {
@@ -53,7 +54,7 @@ describe('ProfileRepositoryImpl', () => {
       .fn()
       .mockRejectedValue(new AppError('validation', 'phone must be in international format', 400));
     await expect(
-      setup({ patch: phone }).update('59', { name: 'a', lastname: 'b', phone: '1' }),
+      setup({ put: phone }).update('59', { name: 'a', lastname: 'b', phone: '1' }),
     ).rejects.toThrow('El teléfono debe llevar lada internacional (+52…).');
 
     const weak = jest
@@ -69,7 +70,7 @@ describe('ProfileRepositoryImpl', () => {
     ).rejects.toBe(wrong);
     const offline = new Error('offline');
     await expect(
-      setup({ patch: jest.fn().mockRejectedValue(offline) }).update('59', { name: 'a', lastname: 'b' }),
+      setup({ put: jest.fn().mockRejectedValue(offline) }).update('59', { name: 'a', lastname: 'b' }),
     ).rejects.toBe(offline);
   });
 });
