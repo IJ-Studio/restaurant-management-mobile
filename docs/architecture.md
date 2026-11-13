@@ -117,6 +117,37 @@ render(
 ## Seguridad
 
 - `httpClient` rechaza URLs sin HTTPS fuera de desarrollo (MASVS-NETWORK).
+- **Certificate pinning** (`src/core/http/certificatePinning.ts`): para el API de producción la app solo
+  acepta certificados emitidos bajo las autoridades fijadas, aunque el teléfono confíe en otras (un proxy
+  instalado en la red, por ejemplo). Detalle en [Certificate pinning](#certificate-pinning).
 - El JWT vive solo en `expo-secure-store` (HU-01) y solo `httpClient` lo agrega a los headers.
 - Sentry filtra tokens, correos y datos personales (`src/core/monitoring/scrub.ts`).
 - En `EXPO_PUBLIC_*` nunca va un secreto: termina en el bundle del APK.
+
+### Certificate pinning
+
+| Aspecto | Decisión |
+|---|---|
+| Librería | `react-native-ssl-public-key-pinning`: en Android configura el `CertificatePinner` de OkHttp, el cliente HTTP de React Native; en iOS usa TrustKit |
+| Qué se fija | El SHA-256 en base64 de la clave pública (SPKI) de las autoridades raíz, no el certificado del servidor, que rota cada pocas semanas |
+| Pins | GTS Root R4 (cadena actual) y tres de respaldo: GTS Root R1, ISRG Root X1 e ISRG Root X2, las otras autoridades del proveedor de hosting |
+| Host | Solo `api-restaurant-management.onrender.com`. El API local y los túneles de prueba no se fijan |
+| Cuándo se activa | Al cargar `httpClient`. Ninguna petición sale antes de que termine (`ready`) |
+| Si el certificado no coincide | La petición falla, la pantalla dice «La conexión no es segura…» y se reporta a Sentry solo el nombre del host |
+| Caducidad | `expirationDate`: en esa fecha el pinning se apaga, para que una versión vieja no se quede sin red si cambian las autoridades. Antes hay que publicar una versión con pins vigentes |
+
+Para recalcular un pin a partir del certificado de una autoridad:
+
+```bash
+openssl x509 -in raiz.pem -pubkey -noout | openssl pkey -pubin -outform DER \
+  | openssl dgst -sha256 -binary | base64
+```
+
+Para ver la cadena que entrega hoy el servidor:
+
+```bash
+openssl s_client -connect api-restaurant-management.onrender.com:443 -showcerts </dev/null
+```
+
+En Expo Go y en Jest el módulo nativo no existe y el pinning no se activa; solo funciona en un build
+propio (depuración o release).

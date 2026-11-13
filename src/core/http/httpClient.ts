@@ -7,6 +7,11 @@ import {
   SESSION_EXPIRED_MESSAGE,
   UNEXPECTED_MESSAGE,
 } from '../errors/AppError';
+import {
+  consumePinningRejection,
+  initCertificatePinning,
+  UNTRUSTED_SERVER_MESSAGE,
+} from './certificatePinning';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type TokenProvider = () => string | null;
@@ -18,6 +23,10 @@ export interface HttpClientOptions {
   /** En producción solo se permite HTTPS (MASVS-NETWORK). */
   allowInsecure: boolean;
   fetchFn?: typeof fetch;
+  /** Ninguna petición sale antes de que termine (p. ej. la activación del certificate pinning). */
+  ready?: Promise<unknown>;
+  /** true si la última falla de red fue un certificado rechazado por el pinning. */
+  untrustedServer?: () => boolean;
 }
 
 /**
@@ -73,6 +82,8 @@ export class HttpClient {
     const token = this.tokenProvider();
     if (token) headers.Authorization = `Bearer ${token}`;
 
+    // Antes del temporizador: la espera no cuenta como tiempo de respuesta del servidor.
+    await this.options.ready;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.options.timeoutMs);
     const fetchFn = this.options.fetchFn ?? fetch;
@@ -89,6 +100,7 @@ export class HttpClient {
       if (controller.signal.aborted) {
         throw new AppError('timeout', 'El servidor tardó demasiado en responder.');
       }
+      if (this.options.untrustedServer?.()) throw new AppError('network', UNTRUSTED_SERVER_MESSAGE);
       throw new AppError('network', 'No hay conexión con el servidor.');
     } finally {
       clearTimeout(timer);
@@ -152,4 +164,6 @@ export const httpClient = new HttpClient({
   baseUrl: env.apiUrl,
   timeoutMs: env.httpTimeoutMs,
   allowInsecure: __DEV__,
+  ready: initCertificatePinning(),
+  untrustedServer: consumePinningRejection,
 });
