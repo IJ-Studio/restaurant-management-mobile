@@ -2,19 +2,17 @@ import type { HttpClient } from '../../../../core/http/httpClient';
 import { StaffRepositoryImpl } from '../data/StaffRepositoryImpl';
 
 const http = () => ({
-  get: jest
-    .fn()
-    .mockResolvedValue([
-      {
-        id: '7',
-        name: 'ANA',
-        lastname: 'RUIZ',
-        email: 'ana@prueba.local',
-        phone: null,
-        roleId: 2,
-        isActive: false,
-      },
-    ]),
+  get: jest.fn().mockResolvedValue([
+    {
+      id: '7',
+      name: 'ANA',
+      lastname: 'RUIZ',
+      email: 'ana@prueba.local',
+      phone: null,
+      roleId: 2,
+      isActive: false,
+    },
+  ]),
   post: jest.fn().mockResolvedValue({}),
   patch: jest.fn().mockResolvedValue({}),
   delete: jest.fn().mockResolvedValue({}),
