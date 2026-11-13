@@ -282,3 +282,11 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
   mesas libres con su capacidad, y manda `mesaId`. Cambiar la fecha o las personas reinicia la elección.
 - **Decisión (administración):** se conserva «Asignar automáticamente» como opción por defecto: por
   teléfono, el personal no siempre sabe qué mesa conviene y el API elige una libre con lugar.
+
+## B-019 · 2026-11-14 · Carta básica para el administrador en la móvil [movil] [decision]
+
+- En la ficha del platillo, el administrador ve «Administrar platillo»: interruptor «Disponible para
+  pedir» y «Precio ($)» con «Guardar precio» (`PATCH /platillos/:id`). Agotar un platillo lo bloquea al
+  momento en la app, en la web y en el API (regla de la Fase 3).
+- **Decisión (administración):** en servicio lo urgente es agotar un platillo y corregir un precio; el alta
+  completa, las imágenes y la importación siguen en la web (formularios largos, mejor en pantalla grande).

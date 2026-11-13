@@ -33,6 +33,10 @@ export function makeTestDependencies(overrides: Partial<Dependencies> = {}): Dep
     logoutUseCase: { execute: jest.fn().mockResolvedValue(undefined) },
     restoreSessionUseCase: { execute: jest.fn().mockResolvedValue(null) },
     getMenuUseCase: { execute: pending() },
+    updateDishUseCase: {
+      setAvailable: jest.fn().mockResolvedValue(undefined),
+      setPrice: jest.fn().mockResolvedValue(undefined),
+    },
     getDishUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
     createReservationUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
     listActiveReservationsUseCase: { execute: pending() },

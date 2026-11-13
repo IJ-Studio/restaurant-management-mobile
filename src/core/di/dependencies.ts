@@ -37,6 +37,7 @@ import type { SessionStorage } from '../../features/auth/domain/repositories/Ses
 import { RestoreSessionUseCase } from '../../features/auth/domain/usecases/RestoreSessionUseCase';
 import { createSessionStore, type SessionStore } from '../../features/auth/presentation/store/sessionStore';
 import { MenuRemoteDataSource } from '../../features/menu/data/datasources/MenuRemoteDataSource';
+import { UpdateDishUseCase } from '../../features/menu/domain/usecases/UpdateDishUseCase';
 import { MenuRepositoryImpl } from '../../features/menu/data/repositories/MenuRepositoryImpl';
 import { GetDishUseCase } from '../../features/menu/domain/usecases/GetDishUseCase';
 import { GetMenuUseCase } from '../../features/menu/domain/usecases/GetMenuUseCase';
@@ -99,6 +100,7 @@ export interface Dependencies {
   restoreSessionUseCase: Pick<RestoreSessionUseCase, 'execute'>;
   getMenuUseCase: Pick<GetMenuUseCase, 'execute'>;
   getDishUseCase: Pick<GetDishUseCase, 'execute'>;
+  updateDishUseCase: Pick<UpdateDishUseCase, 'setAvailable' | 'setPrice'>;
   createReservationUseCase: Pick<CreateReservationUseCase, 'execute'>;
   listActiveReservationsUseCase: Pick<ListActiveReservationsUseCase, 'execute'>;
   listRecentReservationsUseCase: Pick<ListRecentReservationsUseCase, 'execute'>;
@@ -218,6 +220,7 @@ export function createDependencies({
     restoreSessionUseCase: new RestoreSessionUseCase(sessionStorage),
     getMenuUseCase: new GetMenuUseCase(menuRepository),
     getDishUseCase: new GetDishUseCase(menuRepository),
+    updateDishUseCase: new UpdateDishUseCase(menuRepository),
     createReservationUseCase: new CreateReservationUseCase(reservationRepository),
     listActiveReservationsUseCase: new ListActiveReservationsUseCase(reservationRepository),
     listRecentReservationsUseCase: new ListRecentReservationsUseCase(reservationRepository),
