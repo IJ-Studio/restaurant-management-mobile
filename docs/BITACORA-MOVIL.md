@@ -290,3 +290,9 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
   momento en la app, en la web y en el API (regla de la Fase 3).
 - **Decisión (administración):** en servicio lo urgente es agotar un platillo y corregir un precio; el alta
   completa, las imágenes y la importación siguen en la web (formularios largos, mejor en pantalla grande).
+
+## B-020 · 2026-11-14 · Existencias bajas en la cocina de la móvil [movil]
+
+- «Incidencias y mermas» de cocina suma «Existencias bajas»: productos en o por debajo de su mínimo
+  (`minStock` de `GET /inventario/productos`), los más escasos primero, con «Quedan X · mínimo Y». Es el
+  mismo dato del panel lateral de cocina en la web. Un producto sin mínimo no aparece.
