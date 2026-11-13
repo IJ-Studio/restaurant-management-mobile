@@ -40,6 +40,9 @@ import { MenuRemoteDataSource } from '../../features/menu/data/datasources/MenuR
 import { MenuRepositoryImpl } from '../../features/menu/data/repositories/MenuRepositoryImpl';
 import { GetDishUseCase } from '../../features/menu/domain/usecases/GetDishUseCase';
 import { GetMenuUseCase } from '../../features/menu/domain/usecases/GetMenuUseCase';
+import { StripePaymentGateway } from '../../features/orders/data/gateways/StripePaymentGateway';
+import type { PaymentGateway } from '../../features/orders/domain/ports/PaymentGateway';
+import { CheckoutUseCase } from '../../features/orders/domain/usecases/CheckoutUseCase';
 import { SseOrderEvents } from '../../features/orders/data/gateways/SseOrderEvents';
 import type { OrderEventsSource } from '../../features/orders/domain/ports/OrderEventsSource';
 import { DeviceRemoteDataSource } from '../../features/notifications/data/datasources/DeviceRemoteDataSource';
@@ -130,6 +133,7 @@ export interface Dependencies {
   deviceRegistrationUseCase: Pick<DeviceRegistrationUseCase, 'register'>;
   pushNotifications: Pick<PushNotifications, 'onNotificationOpened'>;
   orderEvents: OrderEventsSource;
+  checkoutUseCase: Pick<CheckoutUseCase, 'execute' | 'isAvailable'>;
 }
 
 /**
@@ -141,6 +145,7 @@ export interface Infrastructure {
   sessionStorage?: SessionStorage;
   pushNotifications?: PushNotifications;
   orderEvents?: OrderEventsSource;
+  paymentGateway?: PaymentGateway;
 }
 
 export function createDependencies({
@@ -148,6 +153,7 @@ export function createDependencies({
   sessionStorage = new SecureSessionStorage(),
   pushNotifications = new ExpoPushNotifications(),
   orderEvents,
+  paymentGateway = new StripePaymentGateway(env.stripePublishableKey),
 }: Infrastructure = {}): Dependencies {
   const sessionStore = createSessionStore();
   http.setTokenProvider(() => sessionStore.getState().session?.token ?? null);
@@ -242,6 +248,7 @@ export function createDependencies({
     enableNotificationsUseCase: new EnableNotificationsUseCase(pushNotifications),
     deviceRegistrationUseCase,
     pushNotifications,
+    checkoutUseCase: new CheckoutUseCase(orderRepository, paymentGateway),
     orderEvents:
       orderEvents ??
       new SseOrderEvents({

@@ -78,6 +78,10 @@ export function makeTestDependencies(overrides: Partial<Dependencies> = {}): Dep
       remove: pending(),
     },
     saveTableUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
+    checkoutUseCase: {
+      execute: jest.fn().mockRejectedValue(new Error('sin configurar')),
+      isAvailable: jest.fn().mockReturnValue(false),
+    },
     orderEvents: { subscribe: jest.fn(() => () => undefined) },
     deviceRegistrationUseCase: { register: jest.fn().mockResolvedValue(false) },
     pushNotifications: { onNotificationOpened: jest.fn(() => () => undefined) },

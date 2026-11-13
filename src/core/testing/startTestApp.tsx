@@ -1,5 +1,6 @@
 import { fireEvent, screen } from '@testing-library/react-native';
 
+import type { PaymentGateway } from '../../features/orders/domain/ports/PaymentGateway';
 import { AuthGate } from '../../features/auth/presentation/components/AuthGate';
 import { createDependencies } from '../di/dependencies';
 import { AppNavigator } from '../navigation/AppNavigator';
@@ -21,6 +22,8 @@ interface StartOptions {
   push?: ReturnType<typeof createFakePushNotifications>;
   /** Flujo en tiempo real de pedidos. */
   events?: ReturnType<typeof createFakeOrderEvents>;
+  /** Hoja de pago con tarjeta; sin ella el cobro con tarjeta no se ofrece (como en un build sin llave). */
+  payment?: PaymentGateway;
 }
 
 /**
@@ -33,12 +36,14 @@ export async function startTestApp({
   storage = createMemorySessionStorage(),
   push = createFakePushNotifications(),
   events = createFakeOrderEvents(),
+  payment,
 }: StartOptions = {}) {
   const deps = createDependencies({
     httpClient: api.httpClient,
     sessionStorage: storage,
     pushNotifications: push,
     orderEvents: events,
+    paymentGateway: payment,
   });
   const view = await renderWithProviders(
     <AuthGate>

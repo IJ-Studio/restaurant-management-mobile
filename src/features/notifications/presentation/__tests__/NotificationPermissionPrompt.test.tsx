@@ -23,7 +23,10 @@ describe('NotificationPermissionPrompt', () => {
   it('explica para qué son los avisos antes de que aparezca el permiso del sistema', async () => {
     const { execute } = await setup(undetermined);
 
-    expect(await screen.findByRole('header', { name: 'Avisos de pedidos' })).toBeOnTheScreen();
+    // El modal aparece después de consultar el permiso: margen extra con la suite completa en paralelo.
+    expect(
+      await screen.findByRole('header', { name: 'Avisos de pedidos' }, { timeout: 5000 }),
+    ).toBeOnTheScreen();
     expect(
       screen.getByText(/te avisa cuando un pedido está listo para entregar o para cobrar/),
     ).toBeOnTheScreen();

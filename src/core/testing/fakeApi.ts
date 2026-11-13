@@ -18,6 +18,7 @@ import type {
   PrivacyDto,
 } from '../../features/privacy/data/datasources/PrivacyRemoteDataSource';
 import type { OrderEvent } from '../../features/orders/domain/entities/OrderEvent';
+import type { CardPaymentOutcome, PaymentGateway } from '../../features/orders/domain/ports/PaymentGateway';
 import type {
   OrderEventsListener,
   OrderEventsSource,
@@ -313,6 +314,23 @@ export function createFakeApi(options: FakeApiOptions = {}) {
   const listPaymentMethods: Handler = (_body, _id, _query, user) =>
     cashierOnly(user) ? [403, { message: 'Forbidden resource' }] : [200, paymentMethods];
 
+  /** POST /pagos/crear-intento: como el API, el monto sale de la orden y solo el personal de caja cobra mesas. */
+  const createCardIntent: Handler = (body, _param, _query, user) => {
+    if (cashierOnly(user)) return [403, { message: 'Forbidden resource' }];
+    const { ordenId } = body as { ordenId: string };
+    const order = orders.get(ordenId);
+    if (!order) return [404, { message: 'La orden no existe.' }];
+    if (!['abierta', 'en_preparacion', 'lista', 'entregada'].includes(order.estado))
+      return [400, { message: `Esta orden ya no admite pago (estatus actual: ${order.estado}).` }];
+    return [201, { clientSecret: `pi_${ordenId}_secret_prueba`, status: 'requires_payment_method' }];
+  };
+
+  /** Lo que hace el webhook de Stripe en el API cuando el pago se aprueba. */
+  const settleCardPayment = (clientSecret: string) => {
+    const order = orders.get(clientSecret.replace(/^pi_/, '').replace(/_secret_prueba$/, ''));
+    if (order) order.estado = 'pagada';
+  };
+
   const chargeOrder: Handler = (body, id, _query, user) => {
     if (cashierOnly(user)) return [403, { message: 'Forbidden resource' }];
     const {
@@ -558,6 +576,7 @@ export function createFakeApi(options: FakeApiOptions = {}) {
     ['GET', /^pedidos\/metodos-pago$/, true, listPaymentMethods],
     ['PATCH', /^pedidos\/([^/]+)\/estatus$/, true, changeStatus],
     ['POST', /^pedidos\/([^/]+)\/cobrar$/, true, chargeOrder],
+    ['POST', /^pagos\/crear-intento$/, true, createCardIntent],
     ['GET', /^pedidos\/([^/]+)$/, true, orderDetail],
     ['GET', /^cocina\/incidencias$/, true, () => [200, incidents]],
     ['POST', /^cocina\/incidencias$/, true, reportIncident],
@@ -629,6 +648,7 @@ export function createFakeApi(options: FakeApiOptions = {}) {
     orders,
     reservations,
     faults: faults as FaultInjector,
+    settleCardPayment,
     /** Simula que el token de acceso venció o que el servidor se reinició: ningún token de acceso sirve ya. */
     expireAccessTokens: () => tokens.clear(),
     /** Simula que además el refresco fue revocado (p. ej. cuenta desactivada). */
@@ -661,6 +681,28 @@ export function createFakePushNotifications(
     open: (notification: IncomingNotification) => listeners.forEach((listener) => listener(notification)),
   };
   return fake;
+}
+
+/**
+ * Sustituto de la hoja de pago de Stripe. `outcome` decide qué hace la persona; si paga, avisa al
+ * API falso como lo haría el webhook de Stripe.
+ */
+export function createFakePaymentGateway(
+  api: { settleCardPayment: (clientSecret: string) => void },
+  outcome: CardPaymentOutcome = { status: 'paid' },
+): PaymentGateway & { paid: string[] } {
+  const paid: string[] = [];
+  return {
+    paid,
+    isAvailable: () => true,
+    pay: async ({ clientSecret }) => {
+      if (outcome.status === 'paid') {
+        paid.push(clientSecret);
+        api.settleCardPayment(clientSecret);
+      }
+      return outcome;
+    },
+  };
 }
 
 /** Sustituto del flujo en tiempo real de pedidos: `emit` simula un evento que llega del API. */

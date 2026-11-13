@@ -232,3 +232,18 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
 - Decisión: la reservación válida (selector nativo de fecha), el reinicio del API y el pin erróneo se
   marcan como pruebas manuales en la matriz.
 - Pendiente: ejecutar la matriz en la Tanda 1 (16-nov) y ajustar los textos de los flujos que no coincidan.
+
+## B-015 · 2026-11-13 · Cobro con tarjeta (Stripe) y pruebas de rendimiento [rubrica] [gh-project] [api] [movil] [rendimiento]
+
+- **Móvil:** puerto `PaymentGateway`, adapter `StripePaymentGateway` (PaymentSheet, solo llave pública),
+  fachada `CheckoutUseCase` (intención en el API → pago → confirmación del servidor) y botón «Cobrar con
+  tarjeta en la app» para la cuenta completa. HU-05 CA-1 y CA-2 pasan de pendientes a probadas.
+  Detalle y pruebas de seguridad en [`pagos-stripe.md`](pagos-stripe.md).
+- **API** (PR #143): el personal ya puede crear la intención con el pedido `lista` o `entregada`
+  (antes solo `pendiente`, `para_cobrar` o `abierta`, que no es cuando se cobra una mesa) y se rechaza si
+  ya hay pagos parciales, porque la intención cobra el total.
+- **Rendimiento** (PR #142 del API): k6 con carga nominal (p95 29 ms en lecturas, 0,18 % de errores) y
+  esfuerzo hasta 220 usuarios (p95 862 ms, 3,67 % de errores, sin caída).
+- **Hallazgo y decisión (administración):** el API limita a 40 peticiones por minuto **por IP** y todo
+  el personal comparte la IP del módem. Se hace configurable (`THROTTLE_LIMIT`) y se recomienda 300 en
+  producción.
