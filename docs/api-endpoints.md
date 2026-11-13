@@ -15,9 +15,10 @@ Se levantó leyendo el código de `restaurant-management-api` (rama `develop`, c
 
 | Método | Ruta | Acceso | Body / respuesta |
 |---|---|---|---|
-| POST | `/auth/sign-in` | Público | `{ email, password }` (password ≥ 8) → `200 { accessToken, user }` |
+| POST | `/auth/sign-in` | Público | `{ email, password }` (password ≥ 8) → `200 { accessToken, refreshToken, user }`. `refreshToken` puede faltar en un API anterior |
+| POST | `/auth/refresh` | Público | `{ refreshToken }` → `200 { accessToken, refreshToken, user }`. El token de refresco es de un solo uso y dura 30 días; `401` si es desconocido, venció o ya se usó |
 | GET | `/auth/me` | JWT | `{ user: { id, email, roleId, tokenId } }` (payload del JWT) |
-| POST | `/auth/sign-out` | JWT | `200 { message }`: revoca el token en la caché |
+| POST | `/auth/sign-out` | JWT | `{ refreshToken? }` → `200 { message }`: cierra la sesión de este dispositivo y revoca su token de refresco |
 | POST | `/auth/sign-up` | Público | Registro de clientes (rol 5). **La app móvil no lo usa** |
 
 - El JWT trae `{ id: string, email, roleId, tokenId }`. Expira en `JWT_ACCESS_TOKEN_TTL` (3600 s
