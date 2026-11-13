@@ -322,3 +322,16 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
 - **Decisión:** fechas como texto en lugar del selector nativo: la web usa campos de fecha libres y
   el selector nativo no se puede automatizar en Maestro (ver CN-09); la semana anterior o siguiente cubre
   el uso diario.
+
+## B-023 · 2026-11-13 · Fase 6: la móvil con los tokens de la web [movil] [web] [decision]
+
+- `scripts/tokens-desde-web.mjs` lee `styles/tokens.css` de la web y genera
+  `src/shared/presentation/theme/webTokens.ts` (21 colores del tema claro, 4 radios, velo del diálogo).
+  `colors.ts` y `radius` ya no tienen valores propios: nombran los de la web con las claves de siempre,
+  así que ninguna pantalla cambió de código. El naranja anterior (#e85d04) pasa al oro viejo de la web
+  (#835E25), también en el color de las notificaciones (`app.json`).
+- **Decisión:** la móvil usa el tema **claro** de la web (la web arranca en oscuro). En sala y caja se
+  usa de día y con luz; el claro da mejor lectura al sol. Un modo oscuro en la móvil queda fuera de la
+  entrega.
+- Fondos suaves de estados: mezcla al 12 % sobre la superficie, como `color-mix` de las insignias web.
+- Pendiente en el teléfono (Tanda 1): revisar contraste y radios en pantallas reales.
