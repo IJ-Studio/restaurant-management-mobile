@@ -1,5 +1,7 @@
 import { Platform } from 'react-native';
 
+import { env } from '../config/env';
+
 import { DashboardRemoteDataSource } from '../../features/admin/data/datasources/DashboardRemoteDataSource';
 import { PayrollRepositoryImpl } from '../../features/admin/payroll/data/PayrollRepositoryImpl';
 import { TablesRepositoryImpl } from '../../features/admin/tables/data/TablesRepositoryImpl';
@@ -38,6 +40,8 @@ import { MenuRemoteDataSource } from '../../features/menu/data/datasources/MenuR
 import { MenuRepositoryImpl } from '../../features/menu/data/repositories/MenuRepositoryImpl';
 import { GetDishUseCase } from '../../features/menu/domain/usecases/GetDishUseCase';
 import { GetMenuUseCase } from '../../features/menu/domain/usecases/GetMenuUseCase';
+import { SseOrderEvents } from '../../features/orders/data/gateways/SseOrderEvents';
+import type { OrderEventsSource } from '../../features/orders/domain/ports/OrderEventsSource';
 import { DeviceRemoteDataSource } from '../../features/notifications/data/datasources/DeviceRemoteDataSource';
 import { ExpoPushNotifications } from '../../features/notifications/data/gateways/ExpoPushNotifications';
 import type { PushNotifications } from '../../features/notifications/domain/ports/PushNotifications';
@@ -125,6 +129,7 @@ export interface Dependencies {
   enableNotificationsUseCase: Pick<EnableNotificationsUseCase, 'execute'>;
   deviceRegistrationUseCase: Pick<DeviceRegistrationUseCase, 'register'>;
   pushNotifications: Pick<PushNotifications, 'onNotificationOpened'>;
+  orderEvents: OrderEventsSource;
 }
 
 /**
@@ -135,12 +140,14 @@ export interface Infrastructure {
   httpClient?: HttpClient;
   sessionStorage?: SessionStorage;
   pushNotifications?: PushNotifications;
+  orderEvents?: OrderEventsSource;
 }
 
 export function createDependencies({
   httpClient: http = httpClient,
   sessionStorage = new SecureSessionStorage(),
   pushNotifications = new ExpoPushNotifications(),
+  orderEvents,
 }: Infrastructure = {}): Dependencies {
   const sessionStore = createSessionStore();
   http.setTokenProvider(() => sessionStore.getState().session?.token ?? null);
@@ -235,5 +242,11 @@ export function createDependencies({
     enableNotificationsUseCase: new EnableNotificationsUseCase(pushNotifications),
     deviceRegistrationUseCase,
     pushNotifications,
+    orderEvents:
+      orderEvents ??
+      new SseOrderEvents({
+        baseUrl: env.apiUrl,
+        token: () => sessionStore.getState().session?.token ?? null,
+      }),
   };
 }

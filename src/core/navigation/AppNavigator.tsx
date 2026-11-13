@@ -11,6 +11,7 @@ import { sectionsFor, type Section } from '../../features/auth/domain/entities/p
 import { RequireSection } from '../../features/auth/presentation/components/RequireSection';
 import { useSession } from '../../features/auth/presentation/viewmodels/useSession';
 import { orderIdFromNotification } from '../../features/notifications/domain/entities/notificationTarget';
+import { useOrderEvents } from '../../features/orders/presentation/viewmodels/useOrderEvents';
 import { NotificationPermissionPrompt } from '../../features/notifications/presentation/components/NotificationPermissionPrompt';
 import { useDependencies } from '../di/DependenciesProvider';
 import { navigationTheme, tabScreenOptions } from './navigationTheme';
@@ -47,6 +48,8 @@ export function AppNavigator({ navigationRef }: Props) {
   const role = useSession((state) => state.session?.user.role);
   const sections = sectionsFor(role);
   const { pushNotifications } = useDependencies();
+  // Pedidos en tiempo real mientras hay sesión (HU-06).
+  useOrderEvents();
   // Tocar un aviso de pedido abre ese pedido (HU-07). La lista queda debajo para poder volver.
   const linking = useMemo<LinkingOptions<TabParamList>>(
     () => ({

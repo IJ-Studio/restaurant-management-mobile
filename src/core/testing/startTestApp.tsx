@@ -4,7 +4,12 @@ import { AuthGate } from '../../features/auth/presentation/components/AuthGate';
 import { createDependencies } from '../di/dependencies';
 import { AppNavigator } from '../navigation/AppNavigator';
 import { TEST_PASSWORD } from './data/testData';
-import { createFakeApi, createFakePushNotifications, createMemorySessionStorage } from './fakeApi';
+import {
+  createFakeApi,
+  createFakeOrderEvents,
+  createFakePushNotifications,
+  createMemorySessionStorage,
+} from './fakeApi';
 import { renderWithProviders } from './renderWithProviders';
 
 interface StartOptions {
@@ -14,6 +19,8 @@ interface StartOptions {
   storage?: ReturnType<typeof createMemorySessionStorage>;
   /** Avisos del teléfono: por defecto con el permiso ya concedido. */
   push?: ReturnType<typeof createFakePushNotifications>;
+  /** Flujo en tiempo real de pedidos. */
+  events?: ReturnType<typeof createFakeOrderEvents>;
 }
 
 /**
@@ -25,11 +32,13 @@ export async function startTestApp({
   api = createFakeApi(),
   storage = createMemorySessionStorage(),
   push = createFakePushNotifications(),
+  events = createFakeOrderEvents(),
 }: StartOptions = {}) {
   const deps = createDependencies({
     httpClient: api.httpClient,
     sessionStorage: storage,
     pushNotifications: push,
+    orderEvents: events,
   });
   const view = await renderWithProviders(
     <AuthGate>
@@ -37,7 +46,7 @@ export async function startTestApp({
     </AuthGate>,
     deps,
   );
-  return { api, storage, push, deps, unmount: view.unmount };
+  return { api, storage, push, events, deps, unmount: view.unmount };
 }
 
 /** Llena el formulario de Login y lo envía. */

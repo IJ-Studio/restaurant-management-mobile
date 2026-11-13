@@ -78,6 +78,7 @@ export function makeTestDependencies(overrides: Partial<Dependencies> = {}): Dep
       remove: pending(),
     },
     saveTableUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
+    orderEvents: { subscribe: jest.fn(() => () => undefined) },
     deviceRegistrationUseCase: { register: jest.fn().mockResolvedValue(false) },
     pushNotifications: { onNotificationOpened: jest.fn(() => () => undefined) },
     enableNotificationsUseCase: { execute: grantedPermission() },

@@ -194,3 +194,21 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
   cuatro de integración (registro al entrar, explicación previa, baja al salir y abrir el pedido).
 - Pendiente para la tanda en el teléfono: ver el diálogo en una instalación limpia, aceptar el permiso y
   comprobar el token en la base; un aviso real solo se puede probar con la llave de FCM.
+
+## B-012 · 2026-11-13 · Pedidos en tiempo real por SSE [gh-project] [api] [movil] [decision]
+
+- **API** (PR #141 del API): `GET /pedidos/stream` para el personal (401 sin sesión, 403 cliente).
+  Emite `ready` al conectar, `order` en cada cambio (`items`, `sent`, `status`, `cancelled`, `charged`,
+  solo con el id del pedido) y `ping` cada 25 s; se cierra a los 15 min para revalidar la sesión.
+- **Móvil:** patrón Observer. Puerto `OrderEventsSource`, adapter `SseOrderEvents` (con `XMLHttpRequest`,
+  porque el `fetch` de React Native no entrega la respuesta por partes y `EventSource` no deja mandar
+  `Authorization`) y `useOrderEvents`, que con el estatus conocido actualiza la lista con
+  `setQueryData` y luego invalida lo afectado. Reconexión con espera creciente (2, 5, 15 y 30 s); con
+  401/403 no insiste y se vuelve a abrir al renovarse el token. El sondeo de 30 s queda de respaldo.
+- **Decisión:** lector SSE propio de ~90 líneas en lugar de `react-native-sse` (sin mantenimiento desde
+  2024 y reconexión fija de 5 s).
+- **Límite:** el bus del API vive en memoria; con más de una instancia habrá que pasarlo a
+  `LISTEN/NOTIFY` o Redis.
+- Pruebas: evento, lector SSE (bloques partidos, eventos inválidos, reconexión, 401/403, cierre),
+  observer y una integración (un cambio en otro teléfono hace que la lista se pida al momento).
+- Pendiente para la tanda: dos teléfonos o web + teléfono; un cambio en uno aparece en el otro sin refrescar.

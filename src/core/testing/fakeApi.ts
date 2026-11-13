@@ -17,6 +17,11 @@ import type {
   PrivacyChangesDto,
   PrivacyDto,
 } from '../../features/privacy/data/datasources/PrivacyRemoteDataSource';
+import type { OrderEvent } from '../../features/orders/domain/entities/OrderEvent';
+import type {
+  OrderEventsListener,
+  OrderEventsSource,
+} from '../../features/orders/domain/ports/OrderEventsSource';
 import { PRIVACY_NOTICE_VERSION } from '../../features/privacy/domain/entities/PrivacySettings';
 import type { CategoryWithDishesDto } from '../../features/menu/data/dtos/MenuDto';
 import type { TableDto } from '../../features/orders/data/dtos/OrderDto';
@@ -656,6 +661,24 @@ export function createFakePushNotifications(
     open: (notification: IncomingNotification) => listeners.forEach((listener) => listener(notification)),
   };
   return fake;
+}
+
+/** Sustituto del flujo en tiempo real de pedidos: `emit` simula un evento que llega del API. */
+export function createFakeOrderEvents(): OrderEventsSource & {
+  emit: (event: OrderEvent) => void;
+  ready: () => void;
+  subscribers: () => number;
+} {
+  const listeners = new Set<OrderEventsListener>();
+  return {
+    subscribe: (listener) => {
+      listeners.add(listener);
+      return () => listeners.delete(listener);
+    },
+    emit: (event) => listeners.forEach((listener) => listener.onEvent(event)),
+    ready: () => listeners.forEach((listener) => listener.onReady()),
+    subscribers: () => listeners.size,
+  };
 }
 
 /** Sustituto de SecureSessionStorage: guarda la sesión en memoria y permite revisar qué se guardó. */
