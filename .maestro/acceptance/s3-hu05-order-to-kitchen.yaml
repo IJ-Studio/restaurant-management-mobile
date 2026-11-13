@@ -1,0 +1,22 @@
+# HU-05 · CA-3: el mesero arma el pedido de una mesa y lo envía a cocina; cocina lo ve.
+appId: ${APP_ID || 'com.ijstudio.restaurantmanagement'}
+tags: [sprint-3, hu-05]
+---
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: mesero@prueba.local
+- tapOn: "Menú"
+- tapOn: ".*Guacamole.*"
+- tapOn: "Agregar al pedido"
+- tapOn: ".*Pedido de la mesa.*"
+- tapOn: ".*A01.*"
+- tapOn: "Enviar a cocina"
+- assertVisible: ".*Pedido enviado a cocina.*"
+- takeScreenshot: reports/maestro/s3-hu05-enviado
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: cocina@prueba.local
+- tapOn: "Pedidos"
+- assertVisible: ".*A01.*"

@@ -12,6 +12,7 @@ import { makeActiveOrder, makeOrderDetail } from '../../orders/__fixtures__/orde
 import { OrdersNavigator } from '../../orders/presentation/navigation/OrdersNavigator';
 import { KitchenRepositoryImpl } from '../data/KitchenRepositoryImpl';
 import {
+  lowStock,
   incidentLabel,
   ListIncidentsUseCase,
   ListInventoryProductsUseCase,
@@ -26,8 +27,24 @@ import { incidentSummary } from '../presentation/viewmodels';
 
 jest.setTimeout(20_000);
 
-const aguacate = { id: 31, name: 'Aguacate', category: 'vegetales', unit: 'kg', stock: 5, costPerUnit: 120 };
-const crema = { id: 40, name: 'Crema ácida', category: 'lácteos', unit: 'lt', stock: 3, costPerUnit: 60 };
+const aguacate = {
+  id: 31,
+  name: 'Aguacate',
+  category: 'vegetales',
+  unit: 'kg',
+  stock: 5,
+  minStock: 0,
+  costPerUnit: 120,
+};
+const crema = {
+  id: 40,
+  name: 'Crema ácida',
+  category: 'lácteos',
+  unit: 'lt',
+  stock: 3,
+  minStock: 4,
+  costPerUnit: 60,
+};
 
 function repository(): jest.Mocked<KitchenRepository> {
   return {
@@ -81,6 +98,15 @@ describe('reglas de cocina', () => {
     await expect(new ListIncidentsUseCase(repo).execute('o1')).resolves.toEqual([]);
     expect(repo.listIncidents).toHaveBeenCalledWith('o1');
     await expect(new ListWasteTodayUseCase(repo).execute()).resolves.toEqual([]);
+  });
+
+  it('existencias bajas: solo las que llegan a su mínimo, las más escasas primero', () => {
+    const tortillas = { ...aguacate, id: 1, name: 'Tortillas', stock: 1, minStock: 10 };
+    const sinMinimo = { ...aguacate, id: 2, name: 'Sal', stock: 0, minStock: 0 };
+    expect(lowStock([aguacate, crema, tortillas, sinMinimo]).map((p) => p.name)).toEqual([
+      'Tortillas',
+      'Crema ácida',
+    ]);
   });
 
   it('etiquetas y resumen de incidencias', () => {
@@ -319,6 +345,18 @@ describe('Pantallas de cocina', () => {
         justification: 'Se cayó la caja',
       }),
     );
+  });
+
+  it('cocina ve las existencias bajas, como en el panel de la web', async () => {
+    const deps = setup('cocina', {
+      listInventoryProductsUseCase: { execute: jest.fn().mockResolvedValue([aguacate, crema]) },
+    });
+    await render(deps);
+    await fireEvent.press(await screen.findByRole('button', { name: 'Incidencias y mermas' }));
+
+    expect(await screen.findByText('Crema ácida')).toBeOnTheScreen();
+    expect(screen.getByText('Quedan 3 lt · mínimo 4')).toBeOnTheScreen();
+    expect(screen.queryByText('Quedan 5 kg · mínimo 0')).toBeNull();
   });
 
   it('el admin ve las mermas del día pero no puede registrarlas (P1.2)', async () => {

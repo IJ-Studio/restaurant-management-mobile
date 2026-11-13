@@ -1,0 +1,16 @@
+# HU-03 · CA-1 y CA-2: la carta llega del API con disponibilidad; un platillo agotado no se agrega.
+appId: ${APP_ID || 'com.ijstudio.restaurantmanagement'}
+tags: [sprint-2, hu-03]
+---
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: mesero@prueba.local
+- tapOn: "Menú"
+- assertVisible: ".*Guacamole.*"
+- scrollUntilVisible:
+    element: ".*Mole de olla.*"
+- assertVisible: ".*Agotado.*"
+- tapOn: ".*Mole de olla.*"
+- assertNotVisible: "Agregar al pedido"
+- takeScreenshot: reports/maestro/s2-hu03-agotado
