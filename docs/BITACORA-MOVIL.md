@@ -148,3 +148,26 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
   vuelve al Login con el aviso).
 - Pendiente para la tanda en el teléfono: reiniciar el API con la app abierta y comprobar que sigue
   funcionando sin pedir la contraseña; entrar con el mismo usuario en la web y en la app.
+
+## B-010 · 2026-11-13 · Aviso de privacidad y derechos ARCO [rubrica] [api] [movil] [decision]
+
+- **API** (PR #137 del API): `GET/PUT /profile`, `GET/PUT /profile/privacidad` y `DELETE /account`, con la
+  tabla `consentimientos` (solo inserción: el estado vigente es la última fila de cada tipo).
+- **Móvil:** feature `privacy` nueva.
+  - Aviso con consentimiento explícito tras iniciar sesión: casilla sin marcar, no se puede continuar
+    sin marcarla y quien no acepta cierra la sesión. Una vez por persona y por versión del aviso.
+  - Perfil → Privacidad: fecha en que se aceptó el aviso, switches de «Avisos de pedidos» y «Reportes de
+    errores», dónde se ejerce cada derecho y «Eliminar mi cuenta».
+  - Eliminar la cuenta pide la contraseña y una confirmación; al terminar vuelve al Login con el aviso.
+  - El perfil se lee y se edita por `GET/PUT /profile`.
+- **Decisión (administración):** si el API no responde al consultar el aviso, la app deja entrar y lo pide
+  después. Un problema de red no debe dejar a un mesero sin poder tomar pedidos.
+- **Decisión:** eliminar la cuenta borra los datos personales y conserva pedidos, cobros y nómina sin
+  nombre, que la ley obliga a guardar. El único administrador activo no puede eliminarse.
+- **Decisión:** el texto del aviso describe solo lo que la app hace (acceso por rol, registro de
+  movimientos, avisos por Expo, informes de errores por Sentry) y enlaza al aviso completo de la web.
+- En Perfil, los dos enlaces externos («Aviso de privacidad» y «Eliminar cuenta») pasan a una sola
+  entrada «Privacidad». La eliminación ya no manda a la web: se hace dentro de la app.
+- Mapa de derechos, pantallas y endpoints en [`privacidad-arco.md`](privacidad-arco.md).
+- Pendiente para la tanda en el teléfono: primer inicio de sesión con el aviso, switches, eliminar una
+  cuenta de prueba y comprobar en la web que esa cuenta ya no entra.

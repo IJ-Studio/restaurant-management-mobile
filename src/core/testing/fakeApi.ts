@@ -8,6 +8,11 @@
  */
 import type { Session } from '../../features/auth/domain/entities/Session';
 import type { SessionStorage } from '../../features/auth/domain/repositories/SessionStorage';
+import type {
+  PrivacyChangesDto,
+  PrivacyDto,
+} from '../../features/privacy/data/datasources/PrivacyRemoteDataSource';
+import { PRIVACY_NOTICE_VERSION } from '../../features/privacy/domain/entities/PrivacySettings';
 import type { CategoryWithDishesDto } from '../../features/menu/data/dtos/MenuDto';
 import type { TableDto } from '../../features/orders/data/dtos/OrderDto';
 import type { ReservationDto } from '../../features/reservations/data/dtos/ReservationDto';
@@ -62,6 +67,8 @@ export interface FakeApiOptions {
   reservations?: ReservationDto[];
   /** Tiempo límite del HttpClient (ms). */
   timeoutMs?: number;
+  /** `false`: nadie ha aceptado todavía el aviso de privacidad (primer inicio de sesión). */
+  privacyNoticeAccepted?: boolean;
 }
 
 /**
@@ -376,6 +383,52 @@ export function createFakeApi(options: FakeApiOptions = {}) {
     return [200, userDto(found)];
   };
 
+  /** Privacidad por usuario (GET/PUT /profile/privacidad). Por defecto el aviso ya está aceptado. */
+  const privacy = new Map<number, PrivacyDto>();
+  const privacyOf = (user: TestUser): PrivacyDto => {
+    const accepted = options.privacyNoticeAccepted ?? true;
+    const stored = privacy.get(user.id) ?? {
+      avisoPrivacidad: accepted
+        ? { aceptado: true, version: PRIVACY_NOTICE_VERSION, fecha: '2026-11-01T10:00:00.000Z' }
+        : { aceptado: false, version: null, fecha: null },
+      notificacionesPush: true,
+      reportesErrores: true,
+    };
+    privacy.set(user.id, stored);
+    return stored;
+  };
+
+  const updatePrivacy: Handler = (body, _param, _query, user) => {
+    const { origen, avisoPrivacidad, notificacionesPush, reportesErrores } = body as PrivacyChangesDto & {
+      origen?: string;
+    };
+    if (origen !== 'movil' && origen !== 'web') return [400, { message: 'Datos inválidos.' }];
+    const current = privacyOf(user!);
+    if (avisoPrivacidad) current.avisoPrivacidad = { ...avisoPrivacidad, fecha: '2026-11-13T12:00:00.000Z' };
+    if (notificacionesPush !== undefined) current.notificacionesPush = notificacionesPush;
+    if (reportesErrores !== undefined) current.reportesErrores = reportesErrores;
+    return [200, current];
+  };
+
+  const deleteAccount: Handler = (body, _param, _query, user) => {
+    const { password: given } = body as { password?: string };
+    if (given !== (passwords.get(user!.id) ?? TEST_PASSWORD))
+      return [400, { message: 'La contraseña no es correcta' }];
+    if (user!.roleId === 1 && users.filter((u) => u.roleId === 1).length <= 1)
+      return [
+        409,
+        {
+          message:
+            'Eres el único administrador activo. Nombra a otro administrador antes de eliminar tu cuenta.',
+        },
+      ];
+    // La cuenta deja de existir: ni su token ni su contraseña vuelven a servir.
+    users.splice(users.indexOf(user!), 1);
+    for (const [token, owner] of tokens) if (owner === user) tokens.delete(token);
+    for (const [token, owner] of refreshTokens) if (owner === user) refreshTokens.delete(token);
+    return [204];
+  };
+
   const changePassword: Handler = (body, id, _query, user) => {
     if (!user || String(user.id) !== id)
       return [403, { message: 'Solo puedes cambiar tu propia contraseña' }];
@@ -498,6 +551,21 @@ export function createFakeApi(options: FakeApiOptions = {}) {
     ['POST', /^cocina\/incidencias$/, true, reportIncident],
     ['GET', /^inventario\/mermas$/, true, () => [200, []]],
     ['GET', /^caja\/actual$/, true, () => [200, { abierta: false }]],
+    [
+      'GET',
+      /^profile$/,
+      true,
+      (_body, _param, query, user) => getUser(undefined, String(user!.id), query, user),
+    ],
+    [
+      'PUT',
+      /^profile$/,
+      true,
+      (body, _param, query, user) => updateUser(body, String(user!.id), query, user),
+    ],
+    ['GET', /^profile\/privacidad$/, true, (_body, _param, _query, user) => [200, privacyOf(user!)]],
+    ['PUT', /^profile\/privacidad$/, true, updatePrivacy],
+    ['DELETE', /^account$/, true, deleteAccount],
     ['GET', /^users\/([^/]+)$/, true, getUser],
     ['PATCH', /^users\/([^/]+)\/password$/, true, changePassword],
     ['PATCH', /^users\/([^/]+)$/, true, updateUser],
