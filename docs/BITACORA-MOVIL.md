@@ -296,3 +296,18 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
 - «Incidencias y mermas» de cocina suma «Existencias bajas»: productos en o por debajo de su mínimo
   (`minStock` de `GET /inventario/productos`), los más escasos primero, con «Quedan X · mínimo Y». Es el
   mismo dato del panel lateral de cocina en la web. Un producto sin mínimo no aparece.
+
+## B-021 · 2026-11-14 · Importar la carta y personal dado de baja [api] [web] [movil] [decision]
+
+- **Fase 4.2 y 4.3 (API #147, web #18):** `POST /platillos/importar` con Excel o CSV y vista previa
+  (`confirmar=false`). Al reemplazar, lo que no viene queda **deshabilitado, nunca se borra**; con filas
+  con error se ofrece «Importar de todas formas» (`forzar=true`). La web pregunta «¿Agregar a la carta o
+  reemplazarla?», muestra nuevos, actualizados, a deshabilitar, categorías nuevas, avisos y errores, y
+  suma los filtros «Deshabilitados (agotados)» y «Sin imagen». Se quitó `xlsx` (SheetJS 0.18.5, con
+  vulnerabilidades conocidas) de la web: ahora lee las hojas el API.
+- **Hallazgo:** `GET /users` solo devolvía activos, así que «Activar» no se podía usar ni en la web.
+  API #148 añade `incluirInactivos=true` (sin el parámetro responde igual que antes) y web #19 lo usa.
+- **Fase 2, «Personal» en la móvil:** Dashboard → «Personal»: lista con activos e inactivos, búsqueda,
+  filtro, alta (mismos campos y mensajes que la web), edición con cambio de rol y desactivar o activar con
+  confirmación. **Decisión:** el correo y la contraseña no se editan aquí (el API no lo admite en
+  `PATCH /users/:id`); cada persona cambia su contraseña desde su perfil.
