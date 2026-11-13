@@ -4,6 +4,7 @@ import {
   SERVER_ERROR_MESSAGE,
   SESSION_EXPIRED_MESSAGE,
 } from '../../errors/AppError';
+import { UNTRUSTED_SERVER_MESSAGE } from '../certificatePinning';
 import { HttpClient, type HttpClientOptions } from '../httpClient';
 
 function jsonResponse(status: number, body?: unknown): Response {
@@ -27,6 +28,32 @@ describe('HttpClient', () => {
 
     await expect(client.get('/menu')).resolves.toEqual({ ok: true });
     expect(fetchFn).toHaveBeenCalledWith('https://api.test/menu', expect.objectContaining({ method: 'GET' }));
+  });
+
+  it('no envía nada hasta que termina la preparación (certificate pinning)', async () => {
+    const fetchFn = jest.fn().mockImplementation(async () => jsonResponse(200, {}));
+    let finishReady: () => void = () => undefined;
+    const ready = new Promise<void>((resolve) => {
+      finishReady = resolve;
+    });
+
+    const pending = makeClient(fetchFn, { ready }).get('/menu');
+    await Promise.resolve();
+    expect(fetchFn).not.toHaveBeenCalled();
+
+    finishReady();
+    await pending;
+    expect(fetchFn).toHaveBeenCalledTimes(1);
+  });
+
+  it('avisa que la conexión no es segura si el pinning rechazó el certificado', async () => {
+    const fetchFn = jest.fn().mockRejectedValue(new TypeError('Network request failed'));
+    const client = makeClient(fetchFn, { untrustedServer: () => true });
+
+    await expect(client.get('/menu')).rejects.toMatchObject({
+      kind: 'network',
+      message: UNTRUSTED_SERVER_MESSAGE,
+    });
   });
 
   it('envía el body como JSON', async () => {

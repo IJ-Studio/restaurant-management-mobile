@@ -114,3 +114,18 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
   `app.json`, que es la que genera ese archivo en cada build.
 - Pendiente para la tanda en el teléfono: recorrer la app en el build de release (inicio de sesión,
   navegación por rol, selector de fecha, avisos) para confirmar que la reducción no rompe nada.
+
+## B-008 · 2026-11-13 · Certificate pinning [rubrica] [movil] [seguridad]
+
+- `react-native-ssl-public-key-pinning` configura el `CertificatePinner` de OkHttp con cuatro pins SHA-256
+  para el API de producción: la autoridad raíz de la cadena actual y tres de respaldo. Los pins se
+  calcularon con `openssl` a partir de la cadena real del servidor y del almacén de certificados del sistema.
+- Decisión: fijar autoridades raíz y no el certificado del servidor, que rota cada pocas semanas; con
+  fecha de caducidad (2027-11-30) para que una versión vieja no se quede sin red.
+- Decisión: si la activación falla, la app sigue funcionando y lo reporta. Un atacante en la red no puede
+  provocar ese fallo (es configuración local), y bloquear la app dejaría al restaurante sin servicio.
+- `httpClient` espera la activación antes de la primera petición y muestra un aviso propio cuando el
+  pinning rechaza un certificado. La capa HTTP no depende de Sentry: `App.tsx` le conecta el reporte.
+- Pruebas unitarias de la configuración (formato y respaldo de los pins), de la activación y del aviso.
+- Pendiente para la tanda en el teléfono: comprobar que el build de release habla con el API de producción
+  y que un pin erróneo corta la conexión.
