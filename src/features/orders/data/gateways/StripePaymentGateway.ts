@@ -1,4 +1,6 @@
-import { initPaymentSheet, initStripe, presentPaymentSheet } from '@stripe/stripe-react-native';
+// Rutas internas a propósito: el índice del SDK arrastra componentes que la app no usa (bundle +5 %).
+import { initStripe } from '@stripe/stripe-react-native/lib/module/components/StripeProvider';
+import { initPaymentSheet, presentPaymentSheet } from '@stripe/stripe-react-native/lib/module/functions';
 
 import type {
   CardPaymentIntent,
