@@ -403,3 +403,21 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
 - **Decisión:** crear o editar promociones con imagen, registrar entradas de inventario y proveedores
   se quedan en la web (formularios largos y subida de imágenes); en la app, lo que se resuelve de pie
   durante el servicio.
+
+## B-031 · 2026-11-14 · Tanda 1 en el Pixel 10a (Release por USB) [movil] [prueba] [decision]
+
+- **Build de Release roto desde #462 (Stripe):** el lint vital de Gradle y R8 piden clases de push
+  provisioning que no usamos (`play-services-tapandpay` no está en Maven). Config plugin
+  `plugins/with-lint-release-off.js` y `-dontwarn com.stripe.android.pushProvisioning.**` (#476). Sin
+  esto, el build de EAS para Play también fallaba.
+- **Cierre de la app en Perfil → Privacidad** (`RangeError: Invalid time value`): el API manda los
+  `timestamptz` como los imprime Postgres y Hermes no los entiende. Mismo riesgo en Facturas (#474).
+  **Decisión:** normalizar una sola vez en los formateadores compartidos con `toIsoTimestamp` (#479), en
+  lugar de cambiar las 69 columnas del API a ISO a 9 días de la entrega.
+- **Barra de estado:** con el teléfono en oscuro, la hora salía blanca sobre fondo claro. Barra oscura
+  en toda la app y clara solo en el login (#478).
+- **Maestro:** los fallos eran del arnés (teclado, listas largas, permisos que Maestro concede solo,
+  «atrás» en Android). Corregidos en #477; la semilla local deja `baja@prueba.local` sin consentimientos.
+- **Tiempo real por el túnel:** el túnel rápido de Cloudflare retiene el flujo SSE (llegan las
+  cabeceras, ningún evento en 50 s); en local llega al instante. La app cae al refresco de 30 s, así
+  que HU-06 no se cumple «en segundos» por el túnel. Pendiente: comprobarlo contra producción (Render).
