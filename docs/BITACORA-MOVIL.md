@@ -421,3 +421,15 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
 - **Tiempo real por el túnel:** el túnel rápido de Cloudflare retiene el flujo SSE (llegan las
   cabeceras, ningún evento en 50 s); en local llega al instante. La app cae al refresco de 30 s, así
   que HU-06 no se cumple «en segundos» por el túnel. Pendiente: comprobarlo contra producción (Render).
+
+## B-032 · 2026-11-14 · Tanda 1: resultados y aviso de notificaciones [movil] [prueba]
+
+- **Maestro en Release: 9 de 9** (`_entrada/evidencias/tanda1/junit-release.xml`, no versionado).
+- **Aviso de notificaciones (#480):** en una instalación limpia de Android 13+ nunca aparecía; Expo
+  entrega `denied` con `canAskAgain` y la app solo explicaba con `undetermined`. Verificado tras el
+  arreglo instalando de cero y abriendo con `am start` (sin que Maestro toque permisos).
+- **Sincronización web ↔ móvil (API local, web en build de producción):** el admin agota un platillo
+  en la web y el mesero lo ve «Agotado» en el teléfono; el mesero envía un pedido a B01 desde el
+  teléfono y la cocina de la web lo muestra al cargar.
+- **Rendimiento en el Pixel:** arranque en frío 138 ms (primer fotograma), PSS 163 MB, 1,3 % de
+  fotogramas lentos; las tres metas se cumplen (`docs/rendimiento-movil.md`).
