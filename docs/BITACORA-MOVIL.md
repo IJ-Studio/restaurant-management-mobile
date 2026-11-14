@@ -433,3 +433,14 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
   teléfono y la cocina de la web lo muestra al cargar.
 - **Rendimiento en el Pixel:** arranque en frío 138 ms (primer fotograma), PSS 163 MB, 1,3 % de
   fotogramas lentos; las tres metas se cumplen (`docs/rendimiento-movil.md`).
+
+## B-033 · 2026-11-14 · El pinning no cubría el fetch (Expo 58) [movil] [seguridad] [decision]
+
+- En la prueba CN-20 (pin falso para el túnel) la app entraba igual. Diagnóstico en el Pixel: la
+  librería estaba disponible e inicializada, pero Expo 58 sustituye el `fetch` global por
+  `expo/fetch`, que no pasa por el cliente OkHttp de React Native donde vive el `CertificatePinner`.
+- **Decisión:** usar el `fetch` de React Native (`EXPO_PUBLIC_USE_RN_FETCH=1`, la opción documentada
+  por Expo) en todos los perfiles de EAS, en lugar de cambiar de librería o escribir un módulo
+  nativo. Con eso, el pin falso se rechaza con el aviso «La conexión no es segura…» (CN-20).
+- Prueba nueva: falla si un perfil de `eas.json` no define la variable. Maestro en Release repetido
+  completo con el cambio.
