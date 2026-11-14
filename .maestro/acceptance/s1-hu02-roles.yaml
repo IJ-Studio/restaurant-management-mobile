@@ -1,0 +1,29 @@
+# HU-02 · CA-1 y CA-2: cada rol ve solo sus secciones; tras cerrar sesión no se vuelve atrás.
+appId: ${APP_ID || 'com.ijstudio.restaurantmanagement'}
+tags: [sprint-1, hu-02]
+---
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: cocina@prueba.local
+- assertVisible: "Pedidos"
+- assertNotVisible: "Dashboard"
+- assertNotVisible: "Cobros"
+- assertNotVisible: "Menú"
+- runFlow: ../subflows/logout.yaml
+- back
+- launchApp
+- assertVisible: "Entrar"
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: mesero@prueba.local
+- assertNotVisible: "Dashboard"
+- assertNotVisible: "Cobros"
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: admin@prueba.local
+- assertVisible: "Dashboard"
+- assertNotVisible: "Cobros"
+- takeScreenshot: reports/maestro/s1-hu02-admin

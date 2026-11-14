@@ -1,0 +1,55 @@
+# Rúbrica ARCO: aviso con casilla sin marcar, Privacidad con switches y eliminación de cuenta.
+# Usa la cuenta desechable baja@prueba.local (una cuenta de prueba que se puede borrar; ver docs/pruebas-caja-negra.md).
+# Antes de cada corrida, la cuenta debe estar activa y sin consentimientos (lo deja así la semilla local).
+appId: ${APP_ID || 'com.ijstudio.restaurantmanagement'}
+tags: [arco]
+---
+- launchApp:
+    clearState: true
+    permissions:
+      notifications: deny
+- tapOn: "Correo"
+- waitForAnimationToEnd
+- inputText: "baja@prueba.local"
+- tapOn: "Contraseña"
+- waitForAnimationToEnd
+- inputText: ${PASSWORD || 'Prueba#2026'}
+- hideKeyboard
+- tapOn: "Entrar"
+- assertVisible: "He leído y acepto el aviso de privacidad"
+- tapOn: "Aceptar y continuar"
+- assertVisible: "He leído y acepto el aviso de privacidad"
+- takeScreenshot: reports/maestro/arco-aviso-sin-marcar
+- tapOn: "He leído y acepto el aviso de privacidad"
+- tapOn: "Aceptar y continuar"
+- runFlow:
+    when:
+      visible: "Ahora no"
+    commands:
+      - tapOn: "Ahora no"
+- tapOn: "Perfil"
+- tapOn: "Privacidad"
+- assertVisible: "Avisos de pedidos"
+- tapOn: "Reportes de errores"
+- takeScreenshot: reports/maestro/arco-privacidad
+- scrollUntilVisible:
+    element: "Eliminar mi cuenta"
+- tapOn: "Eliminar mi cuenta"
+- tapOn: "Tu contraseña"
+- waitForAnimationToEnd
+- inputText: ${PASSWORD || 'Prueba#2026'}
+- hideKeyboard
+- tapOn:
+    text: "Eliminar mi cuenta"
+    index: 1
+- tapOn: "Sí, eliminar"
+- assertVisible: "Tu cuenta se eliminó."
+- tapOn: "Correo"
+- waitForAnimationToEnd
+- inputText: "baja@prueba.local"
+- tapOn: "Contraseña"
+- waitForAnimationToEnd
+- inputText: ${PASSWORD || 'Prueba#2026'}
+- hideKeyboard
+- tapOn: "Entrar"
+- assertVisible: "Correo o contraseña incorrectos."

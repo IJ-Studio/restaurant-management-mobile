@@ -2,6 +2,8 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import type { NativeStackScreenProps } from '@react-navigation/native-stack';
 import type { ComponentProps } from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useSession } from '../../../auth/presentation/viewmodels/useSession';
+import { DishAdminControls } from '../components/DishAdminControls';
 
 import { Card } from '../../../../shared/presentation/components/Card';
 import { ScreenState } from '../../../../shared/presentation/components/ScreenState';
@@ -30,6 +32,7 @@ function Meta({ icon, text }: { icon: ComponentProps<typeof Ionicons>['name']; t
 
 export function DishDetailScreen({ route }: Props) {
   const { dish, isLoading, errorMessage, retry } = useDish(route.params.dishId);
+  const isAdmin = useSession((state) => state.session?.user.role === 'admin');
 
   if (!dish && isLoading) return <ScreenState kind="loading" />;
   if (!dish)
@@ -79,6 +82,7 @@ export function DishDetailScreen({ route }: Props) {
           </View>
         )}
       </Card>
+      {isAdmin && <DishAdminControls dish={dish} />}
       <AddToOrderButton
         dish={{ dishId: dish.id, name: dish.name, unitPrice: dish.price }}
         disabled={!dish.available}

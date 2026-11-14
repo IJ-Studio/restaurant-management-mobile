@@ -1,0 +1,31 @@
+# HU-07 / permisos en runtime: antes del permiso del sistema la app explica para qué es.
+appId: ${APP_ID || 'com.ijstudio.restaurantmanagement'}
+tags: [sprint-4, hu-07, permisos]
+---
+- launchApp:
+    clearState: true
+    permissions:
+      notifications: deny
+- tapOn: "Correo"
+- waitForAnimationToEnd
+- inputText: "cajero@prueba.local"
+- tapOn: "Contraseña"
+- waitForAnimationToEnd
+- inputText: ${PASSWORD || 'Prueba#2026'}
+- hideKeyboard
+- tapOn: "Entrar"
+- runFlow:
+    when:
+      visible: "He leído y acepto el aviso de privacidad"
+    commands:
+      - tapOn: "He leído y acepto el aviso de privacidad"
+      - tapOn: "Aceptar y continuar"
+- extendedWaitUntil:
+    visible: "Avisos de pedidos"
+    timeout: 10000
+- takeScreenshot: reports/maestro/s4-hu07-explicacion
+- tapOn: "Activar avisos"
+- tapOn:
+    text: "(Permitir|Allow)"
+    optional: true
+- assertNotVisible: "Activar avisos"
