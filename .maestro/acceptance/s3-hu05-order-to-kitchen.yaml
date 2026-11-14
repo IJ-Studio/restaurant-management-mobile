@@ -7,6 +7,10 @@ tags: [sprint-3, hu-05]
     env:
       EMAIL: mesero@prueba.local
 - tapOn: "Menú"
+- tapOn: "Buscar platillo"
+- waitForAnimationToEnd
+- inputText: "Guacamole"
+- hideKeyboard
 - tapOn: ".*Guacamole.*"
 - tapOn: "Agregar al pedido"
 - tapOn: ".*Pedido de la mesa.*"

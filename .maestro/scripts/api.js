@@ -19,7 +19,7 @@ if (ACTION === 'crear') {
       body: JSON.stringify({ mesa: 'A04', numComensales: 2, items: [{ platilloId: 1, cantidad: 1 }] }),
     }).body,
   );
-  http.post(`${base}/pedidos/confirmar/${created.ordenId}`, { headers: auth });
+  http.post(`${base}/pedidos/confirmar/${created.ordenId}`, { headers: auth, body: '{}' });
   output.orderId = created.ordenId;
 } else {
   http.request(`${base}/pedidos/${ORDER_ID}/estatus`, {

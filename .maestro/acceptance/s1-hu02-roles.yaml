@@ -12,6 +12,7 @@ tags: [sprint-1, hu-02]
 - assertNotVisible: "Menú"
 - runFlow: ../subflows/logout.yaml
 - back
+- launchApp
 - assertVisible: "Entrar"
 - runFlow:
     file: ../subflows/login.yaml

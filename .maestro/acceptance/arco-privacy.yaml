@@ -1,10 +1,13 @@
 # Rúbrica ARCO: aviso con casilla sin marcar, Privacidad con switches y eliminación de cuenta.
 # Usa la cuenta desechable baja@prueba.local (una cuenta de prueba que se puede borrar; ver docs/pruebas-caja-negra.md).
+# Antes de cada corrida, la cuenta debe estar activa y sin consentimientos (lo deja así la semilla local).
 appId: ${APP_ID || 'com.ijstudio.restaurantmanagement'}
 tags: [arco]
 ---
 - launchApp:
     clearState: true
+    permissions:
+      notifications: deny
 - tapOn: "Correo"
 - waitForAnimationToEnd
 - inputText: "baja@prueba.local"

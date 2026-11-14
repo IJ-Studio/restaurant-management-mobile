@@ -7,9 +7,17 @@ tags: [sprint-2, hu-03]
     env:
       EMAIL: mesero@prueba.local
 - tapOn: "Menú"
+- tapOn: "Buscar platillo"
+- waitForAnimationToEnd
+- inputText: "Guacamole"
+- hideKeyboard
 - assertVisible: ".*Guacamole.*"
-- scrollUntilVisible:
-    element: ".*Mole de olla.*"
+- tapOn: "Buscar platillo"
+- eraseText
+- waitForAnimationToEnd
+- inputText: "Mole de olla"
+- hideKeyboard
+- assertVisible: ".*Mole de olla.*"
 - assertVisible: ".*Agotado.*"
 - tapOn: ".*Mole de olla.*"
 - assertNotVisible: "Agregar al pedido"

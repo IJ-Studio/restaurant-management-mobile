@@ -5,7 +5,7 @@ tags: [sprint-4, hu-07, permisos]
 - launchApp:
     clearState: true
     permissions:
-      notifications: unset
+      notifications: deny
 - tapOn: "Correo"
 - waitForAnimationToEnd
 - inputText: "cajero@prueba.local"
