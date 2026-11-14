@@ -377,3 +377,12 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
   incidencias y mermas del día se reiniciaban y la gráfica de ventas por hora salía corrida 6 horas.
   Corregido en API #155 y #156 con la zona del restaurante (DM-22). `/pedidos/admin/recent` además
   limitaba filas de platillos en vez de pedidos.
+
+## B-028 · 2026-11-13 · Fotos y contacto del sitio administrables (P1.5) [web] [api] [decision]
+
+- «Sitio web» en el panel del administrador (web #36): hasta 5 fotos de portada, foto de inicio de
+  sesión y de registro, color de respaldo, teléfono y WhatsApp (`PUT /sitio`, API #154).
+- La landing (web #37) funde encima de la foto de siempre las del administrador, con carrusel que se
+  detiene con «reducir movimiento»; login, registro y «Visítanos» usan lo mismo.
+- **Decisión:** `/sitio` se pide en el navegador y no en el servidor: con `await` en el servidor la
+  portada dejaba de pintarse al instante (la foto LCP debe salir en el HTML sin esperar al API).
