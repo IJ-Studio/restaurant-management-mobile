@@ -33,6 +33,7 @@ export function toCreateRequest(reservation: NewReservation): CreateReservationR
     ocasion: reservation.occasion,
     peticionesEspeciales: reservation.specialRequests,
     canal: reservation.channel,
+    ...(reservation.tableId ? { mesaId: reservation.tableId } : {}),
   };
 }
 

@@ -6,4 +6,6 @@ export const env = {
   /** Web pública del restaurante: de aquí salen las páginas legales que pide Google Play. */
   webUrl: (process.env.EXPO_PUBLIC_WEB_URL || DEFAULT_WEB_URL).replace(/\/+$/, ''),
   httpTimeoutMs: 15000,
+  /** Llave PÚBLICA de Stripe (`pk_…`) para cobrar con tarjeta. Sin ella, la opción no aparece. */
+  stripePublishableKey: process.env.EXPO_PUBLIC_STRIPE_PUBLISHABLE_KEY ?? '',
 } as const;
