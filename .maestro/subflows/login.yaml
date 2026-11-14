@@ -4,8 +4,10 @@ appId: ${APP_ID || 'com.ijstudio.restaurantmanagement'}
 - launchApp:
     clearState: true
 - tapOn: "Correo"
+- waitForAnimationToEnd
 - inputText: ${EMAIL}
 - tapOn: "Contraseña"
+- waitForAnimationToEnd
 - inputText: ${PASSWORD || 'Prueba#2026'}
 - hideKeyboard
 - tapOn: "Entrar"

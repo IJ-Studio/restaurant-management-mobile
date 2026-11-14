@@ -6,8 +6,10 @@ tags: [arco]
 - launchApp:
     clearState: true
 - tapOn: "Correo"
+- waitForAnimationToEnd
 - inputText: "baja@prueba.local"
 - tapOn: "Contraseña"
+- waitForAnimationToEnd
 - inputText: ${PASSWORD || 'Prueba#2026'}
 - hideKeyboard
 - tapOn: "Entrar"
@@ -31,6 +33,7 @@ tags: [arco]
     element: "Eliminar mi cuenta"
 - tapOn: "Eliminar mi cuenta"
 - tapOn: "Tu contraseña"
+- waitForAnimationToEnd
 - inputText: ${PASSWORD || 'Prueba#2026'}
 - hideKeyboard
 - tapOn:
@@ -39,8 +42,10 @@ tags: [arco]
 - tapOn: "Sí, eliminar"
 - assertVisible: "Tu cuenta se eliminó."
 - tapOn: "Correo"
+- waitForAnimationToEnd
 - inputText: "baja@prueba.local"
 - tapOn: "Contraseña"
+- waitForAnimationToEnd
 - inputText: ${PASSWORD || 'Prueba#2026'}
 - hideKeyboard
 - tapOn: "Entrar"

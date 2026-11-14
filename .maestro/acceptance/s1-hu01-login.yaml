@@ -5,8 +5,10 @@ tags: [sprint-1, hu-01]
 - launchApp:
     clearState: true
 - tapOn: "Correo"
+- waitForAnimationToEnd
 - inputText: "mesero@prueba.local"
 - tapOn: "Contraseña"
+- waitForAnimationToEnd
 - inputText: "Incorrecta#1"
 - hideKeyboard
 - tapOn: "Entrar"

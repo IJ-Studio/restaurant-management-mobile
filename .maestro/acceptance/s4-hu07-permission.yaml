@@ -7,8 +7,10 @@ tags: [sprint-4, hu-07, permisos]
     permissions:
       notifications: unset
 - tapOn: "Correo"
+- waitForAnimationToEnd
 - inputText: "cajero@prueba.local"
 - tapOn: "Contraseña"
+- waitForAnimationToEnd
 - inputText: ${PASSWORD || 'Prueba#2026'}
 - hideKeyboard
 - tapOn: "Entrar"

@@ -12,8 +12,10 @@ tags: [sprint-2, hu-04]
 - tapOn: "Guardar reservación"
 - assertVisible: ".*Escribe el nombre del cliente.*"
 - tapOn: "Nombre del cliente"
+- waitForAnimationToEnd
 - inputText: "Cliente Maestro"
 - tapOn: "Teléfono"
+- waitForAnimationToEnd
 - inputText: "12"
 - hideKeyboard
 - tapOn: "Guardar reservación"
