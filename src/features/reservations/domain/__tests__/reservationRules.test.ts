@@ -27,14 +27,16 @@ describe('validateReservation', () => {
 
   it.each([0, -2, 1.5, Number.NaN])('rechaza %p personas', (partySize) => {
     expect(validateReservation(makeDraft({ partySize }), NOW).partySize).toBe(
-      'Debe haber al menos 1 persona.',
+      'El número de personas debe ser de 1 a 50.',
     );
   });
 
   it('acepta de 1 a 50 personas', () => {
     expect(validateReservation(makeDraft({ partySize: 1 }), NOW).partySize).toBeUndefined();
     expect(validateReservation(makeDraft({ partySize: 50 }), NOW).partySize).toBeUndefined();
-    expect(validateReservation(makeDraft({ partySize: 51 }), NOW).partySize).toBe('Máximo 50 personas.');
+    expect(validateReservation(makeDraft({ partySize: 51 }), NOW).partySize).toBe(
+      'El número de personas debe ser de 1 a 50.',
+    );
   });
 
   it('valida nombre, teléfono y correo', () => {

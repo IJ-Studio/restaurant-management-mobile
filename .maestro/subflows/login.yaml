@@ -1,0 +1,22 @@
+# Inicia sesión con EMAIL y PASSWORD y deja la app lista para usarse (aviso y permiso resueltos).
+appId: ${APP_ID || 'com.ijstudio.restaurantmanagement'}
+---
+- launchApp:
+    clearState: true
+- tapOn: "Correo"
+- inputText: ${EMAIL}
+- tapOn: "Contraseña"
+- inputText: ${PASSWORD || 'Prueba#2026'}
+- hideKeyboard
+- tapOn: "Entrar"
+- runFlow:
+    when:
+      visible: "He leído y acepto el aviso de privacidad"
+    commands:
+      - tapOn: "He leído y acepto el aviso de privacidad"
+      - tapOn: "Aceptar y continuar"
+- runFlow:
+    when:
+      visible: "Ahora no"
+    commands:
+      - tapOn: "Ahora no"
