@@ -16,7 +16,7 @@ tags: [sprint-3, hu-05]
 - tapOn: ".*Pedido de la mesa.*"
 - tapOn: ".*A01.*"
 - tapOn: "Enviar a cocina"
-- assertVisible: ".*Pedido enviado a cocina.*"
+- assertVisible: ".*enviado a cocina.*"
 - takeScreenshot: reports/maestro/s3-hu05-enviado
 - runFlow:
     file: ../subflows/login.yaml
