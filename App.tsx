@@ -21,7 +21,8 @@ function App() {
   return (
     <SafeAreaProvider>
       <AppProviders>
-        <StatusBar style="auto" />
+        {/* La app es solo de tema claro: con «auto», un teléfono en oscuro pinta iconos claros sobre fondo claro. */}
+        <StatusBar style="dark" />
         <AuthGate>
           <AppNavigator />
         </AuthGate>
