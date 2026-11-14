@@ -104,3 +104,28 @@ export class CorrectPayrollMovementUseCase {
     return this.repository.correct(id, justification.trim());
   }
 }
+
+/** Mueve el periodo `weeks` semanas (negativo hacia atrás), conservando su duración. */
+export function shiftPeriod(period: Period, weeks: number): Period {
+  const move = (s: string) => {
+    const [y, m, d] = s.split('-').map(Number);
+    return iso(new Date(y, m - 1, d + weeks * 7));
+  };
+  return { start: move(period.start), end: move(period.end) };
+}
+
+const ISO_DAY = /^\d{4}-\d{2}-\d{2}$/;
+const validDay = (s: string) => {
+  if (!ISO_DAY.test(s)) return false;
+  const [y, m, d] = s.split('-').map(Number);
+  return iso(new Date(y, m - 1, d)) === s;
+};
+
+/** Periodo libre «Desde»/«Hasta» como en la web: fechas reales y en orden. */
+export function parsePeriod(start: string, end: string): Period | { error: string } {
+  const s = start.trim();
+  const e = end.trim();
+  if (!validDay(s) || !validDay(e)) return { error: 'Escribe las fechas como AAAA-MM-DD.' };
+  if (s > e) return { error: 'La fecha «Desde» no puede ser posterior a «Hasta».' };
+  return { start: s, end: e };
+}
