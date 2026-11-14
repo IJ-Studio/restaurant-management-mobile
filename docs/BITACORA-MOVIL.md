@@ -8,7 +8,7 @@ grep -n '\[rubrica\]' docs/BITACORA-MOVIL.md
 ```
 
 Etiquetas: `[plan]` `[rubrica]` `[gh-project]` `[decision]` `[api]` `[movil]` `[web]` `[bd]` `[entorno]`
-`[equipo]` `[pruebas]` `[rendimiento]` `[seguridad]`.
+`[equipo]` `[pruebas]` `[rendimiento]` `[seguridad]` `[pagos]` `[facturacion]`.
 
 ---
 
@@ -467,3 +467,45 @@ corrida por página (rendimiento / accesibilidad / buenas prácticas / SEO). Inf
   fijo; sin estrangulamiento el CLS medido es 0,038.
 - **Ruido:** una sola corrida por página. Login móvil bajó de 97 a 78 sin cambios en esa página
   (TBT 185 → 1 028 ms); para comparar en serio, mediana de 3 con `scripts/comparar-rendimiento.mjs`.
+
+## B-035 · 2026-11-14 · División de cuentas y pagos: auditoría y pruebas [pagos] [api] [web] [movil] [pruebas] [gh-project]
+
+La rúbrica no pide división ni facturación. En GitHub Projects, api#81 pide la integración con Stripe
+(intento → webhook firmado → pagado, webhook repetido y rechazo). Paridad (detalle en el reporte no
+versionado `_entrada/reportes/pruebas-division-facturacion-pagos.md`):
+
+- **Ya había:** completa, partes iguales, por platillo, pagos mixtos (cada parte con su método) y
+  propina por parte, en web y móvil. No existe la división «por porcentaje»: el porcentaje es solo
+  para la propina. La móvil precarga los comensales y pasa sola a la siguiente persona; la web hace
+  elegir cuántas personas faltan.
+- **Suite de integración contra el API real** (API #164, `pnpm test:integracion`, fuera de CI): 21
+  casos con Stripe en modo test (`stripe listen`). 100.01 entre 3 da 33.34 + 33.34 + 33.33; dos cajas
+  a la vez dejan un solo pago; el webhook es idempotente; probadas las tarjetas de prueba aprobada,
+  fondos insuficientes y 3D Secure.
+- **Corregido en el API:**
+  - #161: webhook atómico; un cobro doble se reembolsa solo.
+  - #161: con tarjeta ya elegida daba 500 por `return_url`; un rechazo ahora responde 402 con mensaje.
+  - #163: reembolso y reversa de pagos (solo admin).
+- **Maestro** `s3-hu05-cuenta-dividida`: la misma cuenta de 100.01 cobrada en el Pixel (Release) con
+  efectivo, tarjeta y efectivo.
+
+## B-036 · 2026-11-14 · Facturación: el CFDI no amparaba lo cobrado [facturacion] [api] [web] [decision]
+
+- **Fallo grave (ya existía):** Facturapi toma el precio con IVA incluido por omisión y el API le
+  mandaba el subtotal. Un consumo de $100.01 se timbraba por $86.22, comprobado en el sandbox.
+  Corregido en API #162: se manda el total con `tax_included: true`.
+- **También en #162:**
+  - Forma de pago del pago de mayor monto (antes siempre 31).
+  - Un solo CFDI por orden: la solicitud se aparta y lleva `idempotency_key`.
+  - Catálogos del SAT en el DTO.
+  - Caja y administración pueden pedir la factura de una cuenta en mesa (también una dividida).
+  - `POST /facturas/:id/cancelar` con motivo 02 o 03; con 02 la solicitud vuelve a la cola.
+- **Web #45:**
+  - Caja ofrece la factura al cerrar la cuenta.
+  - El admin cancela una factura.
+  - El uso «P01» (no existe en CFDI 4.0) cambia por S01.
+- **Decisión:** el CFDI ampara el consumo sin la propina. Una cuenta dividida se factura completa
+  (un CFDI por orden), no por persona.
+- **Pendiente propuesto:** pedir la factura y cancelarla desde la móvil, y una pantalla de reembolso.
+  No lo pide la rúbrica.
+
