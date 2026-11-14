@@ -509,3 +509,21 @@ versionado `_entrada/reportes/pruebas-division-facturacion-pagos.md`):
 - **Pendiente propuesto:** pedir la factura y cancelarla desde la móvil, y una pantalla de reembolso.
   No lo pide la rúbrica.
 
+
+## B-037 · 2026-11-14 · Pila lista para revisión y versión 1.1.0 para Play [plan] [equipo] [rubrica] [seguridad]
+
+- **Revisión de la pila:**
+  - 31 PRs de la móvil (#453–#483) en una sola pila lineal hacia `develop`. CI completo en verde, sin conflictos y con Joose30 como revisor.
+  - Revisados los commits (autoría, idioma, sin firmas), las líneas agregadas (sin secretos, sin `.only`, sin depuración) y los hilos de code scanning (todos resueltos).
+  - #482 se redirigió a `develop` antes de pedir la revisión, porque borrar su rama base lo habría cerrado.
+- **Regla del repo:** `dismiss_stale_reviews_on_push` y hilos resueltos obligatorios. Por eso no habrá más pushes en la pila mientras José revisa; se fusiona en orden con *merge commit* (nunca squash, que deja en conflicto a los de arriba).
+- **#483, versión 1.1.0:**
+  - versionName 1.0.0 → 1.1.0. El versionCode lo sube EAS (`appVersionSource: remote`, `autoIncrement`): será la 10.
+  - El AAB sale del perfil `store`.
+  - `EXPO_PUBLIC_API_URL` del entorno `production` de EAS es el API de Render. El pin GTS Root R4 coincide con la cadena actual.
+  - `targetSdk` 36 cumple el requisito de Play (API 36 desde el 31-ago-2026).
+- **Por decidir (Irving):**
+  - `SENTRY_DISABLE_AUTO_UPLOAD=true` en EAS deja las trazas ofuscadas.
+  - Comparar el SHA-1 de la llave de subida de EAS con Play Console.
+  - Actualizar en Play la declaración de seguridad de datos: el cobro con tarjeta de Stripe agrega «Información de pago del usuario».
+- **Registro de errores** (`docs/pruebas-caja-negra.md`, en #482): Release lleno con la Tanda 1, CN-22 y E-06 a E-11.
