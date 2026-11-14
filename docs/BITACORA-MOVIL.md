@@ -444,3 +444,26 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
   nativo. Con eso, el pin falso se rechaza con el aviso «La conexión no es segura…» (CN-20).
 - Prueba nueva: falla si un perfil de `eas.json` no define la variable. Maestro en Release repetido
   completo con el cambio.
+
+## B-034 · 2026-11-14 · Lighthouse de la web, antes y después [web] [rendimiento]
+
+Lighthouse 13.6 con Chromium sin interfaz, build de producción de la web contra el API local, una
+corrida por página (rendimiento / accesibilidad / buenas prácticas / SEO). Informes en
+`_entrada/lighthouse/{antes,despues}/` (no versionados).
+
+| Página | Antes (móvil · escritorio) | Después (móvil · escritorio) |
+|---|---|---|
+| Landing | 91/100/96/100 · 97/100/96/100 | 94/100/96/100 · 96/100/96/100 |
+| Carta | 79/100/96/100 · 95/100/96/100 | 77/100/96/100 · 95/100/96/100 |
+| Login | 97/100/96/100 · 94/100/96/100 | 78/100/96/100 · 94/100/96/100 |
+| Dashboard del mesero | 69/99/100/100 · 85/99/100/100 | 89/99/100/100 · 85/99/100/100 |
+
+- **Corregido (web #44):** las tarjetas indicadoras crecían 36 px al llegar los datos (CLS); ahora el
+  esqueleto mide lo mismo (182 px en ambos estados, medido con el API retrasado).
+- **No corregido, con motivo:** buenas prácticas 96 por el 401 de `/api/auth/me` sin sesión
+  (comportamiento documentado y probado; cambiarlo toca a todos los consumidores de la sesión). El
+  bloqueo del hilo principal en móvil es la hidratación de React DOM (chunk de 235 KB), sin arreglo
+  rápido. Lighthouse aún marca ~0,16 de CLS en el dashboard de escritorio, atribuido a otro elemento
+  fijo; sin estrangulamiento el CLS medido es 0,038.
+- **Ruido:** una sola corrida por página. Login móvil bajó de 97 a 78 sin cambios en esa página
+  (TBT 185 → 1 028 ms); para comparar en serio, mediana de 3 con `scripts/comparar-rendimiento.mjs`.
