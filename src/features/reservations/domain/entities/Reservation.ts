@@ -25,6 +25,15 @@ export interface NewReservation {
   occasion?: string;
   specialRequests?: string;
   channel: ReservationChannel;
+  /** Mesa elegida; sin ella el API asigna la primera libre con lugar. */
+  tableId?: number;
+}
+
+/** Mesa libre para la fecha, hora y personas de la reservación. */
+export interface FreeTable {
+  id: number;
+  number: string;
+  capacity: number;
 }
 
 export interface CreatedReservation {

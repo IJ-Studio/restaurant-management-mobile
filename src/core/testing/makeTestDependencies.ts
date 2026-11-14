@@ -1,8 +1,21 @@
 import { makeSession } from '../../features/auth/__fixtures__/auth';
 import { createSessionStore } from '../../features/auth/presentation/store/sessionStore';
 import { createCurrentOrderStore } from '../../features/orders/presentation/store/currentOrderStore';
+import {
+  PRIVACY_NOTICE_VERSION,
+  type PrivacySettings,
+} from '../../features/privacy/domain/entities/PrivacySettings';
 import type { Dependencies } from '../di/dependencies';
 import type { HttpClient } from '../http/httpClient';
+
+/** Aviso de privacidad ya aceptado en la versión vigente: la compuerta deja pasar. */
+export const acceptedPrivacy: PrivacySettings = {
+  noticeAccepted: true,
+  noticeVersion: PRIVACY_NOTICE_VERSION,
+  noticeAcceptedAt: '2026-11-01T10:00:00.000Z',
+  pushNotifications: true,
+  errorReports: true,
+};
 
 /** Resuelve de inmediato con un permiso ya concedido: no bloquea pantallas que no prueban HU-07. */
 const grantedPermission = () =>
@@ -20,6 +33,10 @@ export function makeTestDependencies(overrides: Partial<Dependencies> = {}): Dep
     logoutUseCase: { execute: jest.fn().mockResolvedValue(undefined) },
     restoreSessionUseCase: { execute: jest.fn().mockResolvedValue(null) },
     getMenuUseCase: { execute: pending() },
+    updateDishUseCase: {
+      setAvailable: jest.fn().mockResolvedValue(undefined),
+      setPrice: jest.fn().mockResolvedValue(undefined),
+    },
     getDishUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
     createReservationUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
     listActiveReservationsUseCase: { execute: pending() },
@@ -39,6 +56,12 @@ export function makeTestDependencies(overrides: Partial<Dependencies> = {}): Dep
     getProfileUseCase: { execute: pending() },
     updateProfileUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
     changePasswordUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
+    privacyRepository: {
+      get: jest.fn().mockResolvedValue(acceptedPrivacy),
+      acceptNotice: jest.fn().mockResolvedValue(acceptedPrivacy),
+      setPreference: jest.fn().mockResolvedValue(acceptedPrivacy),
+    },
+    deleteAccountUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
     getCashSessionUseCase: { execute: pending() },
     openCashRegisterUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
     closeCashRegisterUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
@@ -59,6 +82,30 @@ export function makeTestDependencies(overrides: Partial<Dependencies> = {}): Dep
       remove: pending(),
     },
     saveTableUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
+    invoicesRepository: { pending: pending(), issue: pending(), reject: pending() },
+    promotionsRepository: { list: pending(), setActive: pending() },
+    staffRepository: {
+      list: pending(),
+      create: pending(),
+      update: pending(),
+      changeRole: pending(),
+      deactivate: pending(),
+      reactivate: pending(),
+    },
+    saveStaffUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
+    payrollEmployeesRepository: { list: pending(), create: pending(), update: pending(), remove: pending() },
+    saveEmployeeUseCase: { execute: jest.fn().mockRejectedValue(new Error('sin configurar')) },
+    checkoutUseCase: {
+      execute: jest.fn().mockRejectedValue(new Error('sin configurar')),
+      isAvailable: jest.fn().mockReturnValue(false),
+    },
+    // Sin respuesta: los formularios usan las reglas por defecto, iguales a las del servidor.
+    reservationTables: { freeTables: jest.fn().mockResolvedValue([]) },
+    changeReservationStatusUseCase: { execute: jest.fn().mockResolvedValue(undefined) },
+    operationRules: { get: jest.fn().mockRejectedValue(new Error('sin configurar')) },
+    orderEvents: { subscribe: jest.fn(() => () => undefined) },
+    deviceRegistrationUseCase: { register: jest.fn().mockResolvedValue(false) },
+    pushNotifications: { onNotificationOpened: jest.fn(() => () => undefined) },
     enableNotificationsUseCase: { execute: grantedPermission() },
     ...overrides,
   };
