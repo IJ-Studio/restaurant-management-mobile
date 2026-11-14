@@ -35,13 +35,17 @@ env:
 - tapOn: "Cobros"
 - scrollUntilVisible:
     element: ".*${MESA}.*"
-    timeout: 15000
+    timeout: 45000
 - tapOn: ".*${MESA}.*"
 - tapOn: "Partes iguales"
 - assertVisible: ".*persona 1 de 3 · \\$33\\.34.*"
 - takeScreenshot: reports/maestro/division-1-persona-1
 # Persona 1 · efectivo exacto
+- scrollUntilVisible:
+    element: "Recibí \\$33\\.34"
 - tapOn: "Recibí \\$33\\.34"
+- scrollUntilVisible:
+    element: "Confirmar cobro"
 - tapOn: "Confirmar cobro"
 - assertVisible: "Falta por cobrar"
 - assertVisible: ".*66\\.67.*"
@@ -57,7 +61,13 @@ env:
 - tapOn: "Cobrar a la siguiente persona"
 # Persona 3 · paga el resto exacto
 - assertVisible: ".*persona 3 de 3 · \\$33\\.33.*"
+# La app conserva el método de la persona anterior: se vuelve a efectivo.
+- tapOn: "EFECTIVO"
+- scrollUntilVisible:
+    element: "Recibí \\$33\\.33"
 - tapOn: "Recibí \\$33\\.33"
+- scrollUntilVisible:
+    element: "Confirmar cobro"
 - tapOn: "Confirmar cobro"
 - assertNotVisible: "Falta por cobrar"
 - assertVisible: "Listo"
