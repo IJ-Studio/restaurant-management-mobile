@@ -53,13 +53,14 @@
           "color": "#835E25"
         }
       ],
+      "./plugins/with-lint-release-off",
       [
         "expo-build-properties",
         {
           "android": {
             "enableMinifyInReleaseBuilds": true,
             "enableShrinkResourcesInReleaseBuilds": true,
-            "extraProguardRules": "-keepattributes SourceFile,LineNumberTable\n-renamesourcefileattribute SourceFile"
+            "extraProguardRules": "-keepattributes SourceFile,LineNumberTable\n-renamesourcefileattribute SourceFile\n-dontwarn com.stripe.android.pushProvisioning.**"
           }
         }
       ]
