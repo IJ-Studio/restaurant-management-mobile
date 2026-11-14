@@ -31,10 +31,13 @@ export function useNotificationPermission() {
   return {
     status,
     enabled: status === 'granted',
-    /** El sistema todavía deja preguntar: se puede mostrar la explicación y después el permiso. */
-    canAsk: permission !== null && status === 'undetermined' && permission.canAskAgain,
+    /**
+     * El sistema todavía deja preguntar: se puede mostrar la explicación y después el permiso. En
+     * Android 13+ una instalación nueva llega como `denied` con `canAskAgain`, no como `undetermined`.
+     */
+    canAsk: permission !== null && status !== 'granted' && permission.canAskAgain,
     /** Si el sistema ya no deja preguntar, lo único que queda es Ajustes. */
-    needsSettings: status === 'denied' || permission?.canAskAgain === false,
+    needsSettings: status !== 'granted' && permission?.canAskAgain === false,
     /** Consulta el permiso sin mostrar el diálogo del sistema. */
     check,
     /** Muestra el diálogo del sistema (solo tras la explicación o desde Perfil). */

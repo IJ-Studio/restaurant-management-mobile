@@ -69,6 +69,14 @@ describe('NotificationPermissionPrompt', () => {
     expect(screen.queryByRole('header', { name: 'Avisos de pedidos' })).toBeNull();
   });
 
+  it('Android 13+ recién instalada (denied, canAskAgain): también explica los avisos', async () => {
+    await setup({ status: 'denied', canAskAgain: true });
+
+    expect(
+      await screen.findByRole('header', { name: 'Avisos de pedidos' }, { timeout: 5000 }),
+    ).toBeOnTheScreen();
+  });
+
   it('si ya se negó antes, no insiste: queda la opción en Perfil', async () => {
     const { execute } = await setup({ status: 'denied', canAskAgain: false });
 

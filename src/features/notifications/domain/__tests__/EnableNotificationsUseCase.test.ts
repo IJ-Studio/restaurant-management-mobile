@@ -32,6 +32,12 @@ describe('EnableNotificationsUseCase', () => {
     expect(port.requestPermission).not.toHaveBeenCalled();
   });
 
+  it('en Android 13+ una instalación nueva llega como denied con canAskAgain: sí pregunta', async () => {
+    const port = makePort({ status: 'denied', canAskAgain: true }, { status: 'granted', canAskAgain: true });
+    await new EnableNotificationsUseCase(port).execute();
+    expect(port.requestPermission).toHaveBeenCalled();
+  });
+
   it('si se negó, no insiste y devuelve el estado (para ofrecer Ajustes)', async () => {
     const port = makePort({ status: 'denied', canAskAgain: false });
     await expect(new EnableNotificationsUseCase(port).execute()).resolves.toEqual({
