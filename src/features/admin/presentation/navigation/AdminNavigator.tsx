@@ -5,6 +5,8 @@ import { StyleSheet, View } from 'react-native';
 import { stackScreenOptions } from '../../../../core/navigation/navigationTheme';
 import { Button } from '../../../../shared/presentation/components/Button';
 import { spacing } from '../../../../shared/presentation/theme';
+import { PromotionsScreen } from '../../promotions/presentation/PromotionsScreen';
+import { StockScreen } from '../../stock/presentation/StockScreen';
 import { InvoicesScreen } from '../../invoices/presentation/InvoicesScreen';
 import { PayrollEmployeesScreen } from '../../payroll/presentation/PayrollEmployeesScreen';
 import { PayrollScreen } from '../../payroll/presentation/PayrollScreen';
@@ -19,6 +21,8 @@ export type AdminStackParamList = {
   Tables: undefined;
   Staff: undefined;
   Invoices: undefined;
+  Promotions: undefined;
+  Stock: undefined;
 };
 
 const Stack = createNativeStackNavigator<AdminStackParamList>();
@@ -38,6 +42,8 @@ function AdminHome() {
         <Button label="Mesas" variant="outline" onPress={() => navigation.navigate('Tables')} />
         <Button label="Personal" variant="outline" onPress={() => navigation.navigate('Staff')} />
         <Button label="Facturas" variant="outline" onPress={() => navigation.navigate('Invoices')} />
+        <Button label="Promociones" variant="outline" onPress={() => navigation.navigate('Promotions')} />
+        <Button label="Existencias" variant="outline" onPress={() => navigation.navigate('Stock')} />
       </View>
       <DashboardScreen />
     </View>
@@ -58,6 +64,8 @@ export function AdminNavigator() {
       <Stack.Screen name="Tables" component={TablesScreen} options={{ title: 'Mesas' }} />
       <Stack.Screen name="Staff" component={StaffScreen} options={{ title: 'Personal' }} />
       <Stack.Screen name="Invoices" component={InvoicesScreen} options={{ title: 'Facturas' }} />
+      <Stack.Screen name="Promotions" component={PromotionsScreen} options={{ title: 'Promociones' }} />
+      <Stack.Screen name="Stock" component={StockScreen} options={{ title: 'Existencias' }} />
     </Stack.Navigator>
   );
 }

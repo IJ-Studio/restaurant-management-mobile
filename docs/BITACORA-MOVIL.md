@@ -394,3 +394,12 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
   (#33) y los mismos textos de acciones (#34).
 - **Decisión:** la propina sugerida se calcula sobre lo que se cobra en ese momento (la parte o lo que
   falta), igual que la app. Queda pendiente la cuenta por platillo en la web.
+
+## B-030 · 2026-11-13 · Promociones y existencias del administrador en la móvil [movil] [decision]
+
+- Dashboard → «Promociones»: lista con vigencia, precio y estado; activar o desactivar
+  (`PATCH /promociones/:id`). Dashboard → «Existencias»: todos los productos, primero los que están en
+  su mínimo (misma regla que cocina).
+- **Decisión:** crear o editar promociones con imagen, registrar entradas de inventario y proveedores
+  se quedan en la web (formularios largos y subida de imágenes); en la app, lo que se resuelve de pie
+  durante el servicio.

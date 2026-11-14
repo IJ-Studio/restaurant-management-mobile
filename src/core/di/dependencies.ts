@@ -4,6 +4,8 @@ import { env } from '../config/env';
 
 import { DashboardRemoteDataSource } from '../../features/admin/data/datasources/DashboardRemoteDataSource';
 import { PayrollRepositoryImpl } from '../../features/admin/payroll/data/PayrollRepositoryImpl';
+import { PromotionsRepositoryImpl } from '../../features/admin/promotions/data/PromotionsRepositoryImpl';
+import type { PromotionsRepository } from '../../features/admin/promotions/domain/Promotions';
 import { InvoicesRepositoryImpl } from '../../features/admin/invoices/data/InvoicesRepositoryImpl';
 import type { InvoicesRepository } from '../../features/admin/invoices/domain/Invoices';
 import { PayrollEmployeesRepositoryImpl } from '../../features/admin/payroll/data/PayrollEmployeesRepositoryImpl';
@@ -145,6 +147,7 @@ export interface Dependencies {
   saveTableUseCase: Pick<SaveTableUseCase, 'execute'>;
   staffRepository: StaffRepository;
   invoicesRepository: InvoicesRepository;
+  promotionsRepository: PromotionsRepository;
   payrollEmployeesRepository: PayrollEmployeesRepository;
   saveEmployeeUseCase: Pick<SaveEmployeeUseCase, 'execute'>;
   saveStaffUseCase: Pick<SaveStaffUseCase, 'execute'>;
@@ -272,6 +275,7 @@ export function createDependencies({
     saveTableUseCase: new SaveTableUseCase(tablesRepository),
     staffRepository,
     invoicesRepository: new InvoicesRepositoryImpl(http),
+    promotionsRepository: new PromotionsRepositoryImpl(http),
     saveStaffUseCase: new SaveStaffUseCase(staffRepository),
     payrollEmployeesRepository,
     saveEmployeeUseCase: new SaveEmployeeUseCase(payrollEmployeesRepository),
