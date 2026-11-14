@@ -1,8 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { ComponentProps } from 'react';
-import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-
-import { legalLinks } from '../../../../core/config/legalLinks';
+import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../../../../shared/presentation/components/Button';
 import { Card } from '../../../../shared/presentation/components/Card';
@@ -78,18 +76,15 @@ function ActionRow({
   );
 }
 
-/** Abre una página legal de la web. Si el teléfono no puede abrirla, no rompe la pantalla. */
-function openLegalPage(url: string) {
-  Linking.openURL(url).catch(() => undefined);
-}
-
 interface Props {
   /** Las da el navegador del perfil; sin ellas (p. ej. en pruebas) no se muestran las opciones. */
   onEditProfile?: () => void;
   onChangePassword?: () => void;
+  /** Aviso de privacidad, preferencias y eliminar la cuenta. */
+  onPrivacy?: () => void;
 }
 
-export function ProfileScreen({ onEditProfile, onChangePassword }: Props = {}) {
+export function ProfileScreen({ onEditProfile, onChangePassword, onPrivacy }: Props = {}) {
   const user = useSession((state) => state.session?.user);
   const expiresAt = useSession((state) => state.session?.expiresAt);
   const { logout, isLoggingOut } = useLogout();
@@ -137,22 +132,11 @@ export function ProfileScreen({ onEditProfile, onChangePassword }: Props = {}) {
 
       <NotificationSettings />
 
-      <Card style={styles.info}>
-        <ActionRow
-          icon="shield-checkmark-outline"
-          label="Aviso de privacidad"
-          external
-          onPress={() => openLegalPage(legalLinks.privacy)}
-        />
-        <View style={styles.divider}>
-          <ActionRow
-            icon="trash-outline"
-            label="Eliminar cuenta"
-            external
-            onPress={() => openLegalPage(legalLinks.deleteAccount)}
-          />
-        </View>
-      </Card>
+      {onPrivacy && (
+        <Card style={styles.info}>
+          <ActionRow icon="shield-checkmark-outline" label="Privacidad" onPress={onPrivacy} />
+        </Card>
+      )}
 
       <Button
         label="Cerrar sesión"

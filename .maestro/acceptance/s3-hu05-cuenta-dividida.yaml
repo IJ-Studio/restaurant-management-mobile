@@ -1,0 +1,81 @@
+# HU-05 · Cuenta dividida en partes iguales con pagos mixtos: 100.01 entre 3 → 33.34 + 33.34 + 33.33.
+# La mesa la levanta y la entrega «otro teléfono» (scripts/api.js). PLATILLO_ID: platillo de 100.01
+# en la base de pruebas; MESA: una mesa libre.
+appId: ${APP_ID || 'com.ijstudio.restaurantmanagement'}
+tags: [sprint-3, hu-05, pagos]
+env:
+  MESA: ${MESA || 'P30'}
+---
+- runScript:
+    file: ../scripts/api.js
+    env:
+      ROLE_EMAIL: mesero@prueba.local
+      ACTION: crear
+      MESA: ${MESA}
+      PLATILLO_ID: ${PLATILLO_ID}
+      COMENSALES: 3
+- runScript:
+    file: ../scripts/api.js
+    env:
+      ROLE_EMAIL: cocina@prueba.local
+      ACTION: estatus
+      ORDER_ID: ${output.orderId}
+      ESTATUS: lista
+- runScript:
+    file: ../scripts/api.js
+    env:
+      ROLE_EMAIL: mesero@prueba.local
+      ACTION: estatus
+      ORDER_ID: ${output.orderId}
+      ESTATUS: entregada
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: cajero@prueba.local
+- tapOn: "Cobros"
+- scrollUntilVisible:
+    element: ".*${MESA}.*"
+    timeout: 45000
+- tapOn: ".*${MESA}.*"
+- tapOn: "Partes iguales"
+- assertVisible: ".*persona 1 de 3 · \\$33\\.34.*"
+- takeScreenshot: reports/maestro/division-1-persona-1
+# Persona 1 · efectivo exacto
+- scrollUntilVisible:
+    element: "Recibí \\$33\\.34"
+- tapOn: "Recibí \\$33\\.34"
+- scrollUntilVisible:
+    element: "Confirmar cobro"
+- tapOn: "Confirmar cobro"
+- assertVisible: "Falta por cobrar"
+- assertVisible: ".*66\\.67.*"
+- takeScreenshot: reports/maestro/division-2-recibo-persona-1
+- tapOn: "Cobrar a la siguiente persona"
+# Persona 2 · tarjeta en la terminal
+- assertVisible: ".*persona 2 de 3 · \\$33\\.34.*"
+- tapOn: "TARJETA"
+- scrollUntilVisible:
+    element: "Confirmar cobro"
+- tapOn: "Confirmar cobro"
+- assertVisible: ".*33\\.33.*"
+- tapOn: "Cobrar a la siguiente persona"
+# Persona 3 · paga el resto exacto
+- assertVisible: ".*persona 3 de 3 · \\$33\\.33.*"
+# La app conserva el método de la persona anterior: se vuelve a efectivo.
+- tapOn: "EFECTIVO"
+- scrollUntilVisible:
+    element: "Recibí \\$33\\.33"
+- tapOn: "Recibí \\$33\\.33"
+- scrollUntilVisible:
+    element: "Confirmar cobro"
+- tapOn: "Confirmar cobro"
+- assertNotVisible: "Falta por cobrar"
+- assertVisible: "Listo"
+- takeScreenshot: reports/maestro/division-3-cuenta-cerrada
+- runScript:
+    file: ../scripts/api.js
+    env:
+      ROLE_EMAIL: cajero@prueba.local
+      ACTION: detalle
+      ORDER_ID: ${output.orderId}
+- assertTrue: ${output.pagado == '100.01' && output.restante == '0.00' && output.estatus == 'pagada'}
