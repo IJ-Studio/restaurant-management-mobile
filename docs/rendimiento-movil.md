@@ -39,9 +39,12 @@ paquete de la app.
 
 | Medida (Pixel 10a, Release) | Resultado | Meta |
 |---|---|---|
-| Arranque en frío (mediana) | ⏳ Tanda | < 2 000 ms |
-| Memoria PSS | ⏳ Tanda | < 250 MB |
-| Fotogramas lentos al desplazar | ⏳ Tanda | < 10 % |
+| Arranque en frío (mediana de 5, primer fotograma con `am start -W`) | 138 ms (129–148) | < 2 000 ms |
+| Memoria PSS (10 s en el Menú) | 163 MB | < 250 MB |
+| Fotogramas lentos al desplazar | 4 de 305 (1,3 %) | < 10 % |
+
+Medido el 14-nov (Tanda 1) con el Release de #480 contra el API local por túnel. `am start -W` mide
+hasta el primer fotograma (pantalla de arranque), no hasta que el JS pinta el Menú.
 
 ## API
 
