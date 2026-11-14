@@ -1,4 +1,5 @@
 import { LinearGradient } from 'expo-linear-gradient';
+import { StatusBar } from 'expo-status-bar';
 import { memo } from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 
@@ -50,6 +51,8 @@ export function LoginScreen() {
     // Sin KeyboardAvoidingView (añade un render al montarse): en iOS el ScrollView ajusta su inserción al
     // teclado; en Android el sistema redimensiona la ventana, igual que antes.
     <View style={styles.screen}>
+      {/* La cabecera del login es café oscuro: iconos claros solo aquí. */}
+      <StatusBar style="light" />
       <ScrollView
         automaticallyAdjustKeyboardInsets
         contentContainerStyle={styles.content}
