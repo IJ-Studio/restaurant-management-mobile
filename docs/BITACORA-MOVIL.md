@@ -386,3 +386,11 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
   detiene con «reducir movimiento»; login, registro y «Visítanos» usan lo mismo.
 - **Decisión:** `/sitio` se pide en el navegador y no en el servidor: con `await` en el servidor la
   portada dejaba de pintarse al instante (la foto LCP debe salir en el HTML sin esperar al API).
+
+## B-029 · 2026-11-13 · La web al día con la móvil [web] [decision]
+
+- Tiempo real con el mismo flujo de eventos que la app (web #38), cuenta dividida en partes iguales y
+  referencia de terminal (#39), propina por porcentaje (#35), atender pedidos desde el Inicio del admin
+  (#33) y los mismos textos de acciones (#34).
+- **Decisión:** la propina sugerida se calcula sobre lo que se cobra en ese momento (la parte o lo que
+  falta), igual que la app. Queda pendiente la cuenta por platillo en la web.
