@@ -52,20 +52,18 @@ describe('promociones del admin (paridad con la web)', () => {
 
   it('pantalla: desactiva una promoción activa', async () => {
     const repo: jest.Mocked<PromotionsRepository> = {
-      list: jest
-        .fn()
-        .mockResolvedValue([
-          {
-            id: 1,
-            title: 'CAJITA KIDS',
-            description: null,
-            badge: 'Paquete',
-            price: 200,
-            active: true,
-            startDate: null,
-            endDate: null,
-          },
-        ]),
+      list: jest.fn().mockResolvedValue([
+        {
+          id: 1,
+          title: 'CAJITA KIDS',
+          description: null,
+          badge: 'Paquete',
+          price: 200,
+          active: true,
+          startDate: null,
+          endDate: null,
+        },
+      ]),
       setActive: jest.fn().mockResolvedValue(undefined),
     };
     await renderWithProviders(<PromotionsScreen />, makeTestDependencies({ promotionsRepository: repo }));
