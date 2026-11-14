@@ -9,6 +9,10 @@ jest.mock('expo-notifications', () => ({
   getPermissionsAsync: jest.fn(),
   requestPermissionsAsync: jest.fn(),
   addNotificationReceivedListener: jest.fn(),
+  addNotificationResponseReceivedListener: jest.fn(),
+  getLastNotificationResponse: jest.fn(),
+  clearLastNotificationResponse: jest.fn(),
+  getExpoPushTokenAsync: jest.fn(),
   AndroidImportance: { HIGH: 4 },
   AndroidNotificationVisibility: { PRIVATE: 2 },
 }));
@@ -67,5 +71,56 @@ describe('ExpoPushNotifications', () => {
 
     expect(listener).toHaveBeenCalledWith({ title: 'Pedido listo', body: 'Mesa 4', data: { pedidoId: 9 } });
     expect(remove).toHaveBeenCalled();
+  });
+
+  describe('aviso tocado', () => {
+    const response = (data: Record<string, unknown>) => ({
+      notification: { request: { content: { title: 'Pedido listo', body: 'Mesa B01', data } } },
+    });
+
+    it('entrega una sola vez el aviso que abrió la app estando cerrada', () => {
+      mocked.getLastNotificationResponse.mockReturnValue(response({ orderId: 'a1' }) as never);
+      mocked.addNotificationResponseReceivedListener.mockReturnValue({ remove: jest.fn() } as never);
+      const listener = jest.fn();
+
+      new ExpoPushNotifications().onNotificationOpened(listener);
+
+      expect(listener).toHaveBeenCalledWith({
+        title: 'Pedido listo',
+        body: 'Mesa B01',
+        data: { orderId: 'a1' },
+      });
+      expect(mocked.clearLastNotificationResponse).toHaveBeenCalledTimes(1);
+    });
+
+    it('avisa de cada aviso que se toca y permite desuscribirse', () => {
+      mocked.getLastNotificationResponse.mockReturnValue(null);
+      const remove = jest.fn();
+      mocked.addNotificationResponseReceivedListener.mockReturnValue({ remove } as never);
+      const listener = jest.fn();
+
+      const unsubscribe = new ExpoPushNotifications().onNotificationOpened(listener);
+      const [emit] = mocked.addNotificationResponseReceivedListener.mock.calls[0];
+      emit(response({ orderId: 'b2' }) as never);
+      unsubscribe();
+
+      expect(listener).toHaveBeenCalledTimes(1);
+      expect(listener).toHaveBeenCalledWith(expect.objectContaining({ data: { orderId: 'b2' } }));
+      expect(remove).toHaveBeenCalledTimes(1);
+    });
+  });
+
+  describe('token del teléfono', () => {
+    it('devuelve el token de Expo', async () => {
+      mocked.getExpoPushTokenAsync.mockResolvedValue({ type: 'expo', data: 'ExponentPushToken[abc]' });
+
+      await expect(new ExpoPushNotifications().getDeviceToken()).resolves.toBe('ExponentPushToken[abc]');
+    });
+
+    it('sin servicio de avisos devuelve null en vez de fallar', async () => {
+      mocked.getExpoPushTokenAsync.mockRejectedValue(new Error('SERVICE_NOT_AVAILABLE'));
+
+      await expect(new ExpoPushNotifications().getDeviceToken()).resolves.toBeNull();
+    });
   });
 });
