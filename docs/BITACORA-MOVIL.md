@@ -349,3 +349,19 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
   motivo de 5 a 300 caracteres (mismo mensaje que el API). Mismas rutas que la web.
 - **Decisión:** en la móvil solo la bandeja de pendientes; el historial de facturas emitidas y su
   descarga se quedan en la web.
+
+## B-026 · 2026-11-13 · API y web: despliegue, seguridad y Fase 4 [api] [web] [bd] [decision]
+
+- **Despliegue (no ejecutado):** `main` tenía el hotfix #136 que `develop` no; el PR #135 ya no entraba
+  limpio, así que API #150 lo trae con los conflictos resueltos (DM-20). Plan completo en
+  `docs/despliegue-produccion.md` del API (#151): faltan en producción las tablas `consentimientos`,
+  `refresh_tokens` y `solicitudes_factura` (comprobado en solo lectura).
+- **Seguridad:** API #152 corrige 1 crítica (`proxy-addr`) y 5 altas sin cambios mayores; la web dejó
+  `xlsx`. Checkout web con sesión (web #20): sin token, el pago en línea no funcionaba.
+- **Fase 4:** OTP solo diseño (API #153); `GET/PUT /sitio` para las imágenes de la landing y el
+  teléfono/WhatsApp (API #154; falta la pantalla web, al final del plan); accesibilidad usable sobre el
+  menú lateral en móvil (web #22: dos versiones de la capa de Radix no se coordinaban); índice fijo en
+  la carta y menú de categorías en la del admin (web #23, #24). Paginación en servidor descartada por
+  medición (127 KB / 7,9 KB gzip; DM-19).
+- **Fase 5 y 7:** scripts de datos de prueba con reversa (API #149); carta nueva (143 platillos) y
+  paquetes como promociones listos en `_entrada/importacion-carta/`, probados en local, sin aplicar.
