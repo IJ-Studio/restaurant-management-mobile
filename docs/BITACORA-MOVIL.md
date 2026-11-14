@@ -365,3 +365,15 @@ No se puede adelantar: la aprobación del dueño en las pruebas de aceptación y
   medición (127 KB / 7,9 KB gzip; DM-19).
 - **Fase 5 y 7:** scripts de datos de prueba con reversa (API #149); carta nueva (143 platillos) y
   paquetes como promociones listos en `_entrada/importacion-carta/`, probados en local, sin aplicar.
+
+## B-027 · 2026-11-13 · Paridad en la web y la hora del restaurante [web] [api] [decision]
+
+- La web adopta lo que ya hacía la móvil: cuentas en servicio con cobro por adelantado (web #26), notas
+  por platillo y generales en sala (#27) y en cocina (#28), corte con diferencia en vivo (#29),
+  cancelar un pedido con motivo en los primeros 2 minutos (#30), incidencias de cocina (#31) y
+  reservaciones de hoy para el mesero (#32).
+- **Hallazgo (afecta también a la app):** el API calculaba «hoy» con la medianoche del servidor (UTC en
+  Render). Desde las 18:00 de Huejutla desaparecían de caja y cocina los pedidos abiertos antes, las
+  incidencias y mermas del día se reiniciaban y la gráfica de ventas por hora salía corrida 6 horas.
+  Corregido en API #155 y #156 con la zona del restaurante (DM-22). `/pedidos/admin/recent` además
+  limitaba filas de platillos en vez de pedidos.
