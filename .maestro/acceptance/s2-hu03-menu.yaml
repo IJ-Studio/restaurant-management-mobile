@@ -11,7 +11,7 @@ tags: [sprint-2, hu-03]
 - waitForAnimationToEnd
 - inputText: "Guacamole"
 - hideKeyboard
-- assertVisible: ".*Guacamole.*"
+- assertVisible: "Guacamole con totopos"
 - tapOn: "Buscar platillo"
 - eraseText
 - waitForAnimationToEnd

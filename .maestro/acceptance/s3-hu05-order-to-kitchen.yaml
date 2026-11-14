@@ -11,7 +11,7 @@ tags: [sprint-3, hu-05]
 - waitForAnimationToEnd
 - inputText: "Guacamole"
 - hideKeyboard
-- tapOn: ".*Guacamole.*"
+- tapOn: "Guacamole con totopos"
 - tapOn: "Agregar al pedido"
 - tapOn: ".*Pedido de la mesa.*"
 - tapOn: ".*A01.*"
