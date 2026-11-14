@@ -96,3 +96,17 @@ describe('certificate pinning', () => {
     });
   });
 });
+
+describe('builds de EAS', () => {
+  // Expo 58 cambia el `fetch` global por `expo/fetch`, que no pasa por el cliente OkHttp de React
+  // Native: el pinning solo cubre las peticiones si el build usa el fetch de RN (visto en el Pixel).
+  it('todos los perfiles usan el fetch de React Native', () => {
+    const eas = require('../../../../eas.json') as {
+      build: Record<string, { env?: Record<string, string>; extends?: string }>;
+    };
+    const sinFetchRn = Object.entries(eas.build)
+      .filter(([, perfil]) => !perfil.extends && perfil.env?.EXPO_PUBLIC_USE_RN_FETCH !== '1')
+      .map(([nombre]) => nombre);
+    expect(sinFetchRn).toEqual([]);
+  });
+});
