@@ -8,7 +8,7 @@ grep -n '\[rubrica\]' docs/BITACORA-MOVIL.md
 ```
 
 Etiquetas: `[plan]` `[rubrica]` `[gh-project]` `[decision]` `[api]` `[movil]` `[web]` `[bd]` `[entorno]`
-`[equipo]` `[pruebas]` `[rendimiento]` `[seguridad]` `[pagos]` `[facturacion]`.
+`[equipo]` `[pruebas]` `[rendimiento]` `[seguridad]` `[pagos]` `[facturacion]` `[validaciones]` `[datos]`.
 
 ---
 
@@ -527,3 +527,42 @@ versionado `_entrada/reportes/pruebas-division-facturacion-pagos.md`):
   - Comparar el SHA-1 de la llave de subida de EAS con Play Console.
   - Actualizar en Play la declaración de seguridad de datos: el cobro con tarjeta de Stripe agrega «Información de pago del usuario».
 - **Registro de errores** (`docs/pruebas-caja-negra.md`, en #482): Release lleno con la Tanda 1, CN-22 y E-06 a E-11.
+
+
+## B-038 · 2026-11-14 · Escritura accidental en producción y protección [api] [entorno] [datos] [decision]
+
+- Un API en :10000 lanzado fuera de `local.sh` (con el `.env` de producción) recibió un `curl POST /reservations` de prueba: se creó la reserva `76401b66…` en producción (la cancela Irving). Fue la única escritura.
+- **Decisión:** el `.env` del API apunta a la base local; las URL de producción viven en `.env.production.local` (sin cargar, solo para `pg_dump` y lecturas). API #169: con `NODE_ENV=development` el API no arranca contra Supabase salvo `ALLOW_PROD_DB=1`. Motivo: que un arranque local no pueda volver a escribir en producción.
+
+## B-039 · 2026-11-15 · Bugs bloqueantes del sitio público: pedido 401 y reserva rechazada [web] [api] [validaciones] [pruebas]
+
+- **Pedido (a):** la ficha del platillo llamaba `POST /pedidos/mesa` sin token; el API lo exige desde DT-04 (en producción desde el release #134 del 12-nov). Roto también en producción. Web #46: `api.post` con Bearer y `mensajeDeError` (un texto por tipo de fallo).
+- **Reserva (b):** el plano ofrecía mesas que la creación rechazaba (ignoraba comensales, no veía reservas en curso, leía la hora en UTC). API #170 + web #47: misma regla en plano, disponibilidad y creación; transacción con bloqueo (dos a la vez → 201 y 409).
+- **Por qué no se detectaron:** las e2e simulaban el API con `page.route`, que aceptaba el POST sin token y no tenía mesas incompatibles. Ahora hay pruebas contra el API real (`tests/integracion/publico.spec.ts`, `src/integracion/publico.int-spec.ts`).
+
+## B-040 · 2026-11-15 · Plan de validaciones y reglas (DV-01 a DV-15) [api] [web] [validaciones] [decision]
+
+- Plan en `docs/validaciones-publicas.md` del API (#174). Decisiones con motivo:
+  - DV-01 códigos (400 validación, 409 conflicto, 404 lo ajeno) y DV-02 el mensaje lo escribe el servidor.
+  - DV-03 nombre con letras, espacio, guion y apóstrofo (la regla anterior rechazaba «María de los Ángeles» y «Lynn»).
+  - DV-05 lada elegible y E.164 **sin migrar** los datos.
+  - DV-06 horas cada 30 min y horizonte de 60 días (regla nueva).
+  - DV-07 «Sin disponibilidad» = ninguna mesa apta libre en toda la duración.
+  - DV-13 nada se oculta: lo no disponible se ve bloqueado con su motivo.
+  - DV-15 guardas automáticas: DTO sin límite (API) y campo sin `maxLength` (web) hacen fallar las pruebas.
+- Implementado: API #175 (`GET /reservations/horas`), #176 (reglas de campo comunes, publicadas en `/reglas.campos`); web #48 (días y horas bloqueados, lada, límites).
+
+## B-041 · 2026-11-15 · Entradas inválidas, acceso entre cuentas y pago [api] [web] [validaciones] [seguridad] [pagos] [pruebas]
+
+- Batería que lee rutas, roles y DTO de los metadatos de Nest: 224 de 4 707 casos daban 500 → 0 de 4 689 (API #172, el filtro común convierte los errores de datos de Postgres y Stripe en 4xx).
+- IDOR: un cliente no puede leer, cambiar, pagar ni facturar lo de otro (19/19). La carta pública ya no expone `precioCosto` (#173).
+- Horas en UTC en el corte y la demanda (#171).
+- **Pago:** pagar con tarjeta nueva sin guardarla fallaba siempre (también en producción): el `CardElement` se desmontaba antes de confirmar. Web #49. Stripe test: aprobada, fondos insuficientes, 3D Secure y con factura (4/4).
+- Informe con capturas: `_entrada/reportes/validaciones-publicas-y-operativas.md` (no versionado).
+
+## B-042 · 2026-11-15 · Limpieza de datos de prueba en producción, preparada [datos] [bd] [decision]
+
+- Clasificación por tabla y scripts en `_entrada/limpieza-produccion/` (no versionado): `pg_dump` previo, copia de lo que se borra a `respaldo_limpieza_<fecha>` en la misma transacción, simulación por defecto y reversa.
+- **Decisión:** se conservan carta, paquetes, mesas, horarios, configuración, textos y catálogos, y 3 cuentas. Lo dudoso (empleados, nómina, inventario, proveedores, cupones, ventas, auditoría) se conserva hasta que Irving lo confirme.
+- Probado de ida y vuelta en una copia local: la reversa deja las 30 tablas afectadas idénticas (md5). No se ejecutó en producción.
+
