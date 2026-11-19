@@ -29,16 +29,17 @@ function translate(error: unknown): unknown {
 export class ProfileRepositoryImpl implements ProfileRepository {
   constructor(private readonly remote: ProfileRemoteDataSource) {}
 
-  async get(userId: string): Promise<UserProfile> {
-    return toProfile(await this.remote.get(userId));
+  // El perfil sale del token (rutas ARCO); `userId` solo lo usa el cambio de contraseña.
+  async get(_userId: string): Promise<UserProfile> {
+    return toProfile(await this.remote.get());
   }
 
   async update(
-    userId: string,
+    _userId: string,
     changes: { name: string; lastname: string; phone?: string },
   ): Promise<UserProfile> {
     try {
-      return toProfile(await this.remote.update(userId, changes));
+      return toProfile(await this.remote.update(changes));
     } catch (error) {
       throw translate(error);
     }

@@ -1,5 +1,6 @@
 import * as Sentry from '@sentry/react-native';
 
+import { errorReports } from './errorReports';
 import { scrubBreadcrumb, scrubEvent } from './scrub';
 
 const dsn = process.env.EXPO_PUBLIC_SENTRY_DSN;
@@ -12,7 +13,8 @@ export function initSentry(): void {
     dsn,
     environment: __DEV__ ? 'development' : 'production',
     sendDefaultPii: false,
-    beforeSend: scrubEvent,
+    // Quien apagó «Reportes de errores» en Privacidad no envía nada.
+    beforeSend: (event) => (errorReports.isEnabled() ? scrubEvent(event) : null),
     beforeBreadcrumb: scrubBreadcrumb,
   });
 }

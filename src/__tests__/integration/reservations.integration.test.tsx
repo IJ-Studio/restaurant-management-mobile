@@ -16,7 +16,7 @@ describe('Integración: reservaciones con datos de prueba', () => {
 
     expect(await screen.findByText('Cliente Prueba Uno')).toBeOnTheScreen();
     expect(screen.getByText('4 personas · Mesa 3 · Confirmada')).toBeOnTheScreen();
-    expect(screen.getByText('2 personas · Sin mesa · Por confirmar')).toBeOnTheScreen();
+    expect(screen.getByText('2 personas · Sin mesa · Pendiente')).toBeOnTheScreen();
     expect(screen.queryByText('Cliente Cancelado')).toBeNull();
 
     const names = screen.getAllByText(/^Cliente Prueba/).map((node) => node.props.children);

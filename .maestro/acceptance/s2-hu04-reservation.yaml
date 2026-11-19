@@ -1,0 +1,31 @@
+# HU-04 · CA-1 y CA-2: una reservación inválida no se envía y dice por qué.
+# La reservación válida (fecha y hora en el selector nativo) se registra a mano en la matriz.
+appId: ${APP_ID || 'com.ijstudio.restaurantmanagement'}
+tags: [sprint-2, hu-04]
+---
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: mesero@prueba.local
+- tapOn: "Reservaciones"
+- tapOn: "Nueva reservación"
+- scrollUntilVisible:
+    element: "Guardar reservación"
+- tapOn: "Guardar reservación"
+- scrollUntilVisible:
+    element: ".*Escribe el nombre del cliente.*"
+    direction: UP
+- tapOn: "Nombre del cliente"
+- waitForAnimationToEnd
+- inputText: "Cliente Maestro"
+- tapOn: "Teléfono"
+- waitForAnimationToEnd
+- inputText: "12"
+- hideKeyboard
+- scrollUntilVisible:
+    element: "Guardar reservación"
+- tapOn: "Guardar reservación"
+- scrollUntilVisible:
+    element: ".*Escribe un teléfono válido.*"
+    direction: UP
+- takeScreenshot: reports/maestro/s2-hu04-validacion

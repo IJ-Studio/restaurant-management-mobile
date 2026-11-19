@@ -49,7 +49,7 @@ revisan códigos de estado: reciben un `AppError` con un mensaje listo para most
 
 | Respuesta | Qué hace la app |
 |---|---|
-| 401 en una petición **con** token | La sesión venció o se revocó: llama al manejador que registra `createDependencies()`, que borra la sesión de SecureStore, limpia el pedido en curso y la caché de React Query, y vuelve al Login con el aviso "Tu sesión expiró". |
+| 401 en una petición **con** token | Primero intenta renovar la sesión con el token de refresco (`POST /auth/refresh`) y repite la petición una vez; varias peticiones rechazadas a la vez comparten una sola renovación. Si el API ya no acepta el refresco, llama al manejador que registra `createDependencies()`: borra la sesión de SecureStore, limpia el pedido en curso y la caché de React Query, y vuelve al Login con el aviso "Tu sesión expiró". Si la renovación falla por falta de red, la petición falla pero la sesión se conserva. |
 | 401 **sin** token | Es el login con credenciales malas; `AuthRepositoryImpl` pone el mensaje genérico. |
 | 403 | Respeta el mensaje propio del API; el "Forbidden resource" del `RolesGuard` se cambia por "No tienes permiso para realizar esta acción". |
 | 5xx | Mensaje genérico: nunca se muestran detalles internos del servidor. |
@@ -88,6 +88,19 @@ render(
 );
 ```
 
+## Patrones de diseño
+
+| Patrón | Dónde | Para qué |
+|---|---|---|
+| **Singleton** | `src/core/http/httpClient.ts` (`export const httpClient`) | Un solo cliente HTTP: el token, el refresco de sesión y la traducción de errores viven en un lugar |
+| **Factory** | `src/core/di/dependencies.ts` (`createDependencies`), `src/features/auth/presentation/store/sessionStore.ts` (`createSessionStore`) | Arma el grafo de objetos de la app; las pruebas piden otro grafo con dobles |
+| **Dependency Injection** | `src/core/di/DependenciesProvider.tsx`, `useDependencies()` | Las pantallas reciben los casos de uso; las pruebas los sustituyen sin tocar componentes |
+| **Repository** | `src/features/*/data/repositories/*RepositoryImpl.ts` (p. ej. `OrderRepositoryImpl`, `ProfileRepositoryImpl`) | El dominio pide datos por una interfaz (`domain/repositories`) sin saber del API |
+| **Adapter** | `src/features/notifications/data/gateways/ExpoPushNotifications.ts`, `src/features/orders/data/gateways/SseOrderEvents.ts` | Adaptan `expo-notifications` y el flujo SSE del API a puertos del dominio (`PushNotifications`, `OrderEventsSource`) |
+| **Observer** | `OrderEventsSource.subscribe` + `useOrderEvents` (pedidos en tiempo real), `PushNotifications.onNotification` / `onNotificationOpened` | Quien se suscribe reacciona a cada cambio sin sondear; devuelven cómo desuscribirse |
+| **Facade** | `src/features/orders/domain/usecases/SendOrderToKitchenUseCase.ts` | Un solo método para un proceso de varios pasos (validar, crear el pedido de mesa y mandarlo a cocina) |
+| **MVVM** | `src/features/*/presentation/viewmodels/use*.ts` | La pantalla solo pinta; el ViewModel tiene el estado y las acciones |
+
 ## Manejo de estado
 
 | Herramienta | Para qué | Ejemplo |
@@ -117,6 +130,38 @@ render(
 ## Seguridad
 
 - `httpClient` rechaza URLs sin HTTPS fuera de desarrollo (MASVS-NETWORK).
-- El JWT vive solo en `expo-secure-store` (HU-01) y solo `httpClient` lo agrega a los headers.
+- **Certificate pinning** (`src/core/http/certificatePinning.ts`): para el API de producción la app solo
+  acepta certificados emitidos bajo las autoridades fijadas, aunque el teléfono confíe en otras (un proxy
+  instalado en la red, por ejemplo). Detalle en [Certificate pinning](#certificate-pinning).
+- El JWT y el token de refresco viven solo en `expo-secure-store` (HU-01) y solo `httpClient` agrega el JWT a los headers.
+- El token de refresco es de un solo uso: cada renovación entrega otro, y al cerrar sesión se manda al API para que lo revoque.
 - Sentry filtra tokens, correos y datos personales (`src/core/monitoring/scrub.ts`).
 - En `EXPO_PUBLIC_*` nunca va un secreto: termina en el bundle del APK.
+
+### Certificate pinning
+
+| Aspecto | Decisión |
+|---|---|
+| Librería | `react-native-ssl-public-key-pinning`: en Android configura el `CertificatePinner` de OkHttp, el cliente HTTP de React Native; en iOS usa TrustKit |
+| Qué se fija | El SHA-256 en base64 de la clave pública (SPKI) de las autoridades raíz, no el certificado del servidor, que rota cada pocas semanas |
+| Pins | GTS Root R4 (cadena actual) y tres de respaldo: GTS Root R1, ISRG Root X1 e ISRG Root X2, las otras autoridades del proveedor de hosting |
+| Host | Solo `api-restaurant-management.onrender.com`. El API local y los túneles de prueba no se fijan |
+| Cuándo se activa | Al cargar `httpClient`. Ninguna petición sale antes de que termine (`ready`) |
+| Si el certificado no coincide | La petición falla, la pantalla dice «La conexión no es segura…» y se reporta a Sentry solo el nombre del host |
+| Caducidad | `expirationDate`: en esa fecha el pinning se apaga, para que una versión vieja no se quede sin red si cambian las autoridades. Antes hay que publicar una versión con pins vigentes |
+
+Para recalcular un pin a partir del certificado de una autoridad:
+
+```bash
+openssl x509 -in raiz.pem -pubkey -noout | openssl pkey -pubin -outform DER \
+  | openssl dgst -sha256 -binary | base64
+```
+
+Para ver la cadena que entrega hoy el servidor:
+
+```bash
+openssl s_client -connect api-restaurant-management.onrender.com:443 -showcerts </dev/null
+```
+
+En Expo Go y en Jest el módulo nativo no existe y el pinning no se activa; solo funciona en un build
+propio (depuración o release).

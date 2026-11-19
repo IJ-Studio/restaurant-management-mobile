@@ -1,6 +1,6 @@
 import type { HttpClient } from '../../../../core/http/httpClient';
 
-/** GET/PATCH /users/:id (sin contraseña). */
+/** GET/PUT /profile (sin contraseña). */
 export interface UserDto {
   id: number;
   name: string;
@@ -13,12 +13,14 @@ export interface UserDto {
 export class ProfileRemoteDataSource {
   constructor(private readonly http: HttpClient) {}
 
-  get(userId: string): Promise<UserDto> {
-    return this.http.get<UserDto>(`users/${encodeURIComponent(userId)}`);
+  /** Acceso (ARCO): el API toma al usuario del token. */
+  get(): Promise<UserDto> {
+    return this.http.get<UserDto>('profile');
   }
 
-  update(userId: string, body: { name: string; lastname: string; phone?: string }): Promise<UserDto> {
-    return this.http.patch<UserDto>(`users/${encodeURIComponent(userId)}`, body);
+  /** Rectificación (ARCO). */
+  update(body: { name: string; lastname: string; phone?: string }): Promise<UserDto> {
+    return this.http.put<UserDto>('profile', body);
   }
 
   async changePassword(userId: string, currentPassword: string, newPassword: string): Promise<void> {

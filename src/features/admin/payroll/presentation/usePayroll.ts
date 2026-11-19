@@ -10,7 +10,7 @@ import { currentWeek, type MovementType, type Period } from '../domain/Payroll';
 export function usePayroll(initial: Period = currentWeek()) {
   const { payrollRepository, addPayrollMovementUseCase, correctPayrollMovementUseCase } = useDependencies();
   const queryClient = useQueryClient();
-  const [period] = useState(initial);
+  const [period, setPeriod] = useState(initial);
   const [message, setMessage] = useState<{ tone: 'success' | 'danger'; text: string } | null>(null);
   const key = ['payroll', period.start, period.end] as const;
 
@@ -59,6 +59,7 @@ export function usePayroll(initial: Period = currentWeek()) {
 
   return {
     period,
+    setPeriod,
     summary: summary.data ?? [],
     movements: movements.data ?? [],
     isLoading: summary.isLoading || movements.isLoading,

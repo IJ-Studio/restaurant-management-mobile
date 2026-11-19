@@ -1,0 +1,17 @@
+# HU-08 · CA: el administrador ve los indicadores del día; otro rol no puede abrir el dashboard.
+appId: ${APP_ID || 'com.ijstudio.restaurantmanagement'}
+tags: [sprint-4, hu-08]
+---
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: admin@prueba.local
+- tapOn: "Dashboard"
+- assertVisible: "Resumen del día"
+- takeScreenshot: reports/maestro/s4-hu08-dashboard
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: cajero@prueba.local
+- assertNotVisible: "Dashboard"
+- assertNotVisible: "Resumen del día"

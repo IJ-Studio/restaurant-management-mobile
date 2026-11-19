@@ -1,3 +1,5 @@
+import { toIsoTimestamp } from './apiDate';
+
 const DATE_TIME = new Intl.DateTimeFormat('es-MX', {
   weekday: 'short',
   day: 'numeric',
@@ -8,17 +10,22 @@ const DATE_TIME = new Intl.DateTimeFormat('es-MX', {
 const DATE = new Intl.DateTimeFormat('es-MX', { weekday: 'long', day: 'numeric', month: 'long' });
 const TIME = new Intl.DateTimeFormat('es-MX', { hour: '2-digit', minute: '2-digit' });
 
+// Las fechas en texto pueden venir como las imprime Postgres; Hermes no las entiende y `format` lanza
+// RangeError, que cierra la pantalla (Privacidad, Facturas). Se normalizan aquí una sola vez.
+const toDate = (value: Date | string) =>
+  typeof value === 'string' ? new Date(toIsoTimestamp(value)) : value;
+
 /** "lun, 20 oct, 08:00 p.m." en la zona horaria del dispositivo. */
 export function formatDateTime(value: Date | string): string {
-  return DATE_TIME.format(new Date(value));
+  return DATE_TIME.format(toDate(value));
 }
 
 export function formatDate(value: Date | string): string {
-  return DATE.format(new Date(value));
+  return DATE.format(toDate(value));
 }
 
 export function formatTime(value: Date | string): string {
-  return TIME.format(new Date(value));
+  return TIME.format(toDate(value));
 }
 
 const DAY = new Intl.DateTimeFormat('es-MX', { day: 'numeric' });
@@ -26,10 +33,10 @@ const MONTH = new Intl.DateTimeFormat('es-MX', { month: 'short' });
 
 /** Día del mes ("21"), para el bloque de fecha de una tarjeta. */
 export function formatDay(value: Date | string): string {
-  return DAY.format(new Date(value));
+  return DAY.format(toDate(value));
 }
 
 /** Mes abreviado sin punto ("oct"). */
 export function formatMonthShort(value: Date | string): string {
-  return MONTH.format(new Date(value)).replace('.', '');
+  return MONTH.format(toDate(value)).replace('.', '');
 }

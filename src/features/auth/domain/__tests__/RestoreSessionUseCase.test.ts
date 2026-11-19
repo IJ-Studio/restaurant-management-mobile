@@ -19,4 +19,12 @@ describe('RestoreSessionUseCase', () => {
     await expect(new RestoreSessionUseCase(storage, () => NOW).execute()).resolves.toBeNull();
     expect(storage.clear).toHaveBeenCalled();
   });
+
+  it('conserva una sesión vencida si tiene token de refresco: se renueva en la primera petición', async () => {
+    const session = makeSession({ expiresAt: NOW - 1, refreshToken: 'refresco-1' });
+    const storage = makeStorage(session);
+
+    await expect(new RestoreSessionUseCase(storage, () => NOW).execute()).resolves.toEqual(session);
+    expect(storage.clear).not.toHaveBeenCalled();
+  });
 });

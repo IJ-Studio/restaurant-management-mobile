@@ -45,8 +45,20 @@ function StepButton({ symbol, label, onPress }: { symbol: string; label: string;
 }
 
 export function NewReservationScreen({ navigation }: Props) {
-  const { form, minimumDate, update, changePartySize, fieldErrors, submit, isSubmitting, errorMessage } =
-    useReservationForm((result) => navigation.popTo('ReservationsList', { notice: result.message }));
+  const {
+    form,
+    minimumDate,
+    update,
+    changePartySize,
+    fieldErrors,
+    submit,
+    isSubmitting,
+    errorMessage,
+    freeTables,
+    tablesLoading,
+    tableId,
+    selectTable,
+  } = useReservationForm((result) => navigation.popTo('ReservationsList', { notice: result.message }));
 
   return (
     <KeyboardAvoidingView style={styles.container} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
@@ -101,6 +113,28 @@ export function NewReservationScreen({ navigation }: Props) {
               <StepButton symbol="+" label="Más personas" onPress={() => changePartySize(1)} />
             </View>
           </Field>
+          {form.dateTime && (
+            <Field label="Mesa">
+              <View style={styles.chips} accessibilityRole="radiogroup">
+                <Chip
+                  label="Asignar automáticamente"
+                  selected={tableId === undefined}
+                  onPress={() => selectTable(undefined)}
+                />
+                {freeTables.map((table) => (
+                  <Chip
+                    key={table.id}
+                    label={`Mesa ${table.number} · ${table.capacity} lugares`}
+                    selected={tableId === table.id}
+                    onPress={() => selectTable(table.id)}
+                  />
+                ))}
+              </View>
+              {!tablesLoading && freeTables.length === 0 && (
+                <Text style={styles.hint}>No hay mesas libres con ese lugar a esa hora.</Text>
+              )}
+            </Field>
+          )}
           <Field label="Canal">
             <View style={styles.chips} accessibilityRole="radiogroup">
               {CHANNELS.map((channel) => (
@@ -145,6 +179,7 @@ export function NewReservationScreen({ navigation }: Props) {
 }
 
 const styles = StyleSheet.create({
+  hint: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs },
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: spacing.xxxl },
   section: {

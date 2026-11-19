@@ -7,6 +7,8 @@ function makePort(current: PermissionState, afterRequest?: PermissionState): jes
     getPermission: jest.fn().mockResolvedValue(current),
     requestPermission: jest.fn().mockResolvedValue(afterRequest ?? current),
     onNotification: jest.fn(),
+    onNotificationOpened: jest.fn(),
+    getDeviceToken: jest.fn().mockResolvedValue(null),
   };
 }
 
@@ -28,6 +30,12 @@ describe('EnableNotificationsUseCase', () => {
     const port = makePort({ status: 'granted', canAskAgain: true });
     await new EnableNotificationsUseCase(port).execute();
     expect(port.requestPermission).not.toHaveBeenCalled();
+  });
+
+  it('en Android 13+ una instalación nueva llega como denied con canAskAgain: sí pregunta', async () => {
+    const port = makePort({ status: 'denied', canAskAgain: true }, { status: 'granted', canAskAgain: true });
+    await new EnableNotificationsUseCase(port).execute();
+    expect(port.requestPermission).toHaveBeenCalled();
   });
 
   it('si se negó, no insiste y devuelve el estado (para ofrecer Ajustes)', async () => {

@@ -11,7 +11,8 @@ que hace el código de la app (`develop`). Lo marcado con **CONFIRMAR** lo decid
 | Recurso web para eliminar la cuenta (Seguridad de los datos → Eliminación de datos) | `https://el-quijote.vercel.app/eliminar-cuenta` |
 
 Las dos páginas son de servidor (HTML sin sesión) y viven en el repo web. Si la web cambia de dominio,
-actualiza estas URL y `EXPO_PUBLIC_WEB_URL` (la usa Perfil → «Aviso de privacidad» / «Eliminar cuenta»).
+actualiza estas URL y `EXPO_PUBLIC_WEB_URL` (la usan Perfil → Privacidad, para el aviso completo, y Privacidad → Eliminar mi cuenta, para el recurso web).
+La eliminación también se hace dentro de la app, con la contraseña: ver [`privacidad-arco.md`](privacidad-arco.md).
 
 ## Preguntas generales
 

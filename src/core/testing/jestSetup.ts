@@ -12,3 +12,15 @@ jest.mock('@expo/vector-icons/Ionicons', () => {
     default: ({ name }: { name: string }) => createElement(View, { testID: `icon-${name}` }),
   };
 });
+
+// El SDK de Stripe necesita su módulo nativo: en Jest se usa el mock oficial de la librería.
+jest.mock('@stripe/stripe-react-native', () =>
+  jest.requireActual('@stripe/stripe-react-native/jest/mock.js'),
+);
+// Rutas internas que importa StripePaymentGateway: el mismo mock.
+jest.mock('@stripe/stripe-react-native/lib/module/functions', () =>
+  jest.requireMock('@stripe/stripe-react-native'),
+);
+jest.mock('@stripe/stripe-react-native/lib/module/components/StripeProvider', () =>
+  jest.requireMock('@stripe/stripe-react-native'),
+);

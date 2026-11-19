@@ -24,6 +24,12 @@ export interface CreateReservationRequestDto {
   ocasion?: string;
   peticionesEspeciales?: string;
   canal: string;
+  mesaId?: number;
+}
+
+/** Respuesta de GET /reservations/availability. */
+export interface AvailabilityDto {
+  mesasDisponibles: { id: number; numero: string; capacidad: number }[];
 }
 
 export interface CreateReservationResponseDto extends ReservationDto {

@@ -55,6 +55,14 @@ describe('toSession', () => {
     expect(() => toSession(dto({}, ''))).toThrow('Respuesta de inicio de sesión inválida.');
   });
 
+  it('guarda el token de refresco cuando el API lo entrega', () => {
+    expect(toSession({ ...dto(), refreshToken: 'refresco-1' }).refreshToken).toBe('refresco-1');
+  });
+
+  it('con un API anterior (sin refresco) la sesión no lleva ese campo', () => {
+    expect(toSession(dto())).not.toHaveProperty('refreshToken');
+  });
+
   it('usa una hora de vigencia si el token no trae exp', () => {
     expect(toSession(dto({}, jwt({ id: '7' })), 1000).expiresAt).toBe(1000 + 60 * 60 * 1000);
   });

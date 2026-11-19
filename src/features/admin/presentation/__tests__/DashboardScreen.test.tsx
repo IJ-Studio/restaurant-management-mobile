@@ -106,6 +106,22 @@ describe('DashboardScreen', () => {
     expect(await screen.findByLabelText('Ventas del día, $1,250.50')).toBeOnTheScreen();
   });
 
+  it('con el servidor caído (5xx) muestra el aviso sin detalles internos y se recupera al reintentar', async () => {
+    const execute = jest
+      .fn()
+      .mockRejectedValueOnce(
+        new AppError('server', 'El servidor tuvo un problema. Inténtalo de nuevo en unos minutos.', 503),
+      )
+      .mockResolvedValue(makeDashboardSummary());
+    await renderDashboard(execute);
+
+    expect(await screen.findByRole('alert')).toHaveTextContent(
+      'El servidor tuvo un problema. Inténtalo de nuevo en unos minutos.',
+    );
+    await fireEvent.press(screen.getByRole('button', { name: 'Reintentar' }));
+    expect(await screen.findByLabelText('Ventas del día, $1,250.50')).toBeOnTheScreen();
+  });
+
   it('un error inesperado usa un mensaje genérico', async () => {
     await renderDashboard(jest.fn().mockRejectedValue(new Error('boom')));
     expect(await screen.findByRole('alert')).toHaveTextContent('No se pudo cargar el resumen del día.');

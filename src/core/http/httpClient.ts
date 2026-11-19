@@ -7,10 +7,22 @@ import {
   SESSION_EXPIRED_MESSAGE,
   UNEXPECTED_MESSAGE,
 } from '../errors/AppError';
+import {
+  consumePinningRejection,
+  initCertificatePinning,
+  UNTRUSTED_SERVER_MESSAGE,
+} from './certificatePinning';
 
 type Method = 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
 type TokenProvider = () => string | null;
 type UnauthorizedHandler = () => void;
+/** Renueva la sesión: `false` si el API ya no la acepta; lanza un AppError si no hay red. */
+type SessionRefresher = () => Promise<boolean>;
+
+export interface RequestOptions {
+  /** Sin token y sin manejo de sesión: para el refresco, que no debe renovarse a sí mismo. */
+  anonymous?: boolean;
+}
 
 export interface HttpClientOptions {
   baseUrl: string;
@@ -18,6 +30,10 @@ export interface HttpClientOptions {
   /** En producción solo se permite HTTPS (MASVS-NETWORK). */
   allowInsecure: boolean;
   fetchFn?: typeof fetch;
+  /** Ninguna petición sale antes de que termine (p. ej. la activación del certificate pinning). */
+  ready?: Promise<unknown>;
+  /** true si la última falla de red fue un certificado rechazado por el pinning. */
+  untrustedServer?: () => boolean;
 }
 
 /**
@@ -29,6 +45,8 @@ export interface HttpClientOptions {
 export class HttpClient {
   private tokenProvider: TokenProvider = () => null;
   private unauthorizedHandler: UnauthorizedHandler = () => undefined;
+  private sessionRefresher: SessionRefresher | null = null;
+  private refreshing: Promise<boolean> | null = null;
   private readonly baseUrl: string;
 
   constructor(private readonly options: HttpClientOptions) {
@@ -45,12 +63,17 @@ export class HttpClient {
     this.unauthorizedHandler = handler;
   }
 
+  /** Ante un 401 con token, la sesión intenta renovarse una vez antes de darse por vencida. */
+  setSessionRefresher(refresher: SessionRefresher): void {
+    this.sessionRefresher = refresher;
+  }
+
   get<T>(path: string): Promise<T> {
     return this.request<T>('GET', path);
   }
 
-  post<T>(path: string, body?: unknown): Promise<T> {
-    return this.request<T>('POST', path, body);
+  post<T>(path: string, body?: unknown, options?: RequestOptions): Promise<T> {
+    return this.request<T>('POST', path, body, options);
   }
 
   put<T>(path: string, body?: unknown): Promise<T> {
@@ -61,18 +84,26 @@ export class HttpClient {
     return this.request<T>('PATCH', path, body);
   }
 
-  delete<T>(path: string): Promise<T> {
-    return this.request<T>('DELETE', path);
+  delete<T>(path: string, body?: unknown): Promise<T> {
+    return this.request<T>('DELETE', path, body);
   }
 
-  private async request<T>(method: Method, path: string, body?: unknown): Promise<T> {
+  private async request<T>(
+    method: Method,
+    path: string,
+    body?: unknown,
+    options: RequestOptions = {},
+    isRetry = false,
+  ): Promise<T> {
     const url = this.buildUrl(path);
     const headers: Record<string, string> = { Accept: 'application/json' };
     if (body !== undefined) headers['Content-Type'] = 'application/json';
 
-    const token = this.tokenProvider();
+    const token = options.anonymous ? null : this.tokenProvider();
     if (token) headers.Authorization = `Bearer ${token}`;
 
+    // Antes del temporizador: la espera no cuenta como tiempo de respuesta del servidor.
+    await this.options.ready;
     const controller = new AbortController();
     const timer = setTimeout(() => controller.abort(), this.options.timeoutMs);
     const fetchFn = this.options.fetchFn ?? fetch;
@@ -89,14 +120,32 @@ export class HttpClient {
       if (controller.signal.aborted) {
         throw new AppError('timeout', 'El servidor tardó demasiado en responder.');
       }
+      if (this.options.untrustedServer?.()) throw new AppError('network', UNTRUSTED_SERVER_MESSAGE);
       throw new AppError('network', 'No hay conexión con el servidor.');
     } finally {
       clearTimeout(timer);
     }
 
     const data = await readBody(response);
+    // Token de acceso vencido o servidor reiniciado: se renueva la sesión y la petición se repite una vez.
+    if (response.status === 401 && token && !isRetry && (await this.renewSession(token))) {
+      return this.request<T>(method, path, body, options, true);
+    }
     if (!response.ok) throw this.toAppError(response.status, data, token !== null && token !== '');
     return data as T;
+  }
+
+  /** `true` si hay un token nuevo con el que repetir. Las peticiones simultáneas comparten una sola renovación. */
+  private async renewSession(usedToken: string): Promise<boolean> {
+    if (!this.sessionRefresher) return false;
+    // Otra petición ya renovó (o cerró) la sesión mientras esta viajaba con el token viejo.
+    const current = this.tokenProvider();
+    if (current !== usedToken) return current !== null;
+
+    this.refreshing ??= this.sessionRefresher().finally(() => {
+      this.refreshing = null;
+    });
+    return this.refreshing;
   }
 
   private toAppError(status: number, data: unknown, sentToken: boolean): AppError {
@@ -152,4 +201,6 @@ export const httpClient = new HttpClient({
   baseUrl: env.apiUrl,
   timeoutMs: env.httpTimeoutMs,
   allowInsecure: __DEV__,
+  ready: initCertificatePinning(),
+  untrustedServer: consumePinningRejection,
 });

@@ -72,7 +72,7 @@ describe('Reservaciones', () => {
 
     expect(await screen.findByText('Laura Méndez')).toBeOnTheScreen();
     expect(screen.getByText('4 personas · Mesa 7 · Confirmada')).toBeOnTheScreen();
-    expect(screen.getByText('1 persona · Sin mesa · Por confirmar')).toBeOnTheScreen();
+    expect(screen.getByText('1 persona · Sin mesa · Pendiente')).toBeOnTheScreen();
   });
 
   it('avisa cuando no hay reservaciones y cuando el rol no tiene permiso', async () => {
@@ -105,6 +105,30 @@ describe('Reservaciones', () => {
     expect(deps.createReservationUseCase.execute).not.toHaveBeenCalled();
   });
 
+  it('al elegir fecha y personas ofrece las mesas libres y manda la elegida', async () => {
+    const created = makeReservation({ id: 'nueva', customerName: 'Laura Méndez' });
+    const create = jest
+      .fn()
+      .mockResolvedValue({ reservation: created, requiresConfirmation: false, message: 'Listo' });
+    const freeTables = jest.fn().mockResolvedValue([{ id: 7, number: 'A03', capacity: 4 }]);
+    await renderReservations(
+      makeTestDependencies({
+        listActiveReservationsUseCase: { execute: jest.fn().mockResolvedValue([]) },
+        createReservationUseCase: { execute: create },
+        reservationTables: { freeTables },
+      }),
+    );
+
+    await fireEvent.press(await screen.findByRole('button', { name: 'Nueva reservación' }));
+    await fillValidForm();
+    await fireEvent.press(await screen.findByRole('radio', { name: 'Mesa A03 · 4 lugares' }));
+    expect(screen.getByRole('radio', { name: 'Asignar automáticamente' })).not.toBeChecked();
+    await fireEvent.press(screen.getByRole('button', { name: 'Guardar reservación' }));
+
+    expect(freeTables).toHaveBeenCalledWith(tomorrowAt(20), 2, -360);
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ tableId: 7 }), expect.anything());
+  });
+
   it('crea la reservación y aparece de inmediato en el listado', async () => {
     const created = makeReservation({ id: 'nueva', customerName: 'Laura Méndez' });
     const list = jest.fn().mockResolvedValueOnce([]).mockResolvedValue([created]);
@@ -135,6 +159,8 @@ describe('Reservaciones', () => {
         channel: 'presencial',
         dateTime: tomorrowAt(20),
       }),
+      // Sin respuesta de GET /reglas se valida con las reglas por defecto del servidor.
+      expect.objectContaining({ minAdvanceMin: 60, maxPartySize: 50 }),
     );
     expect(list).toHaveBeenCalledTimes(2);
   });

@@ -63,4 +63,11 @@ export class OrderRemoteDataSource {
   charge(orderId: string, body: ChargeOrderRequestDto): Promise<ChargeOrderResponseDto> {
     return this.http.post<ChargeOrderResponseDto>(`pedidos/${id(orderId)}/cobrar`, body);
   }
+
+  /** POST /pagos/crear-intento: el API calcula el monto y devuelve el `clientSecret` de Stripe. */
+  createCardIntent(orderId: string): Promise<{ clientSecret: string; status: string }> {
+    return this.http.post<{ clientSecret: string; status: string }>('pagos/crear-intento', {
+      ordenId: orderId,
+    });
+  }
 }

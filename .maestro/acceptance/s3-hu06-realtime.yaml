@@ -1,0 +1,29 @@
+# HU-06 · CA: un pedido nuevo y su cambio de estado aparecen sin refrescar.
+# El «otro teléfono» es scripts/api.js, que actúa por el API como lo haría otro miembro del personal.
+appId: ${APP_ID || 'com.ijstudio.restaurantmanagement'}
+tags: [sprint-3, hu-06]
+---
+- runFlow:
+    file: ../subflows/login.yaml
+    env:
+      EMAIL: mesero@prueba.local
+- tapOn: "Pedidos"
+- runScript:
+    file: ../scripts/api.js
+    env:
+      ROLE_EMAIL: mesero@prueba.local
+      ACTION: crear
+- extendedWaitUntil:
+    visible: ".*A04.*"
+    timeout: 10000
+- runScript:
+    file: ../scripts/api.js
+    env:
+      ROLE_EMAIL: cocina@prueba.local
+      ACTION: estatus
+      ORDER_ID: ${output.orderId}
+      ESTATUS: lista
+- extendedWaitUntil:
+    visible: ".*[Ll]ist.*"
+    timeout: 10000
+- takeScreenshot: reports/maestro/s3-hu06-tiempo-real

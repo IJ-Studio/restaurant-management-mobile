@@ -106,6 +106,12 @@ export class OrderRepositoryImpl implements OrderRepository {
   }
 
   /** El monto lo calcula el API con el total guardado; aquí solo viajan método, propina y efectivo. */
+  async createCardIntent(orderId: string): Promise<{ clientSecret: string }> {
+    const { clientSecret } = await this.remote.createCardIntent(orderId);
+    if (!clientSecret) throw new AppError('server', 'No se pudo preparar el cobro con tarjeta.');
+    return { clientSecret };
+  }
+
   async charge(orderId: string, request: ChargeRequest): Promise<ChargeReceipt> {
     try {
       const response = await this.remote.charge(orderId, {

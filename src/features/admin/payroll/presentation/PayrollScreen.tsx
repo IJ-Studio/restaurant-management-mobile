@@ -12,7 +12,14 @@ import { TextField } from '../../../../shared/presentation/components/TextField'
 import { colors, spacing, typography } from '../../../../shared/presentation/theme';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { properName, sentenceCase } from '../../../../shared/utils/formatCase';
-import { CONCEPTS, type MovementType, type PayrollSummary } from '../domain/Payroll';
+import {
+  CONCEPTS,
+  parsePeriod,
+  shiftPeriod,
+  type MovementType,
+  type PayrollSummary,
+  type Period,
+} from '../domain/Payroll';
 import { usePayroll } from './usePayroll';
 
 /** «Ver cálculo»: fórmula, periodo y cada dato con su clave y valor, tal como lo devuelve el API. */
@@ -36,6 +43,54 @@ function Calculation({ person }: { person: PayrollSummary }) {
         <Text style={styles.calcKey}>Resultado</Text>
         <Text style={[styles.calcValue, styles.bold]}>{person.net.toFixed(2)}</Text>
       </View>
+    </View>
+  );
+}
+
+/** Periodo como en la web: semana anterior o siguiente, o «Desde»/«Hasta» libres. */
+function PeriodControls({ period, onChange }: { period: Period; onChange: (p: Period) => void }) {
+  const [start, setStart] = useState(period.start);
+  const [end, setEnd] = useState(period.end);
+  const [error, setError] = useState<string | null>(null);
+  const go = (p: Period) => {
+    setStart(p.start);
+    setEnd(p.end);
+    setError(null);
+    onChange(p);
+  };
+  const apply = () => {
+    const p = parsePeriod(start, end);
+    if ('error' in p) setError(p.error);
+    else go(p);
+  };
+  return (
+    <View style={styles.form}>
+      <View style={styles.actions}>
+        <Button label="Semana anterior" variant="outline" onPress={() => go(shiftPeriod(period, -1))} />
+        <Button label="Semana siguiente" variant="outline" onPress={() => go(shiftPeriod(period, 1))} />
+      </View>
+      <View style={styles.actions}>
+        <View style={styles.date}>
+          <TextField
+            label="Desde"
+            value={start}
+            onChangeText={setStart}
+            placeholder="AAAA-MM-DD"
+            maxLength={10}
+          />
+        </View>
+        <View style={styles.date}>
+          <TextField
+            label="Hasta"
+            value={end}
+            onChangeText={setEnd}
+            placeholder="AAAA-MM-DD"
+            maxLength={10}
+          />
+        </View>
+      </View>
+      {error && <Notice tone="danger" message={error} />}
+      <Button label="Ver periodo" variant="ghost" onPress={apply} />
     </View>
   );
 }
@@ -78,7 +133,12 @@ export function PayrollScreen() {
     >
       <Text
         style={styles.hint}
-      >{`Semana del ${vm.period.start} al ${vm.period.end}. Solo controla la nómina: no se paga nada.`}</Text>
+      >{`Periodo del ${vm.period.start} al ${vm.period.end}. Solo controla la nómina: no se paga nada.`}</Text>
+      <PeriodControls
+        key={`${vm.period.start}-${vm.period.end}`}
+        period={vm.period}
+        onChange={vm.setPeriod}
+      />
       {vm.message && <Notice tone={vm.message.tone} message={vm.message.text} />}
       <SectionTitle title="Neto del periodo" />
       {vm.summary.map((p) => (
@@ -190,6 +250,7 @@ export function PayrollScreen() {
 }
 
 const styles = StyleSheet.create({
+  date: { flex: 1, minWidth: 140 },
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, gap: spacing.md, paddingBottom: spacing.xxxl },
   card: { gap: spacing.xs },
