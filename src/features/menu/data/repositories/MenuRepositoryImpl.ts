@@ -11,6 +11,20 @@ export class MenuRepositoryImpl implements MenuRepository {
     return toMenu(await this.remote.getCategoriesWithDishes());
   }
 
+  async updateDish(id: number, changes: { available?: boolean; price?: number }): Promise<void> {
+    try {
+      await this.remote.updateDish(id, {
+        ...(changes.available !== undefined ? { disponible: changes.available } : {}),
+        ...(changes.price !== undefined ? { precio: changes.price } : {}),
+      });
+    } catch (error) {
+      if (error instanceof AppError && error.kind === 'forbidden') {
+        throw new AppError('forbidden', 'Solo el administrador puede cambiar la carta.', error.status);
+      }
+      throw error;
+    }
+  }
+
   async getDish(id: number): Promise<Dish> {
     try {
       return toDish(await this.remote.getDish(id));

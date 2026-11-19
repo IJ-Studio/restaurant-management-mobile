@@ -61,6 +61,23 @@ describe('DashboardRepositoryImpl', () => {
     await expect(setup(jest.fn().mockRejectedValue(offline)).getDailyStats()).rejects.toBe(offline);
   });
 
+  it.each([
+    ['401 (sesión vencida)', new AppError('unauthorized', 'Tu sesión expiró. Vuelve a iniciar sesión.', 401)],
+    [
+      '500 (falla del servidor)',
+      new AppError('server', 'El servidor tuvo un problema. Inténtalo de nuevo en unos minutos.', 500),
+    ],
+    [
+      '503 (servidor dormido)',
+      new AppError('server', 'El servidor tuvo un problema. Inténtalo de nuevo en unos minutos.', 503),
+    ],
+  ])(
+    'un %s llega sin cambios a la pantalla, con el mensaje ya preparado por el cliente HTTP',
+    async (_caso, error) => {
+      await expect(setup(jest.fn().mockRejectedValue(error)).getDailyStats()).rejects.toBe(error);
+    },
+  );
+
   it('pide el mapa de mesas a la hora actual y marca las reservadas', async () => {
     const get = jest.fn().mockResolvedValue([
       { id: 13, numero: 'B01', capacidad: 2, areaNombre: 'Barra', estado: 'disponible' },

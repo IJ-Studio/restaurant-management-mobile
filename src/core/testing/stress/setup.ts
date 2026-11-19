@@ -5,7 +5,12 @@
 import { createDependencies } from '../../di/dependencies';
 import { makeMenu, makeOrderLines, makeReservations, makeTables } from '../data/loadData';
 import { TEST_PASSWORD, testUsers } from '../data/testData';
-import { createFakeApi, createMemorySessionStorage, type FakeApiOptions } from '../fakeApi';
+import {
+  createFakeApi,
+  createFakeOrderEvents,
+  createMemorySessionStorage,
+  type FakeApiOptions,
+} from '../fakeApi';
 import { LOAD } from './config';
 
 // El esfuerzo tarda más que los 5 s por defecto de Jest.
@@ -26,6 +31,7 @@ export async function signedInWaiter(options: FakeApiOptions = {}) {
   const deps = createDependencies({
     httpClient: api.httpClient,
     sessionStorage: createMemorySessionStorage(),
+    orderEvents: createFakeOrderEvents(),
   });
   const session = await deps.loginUseCase.execute({ email: testUsers.mesero.email, password: TEST_PASSWORD });
   deps.sessionStore.getState().setSession(session);

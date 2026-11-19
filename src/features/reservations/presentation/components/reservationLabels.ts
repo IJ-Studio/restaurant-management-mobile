@@ -1,7 +1,7 @@
 import type { Reservation } from '../../domain/entities/Reservation';
 
 const STATUS_LABEL: Record<string, string> = {
-  pendiente: 'Por confirmar',
+  pendiente: 'Pendiente',
   confirmada: 'Confirmada',
   cancelada: 'Cancelada',
   completada: 'Completada',
@@ -17,3 +17,6 @@ export function reservationSummary(reservation: Reservation): string {
   const table = reservation.tableId ? `Mesa ${reservation.tableId}` : 'Sin mesa';
   return [people, table, statusLabel(reservation.status)].join(' · ');
 }
+
+/** Estados que el administrador puede elegir, en el orden de la web. */
+export const STATUS_OPTIONS = ['pendiente', 'confirmada', 'completada', 'cancelada', 'no_show'] as const;

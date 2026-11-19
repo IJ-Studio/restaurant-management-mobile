@@ -54,13 +54,11 @@
       "criterios": [
         {
           "id": "CA-1",
-          "texto": "Un pedido pagado exitosamente aparece en el historial.",
-          "nota": "Pendiente: cobro con Stripe (#338–#341)"
+          "texto": "Un pedido pagado exitosamente aparece en el historial."
         },
         {
           "id": "CA-2",
-          "texto": "Un pago rechazado no crea un pedido confirmado y muestra el motivo al Cajero.",
-          "nota": "Pendiente: cobro con Stripe (#338–#341)"
+          "texto": "Un pago rechazado no crea un pedido confirmado y muestra el motivo al Cajero."
         },
         {
           "id": "CA-3",

@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 // Nombrados: import/namespace no resuelve estos enums a través del `import *` en la v58.
 import { AndroidImportance, AndroidNotificationVisibility } from 'expo-notifications';
@@ -53,9 +54,38 @@ export class ExpoPushNotifications implements PushNotifications {
 
   onNotification(listener: (notification: IncomingNotification) => void): () => void {
     const subscription = Notifications.addNotificationReceivedListener((notification) => {
-      const { title, body, data } = notification.request.content;
-      listener({ title, body, data: (data ?? {}) as Record<string, unknown> });
+      listener(toIncoming(notification));
     });
     return () => subscription.remove();
   }
+
+  onNotificationOpened(listener: (notification: IncomingNotification) => void): () => void {
+    // El aviso que abrió la app estando cerrada se entrega una sola vez.
+    const launch = Notifications.getLastNotificationResponse();
+    if (launch) {
+      Notifications.clearLastNotificationResponse();
+      listener(toIncoming(launch.notification));
+    }
+    const subscription = Notifications.addNotificationResponseReceivedListener((response) => {
+      listener(toIncoming(response.notification));
+    });
+    return () => subscription.remove();
+  }
+
+  async getDeviceToken(): Promise<string | null> {
+    try {
+      const projectId = (Constants.expoConfig?.extra as { eas?: { projectId?: string } } | undefined)?.eas
+        ?.projectId;
+      const { data } = await Notifications.getExpoPushTokenAsync(projectId ? { projectId } : undefined);
+      return data;
+    } catch {
+      // Sin servicios de Google o sin la llave de FCM en el build: la app funciona, solo sin avisos.
+      return null;
+    }
+  }
+}
+
+function toIncoming(notification: Notifications.Notification): IncomingNotification {
+  const { title, body, data } = notification.request.content;
+  return { title, body, data: (data ?? {}) as Record<string, unknown> };
 }

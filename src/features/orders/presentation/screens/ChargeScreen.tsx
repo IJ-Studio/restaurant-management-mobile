@@ -21,6 +21,7 @@ import {
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { formatTime } from '../../../../shared/utils/formatDateTime';
 import { TIP_PERCENTAGES, type ChargeReceipt } from '../../domain/entities/Payment';
+import { useCardCheckout } from '../viewmodels/useCardCheckout';
 import { useCharge, type SplitMode } from '../viewmodels/useCharge';
 
 export type ChargeParams = { orderId: string; place: string };
@@ -356,8 +357,32 @@ export function ChargeScreen() {
           style={styles.submit}
         />
         {vm.problem && <Text style={styles.problem}>{vm.problem}</Text>}
+        {vm.mode === 'full' && <CardCheckout order={vm.order} onDone={() => navigation.goBack()} />}
       </ScrollView>
     </KeyboardAvoidingView>
+  );
+}
+
+/** Cobro con tarjeta en la app (Stripe): alternativa a la terminal para la cuenta completa. */
+function CardCheckout({ order, onDone }: { order: Vm['order']; onDone: () => void }) {
+  const card = useCardCheckout(order);
+  if (!card.available && !card.message) return null;
+  return (
+    <View style={styles.cardCheckout}>
+      {card.message && <Notice tone={card.message.tone} message={card.message.text} style={styles.notice} />}
+      {card.paid ? (
+        <Button label="Listo" onPress={onDone} />
+      ) : (
+        card.available && (
+          <Button
+            label="Cobrar con tarjeta en la app"
+            variant="outline"
+            onPress={card.pay}
+            loading={card.isPaying}
+          />
+        )
+      )}
+    </View>
   );
 }
 
@@ -366,6 +391,7 @@ const MINI_STEP = 36;
 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
+  cardCheckout: { marginTop: spacing.lg },
   content: { padding: spacing.lg, paddingBottom: spacing.xxxl },
   toPay: { ...typography.amount, color: colors.textOnBrand, marginTop: spacing.sm },
   toPayHint: {

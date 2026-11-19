@@ -82,6 +82,7 @@ export function makeOrderRepository(): jest.Mocked<OrderRepository> {
     updateStatus: jest.fn().mockResolvedValue('Pedido actualizado.'),
     listPaymentMethods: jest.fn().mockResolvedValue(makePaymentMethods()),
     charge: jest.fn().mockResolvedValue(makeReceipt()),
+    createCardIntent: jest.fn().mockResolvedValue({ clientSecret: 'pi_123_secret_456' }),
   };
 }
 

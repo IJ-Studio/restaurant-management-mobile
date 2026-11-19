@@ -34,4 +34,6 @@ export interface OrderRepository {
   updateStatus(orderId: string, step: OrderStep): Promise<string>;
   listPaymentMethods(): Promise<PaymentMethod[]>;
   charge(orderId: string, request: ChargeRequest): Promise<ChargeReceipt>;
+  /** Pide al API la intención de pago con tarjeta (Stripe) por lo que falta del pedido. */
+  createCardIntent(orderId: string): Promise<{ clientSecret: string }>;
 }

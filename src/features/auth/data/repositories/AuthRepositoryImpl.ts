@@ -20,8 +20,12 @@ export class AuthRepositoryImpl implements AuthRepository {
     }
   }
 
-  signOut(): Promise<void> {
-    return this.remote.signOut();
+  async refresh(refreshToken: string): Promise<Session> {
+    return toSession(await this.remote.refresh(refreshToken));
+  }
+
+  signOut(refreshToken?: string): Promise<void> {
+    return this.remote.signOut(refreshToken);
   }
 }
 

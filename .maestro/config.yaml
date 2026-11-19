@@ -1,0 +1,8 @@
+# Pruebas de caja negra en un Android real (rúbrica: matriz funcional Debug/Release).
+# Ejecutar:   npm run test:device            (todas)
+#             maestro test .maestro/acceptance/s1-hu01-login.yaml   (una)
+# Variables:  APP_ID (paquete instalado), API_URL (API con HTTPS), PASSWORD (usuarios de prueba).
+flows:
+  - acceptance/*
+executionOrder:
+  continueOnFailure: true

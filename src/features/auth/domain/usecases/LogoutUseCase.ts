@@ -10,7 +10,8 @@ export class LogoutUseCase {
   /** La sesión local se borra aunque el servidor no responda (sin red, token ya vencido). */
   async execute(): Promise<void> {
     try {
-      await this.repository.signOut();
+      const session = await this.storage.load();
+      await this.repository.signOut(session?.refreshToken);
     } catch {
       // Si el servidor no revoca el token, este vence solo (JWT_ACCESS_TOKEN_TTL).
     } finally {

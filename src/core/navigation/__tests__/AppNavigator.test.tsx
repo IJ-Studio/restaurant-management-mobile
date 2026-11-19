@@ -61,9 +61,44 @@ describe('AppNavigator', () => {
     expect(screen.getByText('Resumen del día')).toBeOnTheScreen();
   });
 
-  it('al entrar pide el permiso de notificaciones (HU-07)', async () => {
+  it('al entrar consulta el permiso de notificaciones sin mostrar el diálogo del sistema (HU-07)', async () => {
     const { deps } = await renderAs('mesero');
-    expect(deps.enableNotificationsUseCase.execute).toHaveBeenCalledWith({ ask: true });
+
+    expect(deps.enableNotificationsUseCase.execute).toHaveBeenCalledWith({ ask: false });
+    expect(deps.enableNotificationsUseCase.execute).not.toHaveBeenCalledWith({ ask: true });
+  });
+
+  describe('tocar un aviso de pedido (HU-07)', () => {
+    /** Entrega el aviso como lo haría el teléfono cuando la persona lo toca. */
+    async function openNotification(role: Role, data: Record<string, unknown>) {
+      const rendered = await renderAs(role);
+      const [onOpened] = jest.mocked(rendered.deps.pushNotifications.onNotificationOpened).mock.calls[0];
+      await act(async () =>
+        onOpened({ title: 'Pedido listo', body: 'Mesa B01: listo para entregar.', data }),
+      );
+      return rendered;
+    }
+
+    it('abre ese pedido, con la lista debajo para poder volver', async () => {
+      const { navigationRef } = await openNotification('mesero', {
+        type: 'order_ready',
+        orderId: 'a1b2c3d4-0000',
+        place: 'Mesa B01',
+      });
+
+      expect(navigationRef.getCurrentRoute()).toMatchObject({
+        name: 'OrderDetail',
+        params: { orderId: 'a1b2c3d4-0000', place: 'Mesa B01' },
+      });
+      await act(() => navigationRef.goBack());
+      expect(navigationRef.getCurrentRoute()?.name).toBe('OrdersList');
+    });
+
+    it('un aviso que no es de un pedido no cambia de pantalla', async () => {
+      const { navigationRef } = await openNotification('mesero', { type: 'promocion', orderId: 'x' });
+
+      expect(navigationRef.getCurrentRoute()?.name).not.toBe('OrderDetail');
+    });
   });
 
   it('si cambia el rol en la sesión, se reconstruyen los tabs sin historial del rol anterior', async () => {

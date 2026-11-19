@@ -46,6 +46,7 @@ export function makeMenu(): MenuCategory[] {
 
 export function makeMenuRepository(menu: MenuCategory[] = makeMenu()): jest.Mocked<MenuRepository> {
   return {
+    updateDish: jest.fn().mockResolvedValue(undefined),
     getMenu: jest.fn().mockResolvedValue(menu),
     getDish: jest.fn().mockImplementation(async (id: number) => {
       const dish = menu.flatMap((c) => c.dishes).find((d) => d.id === id);

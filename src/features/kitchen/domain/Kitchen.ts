@@ -57,7 +57,16 @@ export interface InventoryProduct {
   category: string;
   unit: string;
   stock: number;
+  /** Existencia mínima que fijó el administrador; 0 si no tiene. */
+  minStock: number;
   costPerUnit: number;
+}
+
+/** Productos en o por debajo de su mínimo, los más escasos primero (como «Bajo» en la cocina de la web). */
+export function lowStock(products: InventoryProduct[]): InventoryProduct[] {
+  return products
+    .filter((p) => p.minStock > 0 && p.stock <= p.minStock)
+    .sort((a, b) => a.stock / a.minStock - b.stock / b.minStock);
 }
 
 export interface NewWaste {
