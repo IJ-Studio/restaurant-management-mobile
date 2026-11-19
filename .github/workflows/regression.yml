@@ -1,0 +1,125 @@
+# .github/workflows/regression.yml
+# =====================================================================================================
+# Regresión nocturna de la app móvil (mobile#372, #378, #384 y #390).
+#
+# Cada noche corre la suite acumulada (tipos, lint, unitarias, integración y aceptación) sobre la rama
+# entregada, para comprobar que lo nuevo no rompió lo ya entregado. Se lanza también a mano al cerrar
+# un sprint (Actions → Regresión → Run workflow) y deja el reporte como artefacto y en el Summary.
+#
+# - Rama: `main` cuando ya tiene la app; mientras `main` solo tenga el commit inicial, `develop`.
+#   Al lanzarlo a mano se puede elegir otra.
+# - Los flujos de humo de Maestro necesitan un teléfono o emulador: se corren aparte con
+#   `npm run test:device` y su resultado se anota en docs/pruebas-caja-negra.md.
+# - Cada bug corregido conserva su prueba en la suite (ver docs/pruebas-caja-negra.md, E-01…E-11).
+# =====================================================================================================
+name: Regresión
+
+on:
+  schedule:
+    # 03:17 UTC = 21:17 en Huejutla (UTC-6): después del cierre del restaurante.
+    - cron: '17 3 * * *'
+  workflow_dispatch:
+    inputs:
+      rama:
+        description: 'Rama a probar (vacío: main si ya tiene la app, si no develop)'
+        required: false
+        default: ''
+
+permissions:
+  contents: read
+
+concurrency:
+  group: regression
+  cancel-in-progress: false
+
+jobs:
+  regression:
+    name: regression
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+
+      - name: Elegir la rama
+        id: rama
+        env:
+          ELEGIDA: ${{ inputs.rama }}
+        run: |
+          set -euo pipefail
+          if [ -n "${ELEGIDA:-}" ]; then
+            RAMA="$ELEGIDA"
+          elif git cat-file -e origin/main:package.json 2>/dev/null; then
+            RAMA=main
+          else
+            RAMA=develop
+          fi
+          git checkout --quiet "origin/$RAMA"
+          echo "rama=$RAMA" >> "$GITHUB_OUTPUT"
+          echo "### Regresión sobre \`$RAMA\` ($(git rev-parse --short HEAD))" >> "$GITHUB_STEP_SUMMARY"
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci
+
+      # Cada paso sigue aunque falle el anterior, para que el reporte muestre todo lo que se rompió.
+      - name: Tipos
+        id: tipos
+        continue-on-error: true
+        run: npm run typecheck
+      - name: Lint
+        id: lint
+        continue-on-error: true
+        run: npm run lint
+      - name: Unitarias
+        id: unitarias
+        continue-on-error: true
+        run: npm run test:unit -- --ci --json --outputFile=reports/regression/unit.json
+      - name: Integración
+        id: integracion
+        continue-on-error: true
+        run: npm run test:integration -- --ci --json --outputFile=reports/regression/integration.json
+      - name: Aceptación
+        id: aceptacion
+        continue-on-error: true
+        run: npm run test:acceptance -- --ci
+
+      - name: Reporte
+        if: always()
+        run: |
+          {
+            echo ""
+            echo "| Etapa | Resultado |"
+            echo "|---|---|"
+            echo "| Tipos | ${{ steps.tipos.outcome }} |"
+            echo "| Lint | ${{ steps.lint.outcome }} |"
+            echo "| Unitarias | ${{ steps.unitarias.outcome }} |"
+            echo "| Integración | ${{ steps.integracion.outcome }} |"
+            echo "| Aceptación | ${{ steps.aceptacion.outcome }} |"
+          } >> "$GITHUB_STEP_SUMMARY"
+          for f in reports/regression/*.json; do
+            [ -f "$f" ] || continue
+            node -e 'const r=require(process.argv[1]); console.log(`- ${process.argv[1]}: ${r.numPassedTests}/${r.numTotalTests} pruebas en verde`)' "$PWD/$f" >> "$GITHUB_STEP_SUMMARY"
+          done
+
+      - name: Subir reportes
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: regression-report-${{ steps.rama.outputs.rama }}
+          path: |
+            reports/regression/
+            reports/acceptance/
+          retention-days: 30
+          if-no-files-found: ignore
+
+      - name: Veredicto
+        if: always()
+        run: |
+          for r in "${{ steps.tipos.outcome }}" "${{ steps.lint.outcome }}" "${{ steps.unitarias.outcome }}" \
+                   "${{ steps.integracion.outcome }}" "${{ steps.aceptacion.outcome }}"; do
+            [ "$r" = "success" ] || { echo "La regresión falló: revisa el Summary."; exit 1; }
+          done
