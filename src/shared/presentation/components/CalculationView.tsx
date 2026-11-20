@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import type { Calculation } from '../../domain/Calculation';
-import { colors, radius, spacing, typography } from '../theme';
+import { colors, opacity, radius, sizes, spacing, typography } from '../theme';
 
 /** Botón «Ver cálculo» y, al abrirlo, la fórmula, el periodo, los filtros y cada dato con su valor. */
 export function CalculationToggle({
@@ -22,8 +22,7 @@ export function CalculationToggle({
         accessibilityRole="button"
         accessibilityLabel={`${open ? 'Ocultar' : 'Ver'} cálculo de ${title}`}
         accessibilityState={{ expanded: open }}
-        hitSlop={8}
-        style={styles.toggle}
+        style={({ pressed }) => [styles.toggle, pressed && styles.togglePressed]}
       >
         <Text style={styles.toggleText}>{open ? 'Ocultar cálculo' : 'Ver cálculo'}</Text>
       </Pressable>
@@ -58,19 +57,23 @@ export function CalculationToggle({
 }
 
 const styles = StyleSheet.create({
-  toggle: { alignSelf: 'flex-start', marginTop: spacing.xs, minHeight: 32, justifyContent: 'center' },
+  // Enlace en acento subrayado con área táctil completa de 44 (antes 32 con hitSlop).
+  toggle: { alignSelf: 'flex-start', minHeight: sizes.touchTarget, justifyContent: 'center' },
+  togglePressed: { opacity: opacity.pressed },
   toggleText: { ...typography.caption, color: colors.brandStrong, textDecorationLine: 'underline' },
   box: {
     gap: spacing.xxs,
-    marginTop: spacing.xs,
+    marginTop: spacing.xxs,
     padding: spacing.sm,
-    borderRadius: radius.md,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
     backgroundColor: colors.background,
   },
   muted: { ...typography.caption, color: colors.textSecondary },
   row: { flexDirection: 'row', justifyContent: 'space-between', gap: spacing.sm },
   total: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border, paddingTop: spacing.xxs },
   key: { ...typography.caption, color: colors.text, flexShrink: 1 },
-  value: { ...typography.caption, color: colors.text, fontVariant: ['tabular-nums'] },
-  bold: { fontWeight: '700' },
+  value: { ...typography.caption, color: colors.text },
+  bold: { fontFamily: typography.bodyStrong.fontFamily },
 });
