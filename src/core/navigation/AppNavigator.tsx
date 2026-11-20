@@ -15,7 +15,7 @@ import { useOrderEvents } from '../../features/orders/presentation/viewmodels/us
 import { NotificationPermissionPrompt } from '../../features/notifications/presentation/components/NotificationPermissionPrompt';
 import { useDependencies } from '../di/DependenciesProvider';
 import { navigationTheme, tabScreenOptions } from './navigationTheme';
-import { SECTION_CONFIG } from './sections';
+import { SECTION_CONFIG, tabLabelOptions } from './sections';
 
 export type TabParamList = Record<Section, undefined>;
 
@@ -79,13 +79,14 @@ export function AppNavigator({ navigationRef }: Props) {
       <NotificationPermissionPrompt />
       {/* key: si cambia el rol se reconstruye el navegador y no queda historial de otro rol. */}
       <Tab.Navigator key={role} screenOptions={tabScreenOptions}>
-        {sections.map((section) => (
+        {sections.map((section, index) => (
           <Tab.Screen
             key={section}
             name={section}
             component={GUARDED_SCREENS[section]}
             options={{
               title: SECTION_CONFIG[section].title,
+              ...tabLabelOptions(SECTION_CONFIG[section], index, sections.length),
               headerShown: SECTION_CONFIG[section].headerShown ?? true,
               tabBarIcon: ({ focused, color, size }) => (
                 <Ionicons
