@@ -103,7 +103,7 @@ const styles = StyleSheet.create({
   title: { ...typography.title, color: colors.text },
   summary: { ...typography.body, color: colors.textSecondary, marginTop: spacing.xs },
   card: { marginTop: spacing.lg, gap: spacing.sm },
-  label: { ...typography.bodyStrong, color: colors.text },
+  label: { ...typography.label, color: colors.text },
   options: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm },
   reason: { marginTop: spacing.md },
   notice: { marginTop: spacing.lg },
