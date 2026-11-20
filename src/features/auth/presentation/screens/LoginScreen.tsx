@@ -104,32 +104,33 @@ export function LoginScreen() {
 const styles = StyleSheet.create({
   screen: { flex: 1, backgroundColor: colors.background },
   content: { flexGrow: 1 },
-  // Banda de marca: superficie café sólida y filete doble, sin degradado ni marcas de agua.
+  // Banda de marca: superficie café sólida y filete doble, sin degradado ni marcas de agua. Compacta para
+  // que Contraseña quede sobre el teclado: con edge-to-edge Android ya no redimensiona la ventana.
   hero: {
     alignItems: 'center',
     justifyContent: 'center',
     paddingTop: spacing.xxxl + spacing.lg,
-    paddingBottom: spacing.xxl,
+    paddingBottom: spacing.xl,
     backgroundColor: colors.brandSoft,
     borderBottomWidth: 1,
     borderBottomColor: colors.border,
   },
-  rule: { marginBottom: spacing.lg },
+  rule: { marginBottom: spacing.md },
   logo: {
     width: sizes.logo,
     height: undefined,
     aspectRatio: LOGO_ASPECT_RATIO,
     tintColor: colors.text,
   },
-  tagline: { ...typography.overline, color: colors.brand, marginTop: spacing.lg },
+  tagline: { ...typography.overline, color: colors.brand, marginTop: spacing.md },
   sheet: {
     flexGrow: 1,
     paddingHorizontal: spacing.xl,
-    paddingTop: spacing.xxl,
+    paddingTop: spacing.xl,
     paddingBottom: spacing.xxxl,
   },
-  header: { marginBottom: spacing.xl },
-  field: { marginTop: spacing.lg + spacing.xs },
+  header: { marginBottom: spacing.lg },
+  field: { marginTop: spacing.lg },
   notice: { marginTop: spacing.lg },
   submit: { marginTop: spacing.xl },
 });

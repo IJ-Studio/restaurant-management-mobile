@@ -24,7 +24,7 @@ export const sizes = {
   /** Lado de la miniatura de un platillo en las listas. */
   thumbnail: 64,
   /** Ancho del logo en el Login. */
-  logo: 220,
+  logo: 180,
 } as const;
 
 /** Al presionar, el control baja 1 px (`translateY(1px)` de la web): respuesta física sin animación. */
