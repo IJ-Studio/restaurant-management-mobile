@@ -1,14 +1,14 @@
 import { memo } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
 
-import { colors, opacity, pressOffset, radius, shadows, sizes, spacing, typography } from '../theme';
+import { colors, opacity, pressOffset, radius, sizes, spacing, typography } from '../theme';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
 
 interface Props {
   label: string;
   onPress: () => void;
-  /** primary: naranja de marca · secondary: pizarra · outline: borde · ghost: solo texto. */
+  /** primary: relleno de acento · secondary: tonal café · outline: filete de control · ghost: enlace. */
   variant?: ButtonVariant;
   disabled?: boolean;
   /** Muestra un indicador en lugar del texto y bloquea el botón. */
@@ -21,12 +21,12 @@ interface Props {
 
 const SPINNER_COLOR: Record<ButtonVariant, string> = {
   primary: colors.textOnBrand,
-  secondary: colors.textOnBrand,
-  outline: colors.brandStrong,
+  secondary: colors.text,
+  outline: colors.text,
   ghost: colors.brandStrong,
 };
 
-/** Botón de la app, con los estilos `btn-primary` y `btn-secondary` de la web. */
+/** Botón de la app (`btn-primario` y `btn-secundario` de DESIGN.md): 44 de alto, radio 2, etiqueta en versalitas. */
 // memo: solo se vuelve a pintar si cambian sus props.
 export const Button = memo(function Button({
   label,
@@ -71,33 +71,31 @@ export const Button = memo(function Button({
 const styles = StyleSheet.create({
   base: {
     minHeight: sizes.control,
-    borderRadius: radius.md,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: 'transparent',
     paddingHorizontal: spacing.xl,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  primary: { backgroundColor: colors.brand, ...shadows.brand },
-  secondary: { backgroundColor: colors.secondary, ...shadows.card },
-  outline: {
-    backgroundColor: colors.surface,
-    borderWidth: 1.5,
-    borderColor: colors.borderStrong,
-  },
+  primary: { backgroundColor: colors.brand, borderColor: colors.brand },
+  secondary: { backgroundColor: colors.brandSoft, borderColor: colors.borderStrong },
+  outline: { backgroundColor: 'transparent', borderColor: colors.borderStrong },
   ghost: { minHeight: sizes.touchTarget, paddingHorizontal: spacing.md },
-  disabled: { opacity: opacity.disabled, boxShadow: 'none' },
+  disabled: { opacity: opacity.disabled },
   label: typography.button,
 });
 
 const pressedStyles = StyleSheet.create({
-  primary: { backgroundColor: colors.brandStrong },
-  secondary: { opacity: opacity.pressed },
-  outline: { borderColor: colors.brand, backgroundColor: colors.brandSoft },
-  ghost: { backgroundColor: colors.brandSoft },
+  primary: { backgroundColor: colors.brandStrong, borderColor: colors.brandStrong },
+  secondary: { borderColor: colors.brand },
+  outline: { backgroundColor: colors.brandSoft, borderColor: colors.brand },
+  ghost: { backgroundColor: colors.brandTint },
 });
 
 const labelStyles = StyleSheet.create({
   primary: { color: colors.textOnBrand },
-  secondary: { color: colors.textOnBrand },
-  outline: { color: colors.text, ...typography.bodyStrong },
-  ghost: { color: colors.brandStrong, ...typography.bodyStrong },
+  secondary: { color: colors.text },
+  outline: { color: colors.text },
+  ghost: { color: colors.brandStrong },
 });
