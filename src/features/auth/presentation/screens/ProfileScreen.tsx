@@ -5,7 +5,8 @@ import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { Button } from '../../../../shared/presentation/components/Button';
 import { Card } from '../../../../shared/presentation/components/Card';
 import { HeroCard } from '../../../../shared/presentation/components/HeroCard';
-import { colors, opacity, radius, spacing, typography } from '../../../../shared/presentation/theme';
+import { StatusBadge } from '../../../../shared/presentation/components/StatusBadge';
+import { colors, radius, spacing, typography } from '../../../../shared/presentation/theme';
 import { formatTime } from '../../../../shared/utils/formatDateTime';
 import { NotificationSettings } from '../../../notifications/presentation/components/NotificationSettings';
 import type { Role } from '../../domain/entities/Role';
@@ -20,7 +21,8 @@ export const ROLE_LABEL: Record<Role, string> = {
   cliente: 'Cliente',
 };
 
-const AVATAR_SIZE = 88;
+/** Sello de la casa: círculo exterior de 80 con filete y anillo interior a 4 px. */
+const SEAL_SIZE = 80;
 
 function initials(name: string, lastname: string): string {
   return [name, lastname]
@@ -40,11 +42,9 @@ function InfoRow({
 }) {
   return (
     <View style={styles.infoRow} accessible accessibilityLabel={`${label}: ${value}`}>
-      <Ionicons name={icon} size={20} color={colors.brandStrong} />
-      <View style={styles.infoText}>
-        <Text style={styles.infoLabel}>{label}</Text>
-        <Text style={styles.infoValue}>{value}</Text>
-      </View>
+      <Ionicons name={icon} size={16} color={colors.brand} />
+      <Text style={styles.infoLabel}>{label}</Text>
+      <Text style={styles.infoValue}>{value}</Text>
     </View>
   );
 }
@@ -67,11 +67,11 @@ function ActionRow({
       accessibilityRole={external ? 'link' : 'button'}
       accessibilityLabel={label}
       accessibilityHint={external ? 'Se abre en el navegador' : undefined}
-      style={({ pressed }) => [styles.infoRow, pressed && styles.pressed]}
+      style={({ pressed }) => [styles.actionRow, pressed && styles.pressed]}
     >
-      <Ionicons name={icon} size={20} color={colors.brandStrong} />
-      <Text style={[styles.infoValue, styles.infoText]}>{label}</Text>
-      <Ionicons name={external ? 'open-outline' : 'chevron-forward'} size={18} color={colors.textSecondary} />
+      <Ionicons name={icon} size={18} color={colors.brand} />
+      <Text style={styles.actionText}>{label}</Text>
+      <Ionicons name={external ? 'open-outline' : 'chevron-forward'} size={14} color={colors.textMuted} />
     </Pressable>
   );
 }
@@ -93,17 +93,15 @@ export function ProfileScreen({ onEditProfile, onChangePassword, onPrivacy }: Pr
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
       <HeroCard align="center" style={styles.hero}>
-        <View
-          style={styles.avatar}
-          accessibilityElementsHidden
-          importantForAccessibility="no-hide-descendants"
-        >
-          <Text style={styles.avatarText}>{initials(user.name, user.lastname)}</Text>
+        <View style={styles.seal} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
+          <View style={styles.sealRing}>
+            <Text style={styles.sealText}>{initials(user.name, user.lastname)}</Text>
+          </View>
         </View>
         <Text style={styles.name} accessibilityRole="header">
           {user.name} {user.lastname}
         </Text>
-        <Text style={styles.role}>{ROLE_LABEL[user.role]}</Text>
+        <StatusBadge label={ROLE_LABEL[user.role]} tone="brand" style={styles.role} />
       </HeroCard>
 
       <Card style={styles.info}>
@@ -153,33 +151,35 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: spacing.xxxl },
   hero: { alignItems: 'center', paddingVertical: spacing.xl },
-  avatar: {
-    width: AVATAR_SIZE,
-    height: AVATAR_SIZE,
+  seal: {
+    width: SEAL_SIZE,
+    height: SEAL_SIZE,
     borderRadius: radius.pill,
-    backgroundColor: colors.onBrandSurface,
-    alignItems: 'center',
-    justifyContent: 'center',
+    borderWidth: 1,
+    borderColor: colors.brand,
+    backgroundColor: colors.surface,
+    padding: spacing.xs,
     marginBottom: spacing.lg,
   },
-  avatarText: { ...typography.display, color: colors.text },
-  name: { ...typography.title, color: colors.text, textAlign: 'center' },
-  role: {
-    ...typography.badge,
-    color: colors.text,
-    backgroundColor: colors.surface,
+  sealRing: {
+    flex: 1,
     borderRadius: radius.pill,
-    overflow: 'hidden',
-    paddingHorizontal: spacing.md,
-    paddingVertical: spacing.xs,
-    marginTop: spacing.sm,
+    borderWidth: 1,
+    borderColor: colors.brand,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  info: { marginTop: spacing.lg, paddingVertical: spacing.sm },
-  infoRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, paddingVertical: spacing.md },
-  infoText: { flex: 1 },
-  infoLabel: { ...typography.caption, color: colors.textSecondary },
-  infoValue: { ...typography.bodyStrong, color: colors.text },
-  divider: { borderTopWidth: StyleSheet.hairlineWidth, borderTopColor: colors.border },
-  pressed: { opacity: opacity.dimmed },
+  sealText: { ...typography.title, color: colors.text },
+  name: { ...typography.title, color: colors.text, textAlign: 'center' },
+  role: { alignSelf: 'center', marginTop: spacing.sm },
+  info: { marginTop: spacing.lg, paddingVertical: spacing.xs },
+  // Contraetiqueta: rótulo en versalitas a la izquierda y valor tabular a la derecha.
+  infoRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.sm, paddingVertical: spacing.md },
+  infoLabel: { ...typography.overline, color: colors.textSecondary },
+  infoValue: { ...typography.bodyStrong, color: colors.text, flex: 1, textAlign: 'right' },
+  actionRow: { flexDirection: 'row', alignItems: 'center', gap: spacing.md, minHeight: 48 },
+  actionText: { ...typography.bodyStrong, color: colors.text, flex: 1 },
+  divider: { borderTopWidth: 1, borderTopColor: colors.border },
+  pressed: { backgroundColor: colors.brandSoft },
   logout: { marginTop: spacing.xl },
 });
