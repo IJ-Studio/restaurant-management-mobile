@@ -28,7 +28,7 @@ export function HeaderButton({ label, icon, onPress, accessibilityLabel, style }
       <Text style={styles.label} numberOfLines={1}>
         {label}
       </Text>
-      <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />
+      <Ionicons name="chevron-forward" size={14} color={colors.textMuted} style={styles.chevron} />
     </Pressable>
   );
 }
@@ -46,5 +46,8 @@ const styles = StyleSheet.create({
     backgroundColor: colors.surface,
   },
   pressed: { backgroundColor: colors.brandSoft, borderColor: colors.brand },
-  label: { ...typography.caption, color: colors.text, flexShrink: 1, flexGrow: 1 },
+  label: { ...typography.caption, color: colors.text, flexShrink: 1 },
+  // Margen automático y no flexGrow en la etiqueta: con flexGrow, Yoga mide cada acceso a todo lo ancho
+  // dentro de una fila con flexWrap y el contenedor reserva una línea por acceso (hueco en el Dashboard).
+  chevron: { marginLeft: 'auto' },
 });
