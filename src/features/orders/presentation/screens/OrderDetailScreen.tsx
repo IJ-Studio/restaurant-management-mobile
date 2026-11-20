@@ -258,6 +258,8 @@ const styles = StyleSheet.create({
     color: colors.brandStrong,
     backgroundColor: colors.brandSoft,
     borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
     overflow: 'hidden',
     paddingHorizontal: spacing.sm,
     paddingVertical: spacing.xxs,
