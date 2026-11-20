@@ -51,6 +51,11 @@ export const tabScreenOptions: BottomTabNavigationOptions = {
   tabBarInactiveTintColor: colors.textMuted,
   tabBarLabelStyle: { fontFamily: fonts.semibold, fontSize: 12 },
   // elevation 0: sin sombra en Android; la barra se separa con un filete de 1 px.
-  tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border, borderTopWidth: 1, elevation: 0 },
+  tabBarStyle: {
+    backgroundColor: colors.surface,
+    borderTopColor: colors.border,
+    borderTopWidth: 1,
+    elevation: 0,
+  },
   tabBarButton: TabBarButton,
 };

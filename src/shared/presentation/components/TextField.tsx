@@ -85,7 +85,12 @@ export const TextField = memo(function TextField({
       </View>
       {error && (
         <View style={styles.errorRow}>
-          <Ionicons name="alert-circle-outline" size={16} color={colors.danger} importantForAccessibility="no" />
+          <Ionicons
+            name="alert-circle-outline"
+            size={16}
+            color={colors.danger}
+            importantForAccessibility="no"
+          />
           <Text style={styles.error}>{error}</Text>
         </View>
       )}

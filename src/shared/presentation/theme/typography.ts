@@ -32,8 +32,20 @@ const etiqueta = {
 /** Escala tipográfica. */
 export const typography = {
   /** Título de portada (Login). */
-  display: { fontFamily: fonts.display, fontSize: 32, lineHeight: 38, letterSpacing: -0.3, fontVariant: serifFigures },
-  title: { fontFamily: fonts.display, fontSize: 24, lineHeight: 30, letterSpacing: -0.1, fontVariant: serifFigures },
+  display: {
+    fontFamily: fonts.display,
+    fontSize: 32,
+    lineHeight: 38,
+    letterSpacing: -0.3,
+    fontVariant: serifFigures,
+  },
+  title: {
+    fontFamily: fonts.display,
+    fontSize: 24,
+    lineHeight: 30,
+    letterSpacing: -0.1,
+    fontVariant: serifFigures,
+  },
   heading: { fontFamily: fonts.displayMedium, fontSize: 20, lineHeight: 26, fontVariant: serifFigures },
   subheading: { fontFamily: fonts.semibold, fontSize: 17, lineHeight: 22, fontVariant: tabular },
   body: { fontFamily: fonts.regular, fontSize: 16, lineHeight: 24, fontVariant: tabular },
@@ -50,9 +62,21 @@ export const typography = {
   button: etiqueta,
   price: { fontFamily: fonts.semibold, fontSize: 16, lineHeight: 22, fontVariant: tabular },
   /** Cifra de un indicador (StatCard). */
-  stat: { fontFamily: fonts.displayMedium, fontSize: 30, lineHeight: 34, letterSpacing: -0.3, fontVariant: serifFigures },
+  stat: {
+    fontFamily: fonts.displayMedium,
+    fontSize: 30,
+    lineHeight: 34,
+    letterSpacing: -0.3,
+    fontVariant: serifFigures,
+  },
   /** Monto principal de una pantalla (el total a cobrar, lo cobrado hoy). */
-  amount: { fontFamily: fonts.displayMedium, fontSize: 40, lineHeight: 44, letterSpacing: -0.4, fontVariant: serifFigures },
+  amount: {
+    fontFamily: fonts.displayMedium,
+    fontSize: 40,
+    lineHeight: 44,
+    letterSpacing: -0.4,
+    fontVariant: serifFigures,
+  },
 } as const satisfies Record<string, TextStyle>;
 
 export type TypographyToken = keyof typeof typography;
