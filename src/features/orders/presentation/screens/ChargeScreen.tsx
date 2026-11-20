@@ -393,7 +393,7 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   cardCheckout: { marginTop: spacing.lg },
   content: { padding: spacing.lg, paddingBottom: spacing.xxxl },
-  toPay: { ...typography.amount, color: colors.textOnBrand, marginTop: spacing.sm },
+  toPay: { ...typography.amount, color: colors.text, marginTop: spacing.sm },
   toPayHint: {
     ...typography.small,
     color: colors.textOnBrandMuted,

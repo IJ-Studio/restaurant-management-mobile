@@ -411,7 +411,7 @@ const styles = StyleSheet.create({
     borderTopColor: colors.onBrandSurface,
   },
   salesLabel: { ...typography.overline, color: colors.textOnBrandMuted },
-  salesValue: { ...typography.amount, color: colors.textOnBrand, marginTop: spacing.xs },
+  salesValue: { ...typography.amount, color: colors.text, marginTop: spacing.xs },
   salesHint: { ...typography.small, color: colors.textOnBrandMuted, marginTop: spacing.xs },
   notice: { marginBottom: spacing.lg },
   stats: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },

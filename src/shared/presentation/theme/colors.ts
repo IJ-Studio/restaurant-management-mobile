@@ -25,12 +25,12 @@ export const colors = {
   brandTint: mix(w.acento, w.superficie, 0.12),
   /** Final del degradado de marca (blanco encima: 16:1). */
   brandDeep: w.textoPrincipal,
-  /** Texto secundario sobre el degradado de marca (blanco al 85 %, pasa AA en todo el degradado). */
-  textOnBrandMuted: 'rgba(255, 255, 255, 0.85)',
+  /** Texto de apoyo dentro de la banda destacada (HeroCard, superficie café). */
+  textOnBrandMuted: w.textoSecundario,
   /** Trazos decorativos sobre el degradado (no llevan información). */
   onBrandDecor: 'rgba(255, 255, 255, 0.08)',
-  /** Fondo de un elemento sobre el degradado (avatar, chips). */
-  onBrandSurface: 'rgba(255, 255, 255, 0.16)',
+  /** Divisores y elementos dentro de la banda destacada (filete de control). */
+  onBrandSurface: w.bordeControl,
   /** Botón secundario y enlaces. */
   secondary: w.textoSecundario,
 
