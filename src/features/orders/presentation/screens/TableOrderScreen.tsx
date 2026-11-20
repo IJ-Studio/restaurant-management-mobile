@@ -92,7 +92,6 @@ const LineRow = memo(function LineRow({
           accessibilityRole="button"
           accessibilityLabel={`Agregar nota a ${line.name}`}
           style={styles.addNote}
-          hitSlop={spacing.sm}
         >
           <Ionicons name="create-outline" size={16} color={colors.brandStrong} />
           <Text style={styles.addNoteText}>Agregar nota</Text>
@@ -198,7 +197,7 @@ const styles = StyleSheet.create({
   line: {
     backgroundColor: colors.surface,
     borderRadius: radius.md,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderWidth: 1,
     borderColor: colors.border,
     paddingHorizontal: spacing.lg,
     paddingVertical: spacing.md,
@@ -211,7 +210,7 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     gap: spacing.xs,
-    marginTop: spacing.sm,
+    minHeight: sizes.touchTarget,
     alignSelf: 'flex-start',
   },
   addNoteText: { ...typography.caption, color: colors.brandStrong },
@@ -220,14 +219,14 @@ const styles = StyleSheet.create({
   step: {
     width: sizes.touchTarget,
     height: sizes.touchTarget,
-    borderRadius: radius.pill,
-    borderWidth: 1.5,
-    borderColor: colors.brand,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  stepPressed: { backgroundColor: colors.brandSoft },
-  stepText: { ...typography.heading, color: colors.brandStrong },
+  stepPressed: { backgroundColor: colors.brandSoft, borderColor: colors.brand },
+  stepText: { ...typography.heading, color: colors.brand },
   quantity: { ...typography.heading, color: colors.text, minWidth: spacing.xxl, textAlign: 'center' },
   kitchenNote: { marginTop: spacing.lg },
   footer: { margin: spacing.lg, marginTop: 0 },
