@@ -1,14 +1,14 @@
-import { LinearGradient } from 'expo-linear-gradient';
 import { StatusBar } from 'expo-status-bar';
 import { memo } from 'react';
 import { Image, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../../../../shared/presentation/components/Button';
+import { DoubleRule } from '../../../../shared/presentation/components/DoubleRule';
 import { Notice } from '../../../../shared/presentation/components/Notice';
 import { PasswordField } from '../../../../shared/presentation/components/PasswordField';
 import { ScreenHeader } from '../../../../shared/presentation/components/ScreenHeader';
 import { TextField } from '../../../../shared/presentation/components/TextField';
-import { colors, gradients, radius, sizes, spacing, typography } from '../../../../shared/presentation/theme';
+import { colors, sizes, spacing, typography } from '../../../../shared/presentation/theme';
 import { useLogin } from '../viewmodels/useLogin';
 
 const LOGO = require('../../../../../assets/brand/logo-el-quijote.png');
@@ -18,8 +18,8 @@ const LOGO_ASPECT_RATIO = 720 / 372;
 // Partes fijas de la pantalla en memo: al escribir solo se vuelven a pintar los campos.
 const Brand = memo(function Brand() {
   return (
-    <LinearGradient colors={gradients.brand} start={{ x: 0, y: 0 }} end={{ x: 1, y: 1 }} style={styles.hero}>
-      <View style={styles.ring} accessibilityElementsHidden importantForAccessibility="no-hide-descendants" />
+    <View style={styles.hero}>
+      <DoubleRule style={styles.rule} />
       <Image
         source={LOGO}
         style={styles.logo}
@@ -28,7 +28,7 @@ const Brand = memo(function Brand() {
         accessibilityLabel="Restaurante El Quijote"
       />
       <Text style={styles.tagline}>Sabor con Alma</Text>
-    </LinearGradient>
+    </View>
   );
 });
 
@@ -37,7 +37,7 @@ const Header = memo(function Header() {
     <ScreenHeader
       title="Iniciar sesión"
       subtitle="Acceso exclusivo para el personal del restaurante"
-      size="title"
+      size="display"
       style={styles.header}
     />
   );
@@ -51,8 +51,8 @@ export function LoginScreen() {
     // Sin KeyboardAvoidingView (añade un render al montarse): en iOS el ScrollView ajusta su inserción al
     // teclado; en Android el sistema redimensiona la ventana, igual que antes.
     <View style={styles.screen}>
-      {/* La cabecera del login es café oscuro: iconos claros solo aquí. */}
-      <StatusBar style="light" />
+      {/* La cabecera del login es café claro: iconos oscuros. */}
+      <StatusBar style="dark" />
       <ScrollView
         automaticallyAdjustKeyboardInsets
         contentContainerStyle={styles.content}
@@ -101,48 +101,35 @@ export function LoginScreen() {
   );
 }
 
-const RING = 280;
-
 const styles = StyleSheet.create({
-  screen: { flex: 1, backgroundColor: colors.surface },
+  screen: { flex: 1, backgroundColor: colors.background },
   content: { flexGrow: 1 },
+  // Banda de marca: superficie café sólida y filete doble, sin degradado ni marcas de agua.
   hero: {
     alignItems: 'center',
     justifyContent: 'center',
-    paddingTop: spacing.xxxl + spacing.xxl,
-    paddingBottom: spacing.xxxl + spacing.xl,
-    overflow: 'hidden',
+    paddingTop: spacing.xxxl + spacing.lg,
+    paddingBottom: spacing.xxl,
+    backgroundColor: colors.brandSoft,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
   },
-  ring: {
-    position: 'absolute',
-    width: RING,
-    height: RING,
-    borderRadius: RING / 2,
-    borderWidth: spacing.xxxl,
-    borderColor: colors.onBrandDecor,
-    right: -RING / 3,
-    top: -RING / 4,
-  },
+  rule: { marginBottom: spacing.lg },
   logo: {
     width: sizes.logo,
     height: undefined,
     aspectRatio: LOGO_ASPECT_RATIO,
-    tintColor: colors.textOnBrand,
+    tintColor: colors.text,
   },
-  tagline: { ...typography.overline, color: colors.textOnBrandMuted, marginTop: spacing.lg },
-  // La hoja blanca se monta sobre el degradado, como una tarjeta que sube desde abajo.
+  tagline: { ...typography.overline, color: colors.brand, marginTop: spacing.lg },
   sheet: {
     flexGrow: 1,
-    backgroundColor: colors.surface,
-    borderTopLeftRadius: radius.md,
-    borderTopRightRadius: radius.md,
-    marginTop: -spacing.xl,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.xxl,
     paddingBottom: spacing.xxxl,
   },
   header: { marginBottom: spacing.xl },
-  field: { marginTop: spacing.lg },
+  field: { marginTop: spacing.lg + spacing.xs },
   notice: { marginTop: spacing.lg },
   submit: { marginTop: spacing.xl },
 });
