@@ -60,7 +60,8 @@ export const Button = memo(function Button({
       {loading ? (
         <ActivityIndicator color={SPINNER_COLOR[variant]} />
       ) : (
-        <Text style={[styles.label, labelStyles[variant]]} numberOfLines={1}>
+        // Hasta 2 líneas: una etiqueta larga en versalitas se parte en lugar de cortarse con «…».
+        <Text style={[styles.label, labelStyles[variant]]} numberOfLines={2}>
           {label}
         </Text>
       )}
@@ -83,7 +84,7 @@ const styles = StyleSheet.create({
   outline: { backgroundColor: 'transparent', borderColor: colors.borderStrong },
   ghost: { minHeight: sizes.touchTarget, paddingHorizontal: spacing.md },
   disabled: { opacity: opacity.disabled },
-  label: typography.button,
+  label: { ...typography.button, textAlign: 'center' },
 });
 
 const pressedStyles = StyleSheet.create({
@@ -97,5 +98,6 @@ const labelStyles = StyleSheet.create({
   primary: { color: colors.textOnBrand },
   secondary: { color: colors.text },
   outline: { color: colors.text },
-  ghost: { color: colors.brandStrong },
+  // ghost es un enlace: tipo de oración, sin versalitas, para no competir con los botones.
+  ghost: { ...typography.bodyStrong, color: colors.brandStrong, textTransform: 'none', letterSpacing: 0 },
 });
