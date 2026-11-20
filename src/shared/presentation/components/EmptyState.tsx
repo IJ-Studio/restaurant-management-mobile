@@ -2,8 +2,9 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import type { ComponentProps } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '../theme';
+import { colors, spacing, typography } from '../theme';
 import { Button } from './Button';
+import { DoubleRule } from './DoubleRule';
 
 interface Props {
   message: string;
@@ -13,14 +14,13 @@ interface Props {
   action?: { label: string; onPress: () => void };
 }
 
-const BADGE = 72;
-
-/** Pantalla o lista sin contenido: ícono en un círculo de marca, mensaje y acción opcional. */
+/** Pantalla o lista sin contenido: ícono de trazo, filete doble, mensaje y acción opcional. */
 export function EmptyState({ message, icon = 'restaurant-outline', action }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.badge} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        <Ionicons name={icon} size={32} color={colors.brandStrong} />
+        <Ionicons name={icon} size={32} color={colors.brand} />
+        <DoubleRule />
       </View>
       <Text style={styles.message}>{message}</Text>
       {action && (
@@ -32,14 +32,7 @@ export function EmptyState({ message, icon = 'restaurant-outline', action }: Pro
 
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
-  badge: {
-    width: BADGE,
-    height: BADGE,
-    borderRadius: radius.pill,
-    backgroundColor: colors.brandSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  badge: { alignItems: 'center', gap: spacing.md },
   message: {
     ...typography.body,
     color: colors.textSecondary,

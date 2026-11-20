@@ -10,14 +10,14 @@ interface Props {
   style?: StyleProp<ViewStyle>;
 }
 
-const TONES: Record<Tone, { backgroundColor: string; color: string }> = {
-  success: { backgroundColor: colors.successSoft, color: colors.success },
-  warning: { backgroundColor: colors.warningSoft, color: colors.warning },
-  danger: { backgroundColor: colors.dangerSoft, color: colors.danger },
-  info: { backgroundColor: colors.infoSoft, color: colors.info },
+const TONES: Record<Tone, { backgroundColor: string; color: string; borderColor: string }> = {
+  success: { backgroundColor: colors.successSoft, color: colors.success, borderColor: colors.success },
+  warning: { backgroundColor: colors.warningSoft, color: colors.warning, borderColor: colors.warning },
+  danger: { backgroundColor: colors.dangerSoft, color: colors.danger, borderColor: colors.danger },
+  info: { backgroundColor: colors.infoSoft, color: colors.info, borderColor: colors.info },
 };
 
-/** Aviso en línea (`alert-error`, `alert-success`… de la web). El lector de pantalla lo anuncia. */
+/** Aviso en línea: fondo al 12 % y filete del color del estado (cambia relleno y filete, no solo el tinte). */
 export function Notice({ message, tone = 'danger', style }: Props) {
   return (
     <Text style={[styles.notice, TONES[tone], style]} accessibilityRole="alert">
@@ -33,6 +33,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.md,
     paddingVertical: spacing.md - spacing.xxs,
     borderRadius: radius.sm,
+    borderWidth: 1,
     overflow: 'hidden',
   },
 });

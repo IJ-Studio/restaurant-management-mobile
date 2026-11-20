@@ -1,22 +1,22 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { colors, radius, spacing, typography } from '../theme';
+import { colors, spacing, typography } from '../theme';
 import { Button } from './Button';
+import { DoubleRule } from './DoubleRule';
 
 interface Props {
   message: string;
   onRetry?: () => void;
 }
 
-const BADGE = 72;
-
-/** Error a pantalla completa: ícono, mensaje (anunciado como alerta) y botón de reintento. */
+/** Error a pantalla completa: ícono, filete doble, mensaje (anunciado como alerta) y botón de reintento. */
 export function ErrorState({ message, onRetry }: Props) {
   return (
     <View style={styles.container}>
       <View style={styles.badge} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
         <Ionicons name="cloud-offline-outline" size={32} color={colors.danger} />
+        <DoubleRule />
       </View>
       <Text style={styles.message} accessibilityRole="alert">
         {message}
@@ -28,14 +28,7 @@ export function ErrorState({ message, onRetry }: Props) {
 
 const styles = StyleSheet.create({
   container: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: spacing.xl },
-  badge: {
-    width: BADGE,
-    height: BADGE,
-    borderRadius: radius.pill,
-    backgroundColor: colors.dangerSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
+  badge: { alignItems: 'center', gap: spacing.md },
   message: {
     ...typography.bodyStrong,
     color: colors.danger,
