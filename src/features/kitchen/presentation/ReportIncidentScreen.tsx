@@ -7,7 +7,7 @@ import { Button } from '../../../shared/presentation/components/Button';
 import { Chip } from '../../../shared/presentation/components/Chip';
 import { Notice } from '../../../shared/presentation/components/Notice';
 import { TextField } from '../../../shared/presentation/components/TextField';
-import { colors, pressScale, radius, sizes, spacing, typography } from '../../../shared/presentation/theme';
+import { colors, pressOffset, radius, sizes, spacing, typography } from '../../../shared/presentation/theme';
 import { DELAY_MINUTES, INCIDENT_TYPES } from '../domain/Kitchen';
 import { useReportIncident } from './viewmodels';
 
@@ -39,7 +39,7 @@ export function ReportIncidentScreen() {
                 accessibilityRole="radio"
                 accessibilityState={{ selected }}
                 accessibilityLabel={option.label}
-                style={({ pressed }) => [styles.type, selected && styles.typeSelected, pressed && pressScale]}
+                style={({ pressed }) => [styles.type, selected && styles.typeSelected, pressed && pressOffset]}
               >
                 <Ionicons
                   name={option.icon as IconName}
@@ -107,7 +107,7 @@ const styles = StyleSheet.create({
     width: TYPE_SIZE,
     minHeight: TYPE_SIZE,
     padding: spacing.sm,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,

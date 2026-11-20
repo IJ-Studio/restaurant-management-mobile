@@ -134,8 +134,8 @@ const styles = StyleSheet.create({
   sheet: {
     flexGrow: 1,
     backgroundColor: colors.surface,
-    borderTopLeftRadius: radius.xl,
-    borderTopRightRadius: radius.xl,
+    borderTopLeftRadius: radius.md,
+    borderTopRightRadius: radius.md,
     marginTop: -spacing.xl,
     paddingHorizontal: spacing.xl,
     paddingTop: spacing.xxl,

@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { ActivityIndicator, Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
 
-import { colors, opacity, pressScale, radius, shadows, sizes, spacing, typography } from '../theme';
+import { colors, opacity, pressOffset, radius, shadows, sizes, spacing, typography } from '../theme';
 
 export type ButtonVariant = 'primary' | 'secondary' | 'outline' | 'ghost';
 
@@ -52,7 +52,7 @@ export const Button = memo(function Button({
         styles.base,
         styles[variant],
         pressed && pressedStyles[variant],
-        pressed && pressScale,
+        pressed && pressOffset,
         disabled && styles.disabled,
         style,
       ]}

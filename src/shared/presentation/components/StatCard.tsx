@@ -46,7 +46,7 @@ export function StatCard({ label, value, icon, hint, tone = 'neutral', style, ca
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radius.xl,
+    borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
     padding: spacing.lg,

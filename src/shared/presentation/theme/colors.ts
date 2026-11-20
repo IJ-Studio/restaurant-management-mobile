@@ -21,6 +21,8 @@ export const colors = {
   brandStrong: w.acentoIntenso,
   /** Fondo tenue de marca (badges, letreros). */
   brandSoft: w.superficieCafe,
+  /** Acento al 12 % sobre la superficie (`color-mix` de la web): insignias y selección. */
+  brandTint: mix(w.acento, w.superficie, 0.12),
   /** Final del degradado de marca (blanco encima: 16:1). */
   brandDeep: w.textoPrincipal,
   /** Texto secundario sobre el degradado de marca (blanco al 85 %, pasa AA en todo el degradado). */
@@ -66,3 +68,27 @@ export const colors = {
 } as const;
 
 export type ColorToken = keyof typeof colors;
+
+/**
+ * Tema oscuro de DESIGN.md, alternativo al claro por defecto. Queda como datos con los mismos nombres
+ * de `webTokens`: la app aún no tiene selector de tema y cablearlo es lógica, fuera del pulido visual.
+ */
+export const darkPalette = {
+  fondo: '#14100C',
+  superficie: '#1C1712',
+  superficieElevada: '#262019',
+  superficieCafe: '#2B2119',
+  bordeSutil: '#2E261F',
+  bordeControl: '#7D6E5A',
+  textoPrincipal: '#EFE7DA',
+  textoSecundario: '#BDB09C',
+  textoTenue: '#978A76',
+  acento: '#C9A267',
+  acentoIntenso: '#DBB97F',
+  textoSobreAcento: '#14100C',
+  foco: '#E8C98F',
+  error: '#E8846F',
+  exito: '#9CC08F',
+  aviso: '#D9AE5B',
+  info: '#9DB4C7',
+} as const satisfies Partial<Record<keyof typeof w, string>>;

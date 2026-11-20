@@ -10,7 +10,7 @@ import { ScreenState } from '../../../../shared/presentation/components/ScreenSt
 import { TextField } from '../../../../shared/presentation/components/TextField';
 import {
   colors,
-  pressScale,
+  pressOffset,
   radius,
   sizes,
   spacing,
@@ -28,7 +28,7 @@ import { useTableOrder } from '../viewmodels/useTableOrder';
 function StepButton({ symbol, label, onPress }: { symbol: string; label: string; onPress: () => void }) {
   return (
     <Pressable
-      style={({ pressed }) => [styles.step, pressed && styles.stepPressed, pressed && pressScale]}
+      style={({ pressed }) => [styles.step, pressed && styles.stepPressed, pressed && pressOffset]}
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
@@ -197,7 +197,7 @@ const styles = StyleSheet.create({
   lines: { gap: spacing.sm },
   line: {
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
     paddingHorizontal: spacing.lg,

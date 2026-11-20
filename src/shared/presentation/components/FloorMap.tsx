@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, pressScale, radius, spacing, typography } from '../theme';
+import { colors, pressOffset, radius, spacing, typography } from '../theme';
 
 export type FloorTableState = 'libre' | 'ocupada' | 'reservada' | 'por_cobrar';
 export type FloorTableShape = 'cuadrada' | 'redonda' | 'rectangular' | 'barra';
@@ -84,7 +84,7 @@ const TableSeat = memo(function TableSeat({
       accessibilityState={onSelect ? { selected } : undefined}
       accessibilityLabel={label}
       accessibilityHint={onSelect ? `${state.label}, ${table.capacity} lugares` : undefined}
-      style={({ pressed }) => [styles.seat, pressed && pressScale]}
+      style={({ pressed }) => [styles.seat, pressed && pressOffset]}
     >
       <View style={box}>
         {chairs.map((chair, index) => (
@@ -183,7 +183,7 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: spacing.sm,
     padding: spacing.md,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     borderWidth: 1,
     borderStyle: 'dashed',
     borderColor: colors.borderStrong,

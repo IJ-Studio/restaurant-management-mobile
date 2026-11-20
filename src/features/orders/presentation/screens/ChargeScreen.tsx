@@ -12,7 +12,7 @@ import { Notice } from '../../../../shared/presentation/components/Notice';
 import { TextField } from '../../../../shared/presentation/components/TextField';
 import {
   colors,
-  pressScale,
+  pressOffset,
   radius,
   sizes,
   spacing,
@@ -49,7 +49,7 @@ function MiniStep({ symbol, label, onPress }: { symbol: string; label: string; o
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={({ pressed }) => [styles.miniStep, pressed && styles.miniStepPressed, pressed && pressScale]}
+      style={({ pressed }) => [styles.miniStep, pressed && styles.miniStepPressed, pressed && pressOffset]}
     >
       <Text style={styles.miniStepText}>{symbol}</Text>
     </Pressable>

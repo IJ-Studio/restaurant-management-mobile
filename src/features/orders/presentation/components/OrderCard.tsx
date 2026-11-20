@@ -5,7 +5,7 @@ import { Button } from '../../../../shared/presentation/components/Button';
 import { StatusBadge } from '../../../../shared/presentation/components/StatusBadge';
 import {
   colors,
-  pressScale,
+  pressOffset,
   radius,
   shadows,
   spacing,
@@ -61,7 +61,7 @@ export function OrderCard({ order, onPress, action, showAllItems = false, now = 
         accessibilityRole={onPress ? 'button' : undefined}
         accessibilityLabel={`${order.place}, ${status}, ${order.customer}, ${total}`}
         accessibilityHint={onPress ? 'Abre el detalle del pedido' : undefined}
-        style={({ pressed }) => [styles.body, pressed && styles.pressed, pressed && pressScale]}
+        style={({ pressed }) => [styles.body, pressed && styles.pressed, pressed && pressOffset]}
       >
         <View style={styles.header}>
           <Text style={styles.place} numberOfLines={1}>
@@ -119,7 +119,7 @@ export function OrderCard({ order, onPress, action, showAllItems = false, now = 
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
+    borderRadius: radius.md,
     borderWidth: StyleSheet.hairlineWidth,
     borderColor: colors.border,
     overflow: 'hidden',

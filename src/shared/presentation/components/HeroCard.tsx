@@ -46,7 +46,7 @@ const RING = 220;
 
 const styles = StyleSheet.create({
   card: {
-    borderRadius: radius.xl,
+    borderRadius: radius.md,
     padding: spacing.xl,
     overflow: 'hidden',
     ...shadows.brand,

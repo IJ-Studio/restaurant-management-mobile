@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import type { ComponentProps } from 'react';
 import { Pressable, StyleSheet, Text } from 'react-native';
 
-import { colors, pressScale, radius, sizes, spacing, typography } from '../theme';
+import { colors, pressOffset, radius, sizes, spacing, typography } from '../theme';
 
 interface Props {
   label: string;
@@ -19,7 +19,7 @@ export function HeaderButton({ label, icon, onPress, accessibilityLabel }: Props
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
       hitSlop={spacing.sm}
-      style={({ pressed }) => [styles.button, pressed && styles.pressed, pressed && pressScale]}
+      style={({ pressed }) => [styles.button, pressed && styles.pressed, pressed && pressOffset]}
     >
       <Ionicons name={icon} size={16} color={colors.brandStrong} />
       <Text style={styles.label}>{label}</Text>
