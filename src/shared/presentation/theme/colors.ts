@@ -30,8 +30,6 @@ export const colors = {
   background: w.fondo,
   /** Tarjetas, inputs y pantallas de formulario. */
   surface: w.superficie,
-  /** Fondo de segundo nivel: filas presionadas, chips sin seleccionar. */
-  elevated: w.superficieCafe,
   /** Rellenos neutros: imagen sin foto, esqueletos de carga. */
   subtle: w.bordeSutil,
 
