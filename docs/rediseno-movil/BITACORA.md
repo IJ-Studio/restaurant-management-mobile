@@ -89,3 +89,75 @@ contra el inventario y no tenían estilos fuera del sistema.
 7. **Perfil:** sello circular con doble filete y monograma centrado.
 8. **Cifras:** que Fraunces y DM Sans muestren cifras tabulares (montos alineados en Cobrar, Caja y Nómina).
 9. Correr el flujo Maestro `s2-hu04-reservation.yaml` y el login (`subflows/login.yaml`).
+
+## Sesión 2 · 2026-11-20 · Release en el Pixel 10a, regresiones y rendimiento
+
+Release local de la rama (R8, Stripe #476 y pinning #481), API local con base local por túnel rápido de
+`cloudflared` (nunca la base de producción). Pantalla del teléfono encendida por USB solo durante la
+sesión (se restauró el ajuste).
+
+### Regresiones del pulido corregidas
+
+| Commit | Qué fallaba | Corrección |
+|---|---|---|
+| `8d4db74` fix(ui) | Login: con la etiqueta encima de cada campo, el teclado tapaba la caja de Contraseña (Android edge-to-edge ya no redimensiona la ventana). Al tocarla se pulsaba una tecla. Rompía 8 de 10 flujos de Maestro | Banda de marca, logo (220 → 180) y márgenes ~57 dp más compactos |
+| `aa4ec8f` fix(test) | `s2-hu04-reservation`: el centro de la pantalla, donde desliza `scrollUntilVisible`, cae ahora sobre la caja de Correo. Un arrastre que empieza sobre una caja de texto no mueve el formulario (también en `develop`) | El segundo desplazamiento empieza en el margen izquierdo |
+| `a198b94` fix(ui) | Dashboard: ~540 px vacíos bajo los accesos rápidos (Yoga medía cada `HeaderButton` a todo lo ancho por el `flexGrow` de la etiqueta). En Pedidos, «Reportes» ocupaba toda la cabecera y tapaba el título | Chevron con `marginLeft: 'auto'`; la etiqueta ya no crece |
+
+### Resultados
+
+- **Maestro (Release, Pixel 10a): 10 de 10** en la corrida final (`s3-hu05-cuenta-dividida` incluido).
+  - `s3-hu06-realtime` es intermitente por el túnel: el SSE no pasa (B-031) y la app cae al refresco
+    de 30 s, más largo que la espera de 10 s del flujo. También falla en `develop`; no es del pulido.
+  - `arco-privacy` consume `baja@prueba.local`: relanzar `_entrada/semilla-local.sql` antes de cada
+    corrida.
+  - Hay que pasar las variables con `-e` (`-e API_URL=… -e PLATILLO_ID=154`), no por el entorno del
+    shell.
+- **Jest completo en serie** (`--runInBand`): 726 pasan, 8 omitidas, 0 fallan (113 archivos, 4
+  omitidos). Sin `--forceExit` el proceso no termina al acabar: queda un handle abierto. No es nuevo.
+- **typecheck** y **lint** (excluyendo `.claude/` y `.agents/`): sin errores.
+
+### Capturas (`capturas/`, 720 px, JPG)
+
+| Punto a revisar | Resultado |
+|---|---|
+| «Reservas» completo y pestaña activa | ✅ texto completo; filete superior de 2 px en la activa (05, 09) |
+| Anillo de foco en Android | ✅ visible y sin mover el formulario (02, 10) |
+| Botones con texto largo | ✅ «Empezar a preparar», «Cobrar con tarjeta en la app» y «Cambiar estado» en una línea, sin cortes (08, 09, 14) |
+| Alineación de montos | ✅ cifras tabulares en Cobrar, Caja y Cobros (12, 13, 15, 16) |
+| Sello del perfil | ✅ centrado, doble filete y monograma (11) |
+| Login con teclado | ✅ tras `8d4db74`, Contraseña queda sobre el teclado (02) |
+| Dashboard | ✅ tras `a198b94`, sin hueco (03, 04) |
+
+Hallazgos visuales que no son regresión (quedan anotados, sin tocar):
+
+- **«Ver cálculo» repetido:** dos o tres seguidos en las tarjetas del Dashboard y de Caja. Ya pasaba
+  en `develop`; el pulido solo los subió de 32 a 44 px. El nombre accesible sí los distingue.
+- **Botón primario deshabilitado** («Cobrar $95.00», «Cerrar caja»): el texto apenas contrasta.
+- **Arrastre sobre una caja de texto:** en formularios largos (Nueva reservación) no desplaza la
+  pantalla. Ya pasaba en `develop`.
+- **Pestañas en Android:** el nombre accesible empieza con «, » (por ejemplo «, Dashboard»).
+  - Android lo arma con los hijos del botón: el glifo del ícono más la etiqueta.
+  - Solo «Reservaciones» tiene un nombre fijo (`tabLabelOptions`).
+  - Falta confirmarlo con TalkBack y compararlo con `develop`.
+
+### Rendimiento
+
+Detalle en [RENDIMIENTO.md](RENDIMIENTO.md):
+
+- El Menú se traba por las fotos a tamaño original (85 % de fotogramas lentos con fotos frente a
+  0,34 % sin ellas).
+- El pulido no cambió las cifras frente a `develop`.
+
+### AAB para Play
+
+Comprobaciones, decisiones pendientes y comandos en [AAB-PLAY.md](AAB-PLAY.md). Nada se generó ni
+se subió.
+
+### Estado del entorno al cerrar
+
+- Detenidos el túnel, la API local y la base local.
+- La base local quedó sin fotos, como estaba. Se agregaron pedidos de prueba (uno por mesa) para la
+  línea base de Pedidos.
+- `.env.local` apunta al túnel ya cerrado.
+- En el teléfono queda instalado el Release de la rama (`a198b94`) con la sesión de cajero.
