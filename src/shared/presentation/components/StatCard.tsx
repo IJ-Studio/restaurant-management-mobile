@@ -3,7 +3,7 @@ import type { ComponentProps } from 'react';
 import { StyleSheet, Text, View, type StyleProp, type ViewStyle } from 'react-native';
 
 import type { Calculation } from '../../domain/Calculation';
-import { colors, radius, shadows, spacing, typography } from '../theme';
+import { colors, radius, spacing, typography } from '../theme';
 import { CalculationToggle } from './CalculationView';
 
 type IconName = ComponentProps<typeof Ionicons>['name'];
@@ -14,26 +14,26 @@ interface Props {
   icon: IconName;
   /** Texto chico bajo el valor (p. ej. "de 16 mesas"). */
   hint?: string;
-  /** `brand` resalta la tarjeta principal (ventas), como `promo-card` de la web. */
+  /** `brand` resalta la tarjeta principal (ventas) con la superficie café. */
   tone?: 'brand' | 'neutral';
   style?: StyleProp<ViewStyle>;
   /** «Ver cálculo» (P1.4): el desglose de la cifra. */
   calculation?: Calculation;
 }
 
-/** Tarjeta de un total del día: ícono, valor grande y etiqueta. */
+/** Indicador de DESIGN.md: rótulo en versalitas con su ícono a la derecha, cifra en Fraunces y pista. */
 export function StatCard({ label, value, icon, hint, tone = 'neutral', style, calculation }: Props) {
   const brand = tone === 'brand';
   return (
     <View style={[styles.card, brand && styles.brandCard, style]}>
       <View accessible accessibilityLabel={[label, value, hint].filter(Boolean).join(', ')}>
-        <View style={[styles.icon, brand && styles.brandIcon]}>
-          <Ionicons name={icon} size={18} color={brand ? colors.textOnBrand : colors.brandStrong} />
+        <View style={styles.header}>
+          <Text style={styles.label}>{label}</Text>
+          <Ionicons name={icon} size={16} color={colors.brand} />
         </View>
         <Text style={styles.value} numberOfLines={1} adjustsFontSizeToFit>
           {value}
         </Text>
-        <Text style={styles.label}>{label}</Text>
         {hint && <Text style={styles.hint}>{hint}</Text>}
       </View>
       {calculation && (
@@ -46,24 +46,20 @@ export function StatCard({ label, value, icon, hint, tone = 'neutral', style, ca
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radius.xl,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: radius.md,
+    borderWidth: 1,
     borderColor: colors.border,
     padding: spacing.lg,
-    ...shadows.card,
   },
-  brandCard: { backgroundColor: colors.brandSoft, borderColor: colors.brandSoft },
-  icon: {
-    width: spacing.xxl,
-    height: spacing.xxl,
-    borderRadius: radius.md,
-    backgroundColor: colors.brandSoft,
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: spacing.md,
+  brandCard: { backgroundColor: colors.brandSoft, borderColor: colors.borderStrong },
+  header: {
+    flexDirection: 'row',
+    alignItems: 'flex-start',
+    justifyContent: 'space-between',
+    gap: spacing.sm,
+    marginBottom: spacing.sm,
   },
-  brandIcon: { backgroundColor: colors.brand },
-  value: { ...typography.title, color: colors.text },
-  label: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xxs },
-  hint: { ...typography.caption, color: colors.textSecondary },
+  label: { ...typography.overline, color: colors.textSecondary, flexShrink: 1 },
+  value: { ...typography.stat, color: colors.text },
+  hint: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xxs },
 });

@@ -3,6 +3,7 @@ import { Modal, StyleSheet, Text, View } from 'react-native';
 
 import { useDependencies } from '../../../../core/di/DependenciesProvider';
 import { Button } from '../../../../shared/presentation/components/Button';
+import { DoubleRule } from '../../../../shared/presentation/components/DoubleRule';
 import { colors, radius, spacing, typography } from '../../../../shared/presentation/theme';
 import { useNotificationStore } from '../store/notificationStore';
 import { useNotificationPermission } from '../viewmodels/useNotificationPermission';
@@ -30,6 +31,7 @@ export function NotificationPermissionPrompt() {
     <Modal visible={canAsk && !dismissed} transparent animationType="fade" onRequestClose={dismiss}>
       <View style={styles.backdrop}>
         <View style={styles.dialog} accessibilityViewIsModal>
+          <DoubleRule />
           <Text style={styles.title} accessibilityRole="header">
             Avisos de pedidos
           </Text>
@@ -51,7 +53,14 @@ export function NotificationPermissionPrompt() {
 
 const styles = StyleSheet.create({
   backdrop: { flex: 1, justifyContent: 'center', padding: spacing.xl, backgroundColor: colors.overlay },
-  dialog: { backgroundColor: colors.surface, borderRadius: radius.lg, padding: spacing.xl, gap: spacing.md },
+  dialog: {
+    backgroundColor: colors.surface,
+    borderRadius: radius.lg,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    padding: spacing.xl,
+    gap: spacing.md,
+  },
   title: { ...typography.title, color: colors.text },
   text: { ...typography.body, color: colors.textSecondary },
   accept: { marginTop: spacing.sm },

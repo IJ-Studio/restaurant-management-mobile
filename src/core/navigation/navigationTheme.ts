@@ -2,6 +2,7 @@ import type { BottomTabNavigationOptions } from '@react-navigation/bottom-tabs';
 import { DefaultTheme, type Theme } from '@react-navigation/native';
 import type { NativeStackNavigationOptions } from '@react-navigation/native-stack';
 
+import { TabBarButton } from '../../shared/presentation/components/TabBarButton';
 import { colors, fonts } from '../../shared/presentation/theme';
 
 /**
@@ -27,7 +28,7 @@ export const navigationTheme: Theme = {
   },
 };
 
-const headerTitleStyle = { fontFamily: fonts.display, fontSize: 19, color: colors.text };
+const headerTitleStyle = { fontFamily: fonts.display, fontSize: 20, color: colors.text };
 
 /** Encabezado de los stacks (Menú, Reservaciones, Pedidos). */
 export const stackScreenOptions: NativeStackNavigationOptions = {
@@ -35,6 +36,8 @@ export const stackScreenOptions: NativeStackNavigationOptions = {
   headerTintColor: colors.brandStrong,
   headerBackButtonDisplayMode: 'minimal',
   headerStyle: { backgroundColor: colors.surface },
+  // Sin sombra: la cabecera se separa del fondo por el escalón de superficie.
+  headerShadowVisible: false,
   contentStyle: { backgroundColor: colors.background },
 };
 
@@ -42,9 +45,17 @@ export const stackScreenOptions: NativeStackNavigationOptions = {
 export const tabScreenOptions: BottomTabNavigationOptions = {
   headerTitleAlign: 'center',
   headerTitleStyle,
-  headerStyle: { backgroundColor: colors.surface },
-  tabBarActiveTintColor: colors.brandStrong,
-  tabBarInactiveTintColor: colors.textSecondary,
+  headerStyle: { backgroundColor: colors.surface, borderBottomWidth: 1, borderBottomColor: colors.border },
+  headerShadowVisible: false,
+  tabBarActiveTintColor: colors.brand,
+  tabBarInactiveTintColor: colors.textMuted,
   tabBarLabelStyle: { fontFamily: fonts.semibold, fontSize: 12 },
-  tabBarStyle: { backgroundColor: colors.surface, borderTopColor: colors.border },
+  // elevation 0: sin sombra en Android; la barra se separa con un filete de 1 px.
+  tabBarStyle: {
+    backgroundColor: colors.surface,
+    borderTopColor: colors.border,
+    borderTopWidth: 1,
+    elevation: 0,
+  },
+  tabBarButton: TabBarButton,
 };

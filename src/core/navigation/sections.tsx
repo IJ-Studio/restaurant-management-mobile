@@ -1,5 +1,6 @@
 import type Ionicons from '@expo/vector-icons/Ionicons';
 import type { ComponentProps, ComponentType } from 'react';
+import { Platform } from 'react-native';
 
 import { AdminNavigator } from '../../features/admin/presentation/navigation/AdminNavigator';
 import type { Section } from '../../features/auth/domain/entities/permissions';
@@ -13,6 +14,8 @@ type IconName = ComponentProps<typeof Ionicons>['name'];
 
 interface SectionConfig {
   title: string;
+  /** Texto corto de la pestaña cuando el título no cabe; el título sigue siendo el nombre accesible. */
+  tabLabel?: string;
   component: ComponentType;
   headerShown?: boolean;
   /** Ícono de la pestaña: relleno cuando está activa, de contorno cuando no. */
@@ -42,6 +45,7 @@ export const SECTION_CONFIG: Record<Section, SectionConfig> = {
   },
   reservations: {
     title: 'Reservaciones',
+    tabLabel: 'Reservas',
     component: ReservationsNavigator,
     headerShown: false,
     icon: { active: 'calendar', inactive: 'calendar-outline' },
@@ -56,6 +60,18 @@ export const SECTION_CONFIG: Record<Section, SectionConfig> = {
     title: 'Perfil',
     component: ProfileNavigator,
     headerShown: false,
-    icon: { active: 'person-circle', inactive: 'person-circle-outline' },
+    icon: { active: 'person', inactive: 'person-outline' },
   },
 };
+
+/**
+ * Pestaña con texto corto («Reservas»): el nombre accesible sigue siendo el título completo, con el
+ * mismo formato que React Navigation arma en iOS, para que lectores de pantalla y flujos lo encuentren.
+ */
+export function tabLabelOptions({ title, tabLabel }: SectionConfig, index: number, count: number) {
+  if (!tabLabel) return {};
+  return {
+    tabBarLabel: tabLabel,
+    tabBarAccessibilityLabel: Platform.OS === 'ios' ? `${title}, tab, ${index + 1} of ${count}` : title,
+  };
+}

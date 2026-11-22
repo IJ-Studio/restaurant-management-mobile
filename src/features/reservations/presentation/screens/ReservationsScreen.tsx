@@ -57,27 +57,29 @@ export function ReservationsScreen() {
         keyExtractor={(reservation) => reservation.id}
         contentContainerStyle={styles.list}
         renderItem={({ item }) => (
-          <View>
-            <ReservationCard reservation={item} />
-            {isAdmin && (
-              <Button
-                label="Cambiar estado"
-                accessibilityLabel={`Cambiar estado de ${item.customerName}`}
-                variant="ghost"
-                onPress={() =>
-                  navigation.navigate('ReservationStatus', {
-                    id: item.id,
-                    customerName: item.customerName,
-                    status: item.status,
-                    summary: `${formatDateTime(item.dateTime)} · ${reservationSummary(item)}`,
-                    when: formatDateTime(item.dateTime),
-                    phone: item.customerPhone,
-                    email: item.customerEmail,
-                  })
-                }
-              />
-            )}
-          </View>
+          <ReservationCard
+            reservation={item}
+            footer={
+              isAdmin && (
+                <Button
+                  label="Cambiar estado"
+                  accessibilityLabel={`Cambiar estado de ${item.customerName}`}
+                  variant="outline"
+                  onPress={() =>
+                    navigation.navigate('ReservationStatus', {
+                      id: item.id,
+                      customerName: item.customerName,
+                      status: item.status,
+                      summary: `${formatDateTime(item.dateTime)} · ${reservationSummary(item)}`,
+                      when: formatDateTime(item.dateTime),
+                      phone: item.customerPhone,
+                      email: item.customerEmail,
+                    })
+                  }
+                />
+              )
+            }
+          />
         )}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         ListHeaderComponent={
@@ -104,8 +106,14 @@ export function ReservationsScreen() {
       <View style={styles.top}>
         <Button label="Nueva reservación" onPress={() => navigation.navigate('NewReservation')} />
         <View style={styles.views} accessibilityRole="radiogroup">
-          <Chip label="Próximas" selected={view === 'active'} onPress={() => setView('active')} />
           <Chip
+            variant="tab"
+            label="Próximas"
+            selected={view === 'active'}
+            onPress={() => setView('active')}
+          />
+          <Chip
+            variant="tab"
             label={`Recientes (${RECENT_RESERVATIONS_DAYS} días)`}
             accessibilityLabel="Recientes"
             selected={view === 'recent'}
@@ -122,7 +130,14 @@ export function ReservationsScreen() {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   top: { padding: spacing.lg, paddingBottom: spacing.sm },
-  views: { flexDirection: 'row', gap: spacing.sm, marginTop: spacing.lg },
+  // Barra de pestañas: filete inferior de 1 px; la activa lleva el filete doble ocre.
+  views: {
+    flexDirection: 'row',
+    gap: spacing.lg,
+    marginTop: spacing.lg,
+    borderBottomWidth: 1,
+    borderBottomColor: colors.border,
+  },
   notice: { marginTop: spacing.md },
   list: { padding: spacing.lg, paddingTop: spacing.sm, flexGrow: 1 },
   separator: { height: spacing.md },

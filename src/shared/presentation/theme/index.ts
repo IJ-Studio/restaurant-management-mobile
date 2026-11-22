@@ -1,4 +1,4 @@
-/** Tema central de la app: colores, tipografía, espaciados, radios y sombras de El Quijote. */
-export { colors, type ColorToken } from './colors';
+/** Tema central de la app («Etiqueta de la casa»): colores, tipografía, espaciados y radios. Sin sombras. */
+export { colors, darkPalette, type ColorToken } from './colors';
 export { fonts, typography, type TypographyToken } from './typography';
-export { gradients, opacity, pressScale, radius, shadows, sizes, spacing } from './layout';
+export { opacity, pressOffset, radius, sizes, spacing } from './layout';

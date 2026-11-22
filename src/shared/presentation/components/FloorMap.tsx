@@ -1,7 +1,7 @@
 import { memo } from 'react';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { colors, pressScale, radius, spacing, typography } from '../theme';
+import { colors, fonts, pressOffset, radius, spacing, typography } from '../theme';
 
 export type FloorTableState = 'libre' | 'ocupada' | 'reservada' | 'por_cobrar';
 export type FloorTableShape = 'cuadrada' | 'redonda' | 'rectangular' | 'barra';
@@ -25,8 +25,9 @@ interface Props {
 }
 
 const STATE: Record<FloorTableState, { label: string; fill: string; border: string; text: string }> = {
-  libre: { label: 'Libre', fill: colors.surface, border: colors.success, text: colors.text },
-  ocupada: { label: 'Ocupada', fill: colors.brand, border: colors.brand, text: colors.textOnBrand },
+  libre: { label: 'Libre', fill: colors.successSoft, border: colors.success, text: colors.success },
+  // Contorno y tinte, no relleno de acento: el relleno ocre se reserva al botón primario de la pantalla.
+  ocupada: { label: 'Ocupada', fill: colors.brandTint, border: colors.brand, text: colors.brandStrong },
   reservada: { label: 'Reservada', fill: colors.infoSoft, border: colors.info, text: colors.info },
   por_cobrar: { label: 'Por cobrar', fill: colors.warningSoft, border: colors.warning, text: colors.warning },
 };
@@ -84,7 +85,7 @@ const TableSeat = memo(function TableSeat({
       accessibilityState={onSelect ? { selected } : undefined}
       accessibilityLabel={label}
       accessibilityHint={onSelect ? `${state.label}, ${table.capacity} lugares` : undefined}
-      style={({ pressed }) => [styles.seat, pressed && pressScale]}
+      style={({ pressed }) => [styles.seat, pressed && pressOffset]}
     >
       <View style={box}>
         {chairs.map((chair, index) => (
@@ -101,7 +102,7 @@ const TableSeat = memo(function TableSeat({
               height,
               left: GAP + CHAIR,
               top: GAP + CHAIR,
-              borderRadius: round ? radius.pill : radius.md,
+              borderRadius: round ? radius.pill : radius.sm,
               backgroundColor: fill,
               borderColor: selected ? colors.secondary : state.border,
             },
@@ -177,29 +178,28 @@ export const FloorMap = memo(function FloorMap({
 const styles = StyleSheet.create({
   area: { marginBottom: spacing.lg },
   areaName: { ...typography.overline, color: colors.textSecondary, marginBottom: spacing.sm },
-  // Piso del área: fondo cálido con borde punteado, como un plano.
+  // Caja técnica del área: fondo de página con filete continuo, como un plano limpio.
   floor: {
     flexDirection: 'row',
     flexWrap: 'wrap',
     gap: spacing.sm,
     padding: spacing.md,
-    borderRadius: radius.lg,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderStyle: 'dashed',
     borderColor: colors.borderStrong,
-    backgroundColor: colors.elevated,
+    backgroundColor: colors.background,
   },
   seat: { padding: spacing.xxs },
   chair: { position: 'absolute', width: CHAIR, height: CHAIR, borderRadius: radius.pill },
   table: {
     position: 'absolute',
-    borderWidth: 2,
+    borderWidth: 1,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  number: typography.badge,
+  number: { ...typography.caption, fontFamily: fonts.semibold },
   legend: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md },
   legendItem: { flexDirection: 'row', alignItems: 'center', gap: spacing.xs },
-  legendDot: { width: 12, height: 12, borderRadius: radius.pill, borderWidth: 2 },
+  legendDot: { width: 12, height: 12, borderRadius: radius.pill, borderWidth: 1 },
   legendText: { ...typography.caption, color: colors.textSecondary },
 });

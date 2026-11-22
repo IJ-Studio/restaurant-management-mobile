@@ -3,7 +3,7 @@ import { createNativeStackNavigator, type NativeStackNavigationProp } from '@rea
 import { StyleSheet, View } from 'react-native';
 
 import { stackScreenOptions } from '../../../../core/navigation/navigationTheme';
-import { Button } from '../../../../shared/presentation/components/Button';
+import { HeaderButton } from '../../../../shared/presentation/components/HeaderButton';
 import { spacing } from '../../../../shared/presentation/theme';
 import { PromotionsScreen } from '../../promotions/presentation/PromotionsScreen';
 import { StockScreen } from '../../stock/presentation/StockScreen';
@@ -33,17 +33,29 @@ function AdminHome() {
   return (
     <View style={styles.home}>
       <View style={styles.modules}>
-        <Button label="Nómina" variant="outline" onPress={() => navigation.navigate('Payroll')} />
-        <Button
+        <HeaderButton label="Nómina" style={styles.module} onPress={() => navigation.navigate('Payroll')} />
+        <HeaderButton
           label="Empleados de la nómina"
-          variant="outline"
+          style={styles.module}
           onPress={() => navigation.navigate('PayrollEmployees')}
         />
-        <Button label="Mesas" variant="outline" onPress={() => navigation.navigate('Tables')} />
-        <Button label="Personal" variant="outline" onPress={() => navigation.navigate('Staff')} />
-        <Button label="Facturas" variant="outline" onPress={() => navigation.navigate('Invoices')} />
-        <Button label="Promociones" variant="outline" onPress={() => navigation.navigate('Promotions')} />
-        <Button label="Existencias" variant="outline" onPress={() => navigation.navigate('Stock')} />
+        <HeaderButton label="Mesas" style={styles.module} onPress={() => navigation.navigate('Tables')} />
+        <HeaderButton label="Personal" style={styles.module} onPress={() => navigation.navigate('Staff')} />
+        <HeaderButton
+          label="Facturas"
+          style={styles.module}
+          onPress={() => navigation.navigate('Invoices')}
+        />
+        <HeaderButton
+          label="Promociones"
+          style={styles.module}
+          onPress={() => navigation.navigate('Promotions')}
+        />
+        <HeaderButton
+          label="Existencias"
+          style={styles.module}
+          onPress={() => navigation.navigate('Stock')}
+        />
       </View>
       <DashboardScreen />
     </View>
@@ -79,4 +91,6 @@ const styles = StyleSheet.create({
     paddingHorizontal: spacing.lg,
     paddingTop: spacing.md,
   },
+  // Cada acceso crece para llenar su fila: en 390 px quedan filas de 2, 3 y 2 como en el diseño.
+  module: { flexGrow: 1 },
 });

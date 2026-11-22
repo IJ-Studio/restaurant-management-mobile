@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { colors, opacity, radius, sizes, spacing, typography } from '../theme';
@@ -17,7 +18,7 @@ interface Props {
   testID?: string;
 }
 
-/** Fila de lista con imagen opcional, título, subtítulo y valor a la derecha. */
+/** Fila de lista con imagen opcional, título, subtítulo, valor a la derecha y chevron si lleva a otra pantalla. */
 export function ListItem({
   title,
   subtitle,
@@ -55,6 +56,9 @@ export function ListItem({
         {badge && <StatusBadge label={badge} tone={badgeTone} style={styles.badge} />}
       </View>
       {trailing && <Text style={styles.trailing}>{trailing}</Text>}
+      {onPress && (
+        <Ionicons name="chevron-forward" size={14} color={colors.textMuted} style={styles.chevron} />
+      )}
     </Pressable>
   );
 }
@@ -63,23 +67,24 @@ const styles = StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
-    minHeight: sizes.touchTarget,
+    minHeight: 48,
     paddingVertical: spacing.md,
     paddingHorizontal: spacing.lg,
     backgroundColor: colors.surface,
   },
-  pressed: { backgroundColor: colors.elevated },
+  pressed: { backgroundColor: colors.brandSoft },
   disabled: { opacity: opacity.dimmed },
   image: {
     width: sizes.thumbnail,
     height: sizes.thumbnail,
-    borderRadius: radius.md,
+    borderRadius: radius.sm,
     marginRight: spacing.md,
   },
-  imagePlaceholder: { backgroundColor: colors.subtle },
+  imagePlaceholder: { backgroundColor: colors.brandSoft, borderWidth: 1, borderColor: colors.border },
   body: { flex: 1 },
   title: { ...typography.subheading, color: colors.text },
   subtitle: { ...typography.small, color: colors.textSecondary, marginTop: spacing.xxs },
   badge: { marginTop: spacing.xs },
   trailing: { ...typography.price, color: colors.brandStrong, marginLeft: spacing.md },
+  chevron: { marginLeft: spacing.sm },
 });

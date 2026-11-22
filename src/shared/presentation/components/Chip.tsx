@@ -2,12 +2,13 @@ import {
   Pressable,
   StyleSheet,
   Text,
+  View,
   type AccessibilityRole,
   type StyleProp,
   type ViewStyle,
 } from 'react-native';
 
-import { colors, pressScale, radius, sizes, spacing, typography } from '../theme';
+import { colors, pressOffset, radius, sizes, spacing, typography } from '../theme';
 
 interface Props {
   label: string;
@@ -18,10 +19,12 @@ interface Props {
   /** `radio` para elegir una opción de un grupo (mesa, canal, filtro). */
   accessibilityRole?: AccessibilityRole;
   accessibilityLabel?: string;
+  /** `tab`: pestaña de una barra (texto y filete doble ocre bajo la activa), en lugar de caja. */
+  variant?: 'chip' | 'tab';
   style?: StyleProp<ViewStyle>;
 }
 
-/** Opción seleccionable en forma de pastilla; seleccionada se pinta con el naranja de marca. */
+/** Opción seleccionable: caja de control con radio 2; seleccionada cambia relleno y filete al acento. */
 export function Chip({
   label,
   selected,
@@ -29,9 +32,24 @@ export function Chip({
   count,
   accessibilityRole = 'radio',
   accessibilityLabel,
+  variant = 'chip',
   style,
 }: Props) {
   const text = count === undefined ? label : `${label} · ${count}`;
+  if (variant === 'tab') {
+    return (
+      <Pressable
+        onPress={onPress}
+        accessibilityRole={accessibilityRole}
+        accessibilityState={{ selected }}
+        accessibilityLabel={accessibilityLabel ?? text}
+        style={({ pressed }) => [styles.tab, pressed && styles.tabPressed, style]}
+      >
+        <Text style={[styles.tabLabel, selected && styles.tabLabelSelected]}>{text}</Text>
+        <View style={[styles.rule, selected && styles.ruleSelected]} />
+      </Pressable>
+    );
+  }
   return (
     <Pressable
       onPress={onPress}
@@ -42,7 +60,7 @@ export function Chip({
         styles.chip,
         selected && styles.selected,
         pressed && !selected && styles.pressed,
-        pressed && pressScale,
+        pressed && pressOffset,
         style,
       ]}
     >
@@ -56,15 +74,22 @@ const styles = StyleSheet.create({
     minHeight: sizes.touchTarget,
     minWidth: sizes.touchTarget,
     paddingHorizontal: spacing.lg,
-    borderRadius: radius.pill,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  selected: { backgroundColor: colors.secondary, borderColor: colors.secondary },
-  pressed: { backgroundColor: colors.elevated },
+  selected: { backgroundColor: colors.brandTint, borderColor: colors.brand },
+  pressed: { backgroundColor: colors.brandSoft },
   label: { ...typography.bodyStrong, color: colors.text },
-  labelSelected: { color: colors.textOnBrand },
+  labelSelected: { color: colors.brandStrong },
+  tab: { minHeight: sizes.touchTarget, justifyContent: 'flex-end', paddingHorizontal: spacing.xs },
+  tabPressed: { backgroundColor: colors.brandSoft },
+  tabLabel: { ...typography.bodyStrong, color: colors.textSecondary, paddingBottom: spacing.sm },
+  tabLabelSelected: { color: colors.text },
+  // Filete doble ocre (1 + 3 + 1 px) bajo la pestaña activa; la inactiva reserva el alto para no saltar.
+  rule: { height: 5 },
+  ruleSelected: { borderTopWidth: 1, borderBottomWidth: 1, borderColor: colors.brand },
 });

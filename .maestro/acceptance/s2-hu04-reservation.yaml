@@ -22,8 +22,16 @@ tags: [sprint-2, hu-04]
 - waitForAnimationToEnd
 - inputText: "12"
 - hideKeyboard
-- scrollUntilVisible:
-    element: "Guardar reservación"
+# Desliza desde el margen: un arrastre que empieza sobre una caja de texto no mueve el formulario, y
+# el centro de la pantalla (donde desliza scrollUntilVisible) cae sobre la caja de Correo.
+- repeat:
+    times: 8
+    while:
+      notVisible: "Guardar reservación"
+    commands:
+      - swipe:
+          start: 2%, 70%
+          end: 2%, 25%
 - tapOn: "Guardar reservación"
 - scrollUntilVisible:
     element: ".*Escribe un teléfono válido.*"

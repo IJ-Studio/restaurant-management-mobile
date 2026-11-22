@@ -94,7 +94,7 @@ export function DishDetailScreen({ route }: Props) {
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: spacing.xxxl },
-  image: { width: '100%', aspectRatio: 16 / 10, borderRadius: radius.xl },
+  image: { width: '100%', aspectRatio: 16 / 10, borderRadius: radius.md },
   imagePlaceholder: { backgroundColor: colors.brandSoft, alignItems: 'center', justifyContent: 'center' },
   // La tarjeta se monta un poco sobre la foto, como las tarjetas del menú en la web.
   card: { marginTop: -spacing.xxl, marginHorizontal: spacing.sm, padding: spacing.xl },

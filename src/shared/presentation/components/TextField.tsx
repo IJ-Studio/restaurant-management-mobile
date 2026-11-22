@@ -1,10 +1,12 @@
-import { memo, useState, type ReactNode } from 'react';
+import Ionicons from '@expo/vector-icons/Ionicons';
+import { memo, useRef, useState, type ReactNode } from 'react';
 import {
   StyleSheet,
   Text,
   TextInput,
   View,
   type StyleProp,
+  type TextInputInstance,
   type TextInputProps,
   type ViewStyle,
 } from 'react-native';
@@ -12,7 +14,7 @@ import {
 import { colors, radius, sizes, spacing, typography } from '../theme';
 
 interface Props extends Omit<TextInputProps, 'style'> {
-  /** Etiqueta visible sobre el borde; también es el nombre para el lector de pantalla si no se da otro. */
+  /** Etiqueta visible encima del campo; también es el nombre para el lector de pantalla si no se da otro. */
   label: string;
   error?: string;
   /** Elemento a la derecha dentro del campo (p. ej. un botón para mostrar la contraseña). */
@@ -21,8 +23,8 @@ interface Props extends Omit<TextInputProps, 'style'> {
 }
 
 /**
- * Campo de texto con la etiqueta montada sobre el borde, como `input-floating` de la web.
- * Al enfocarse se pinta el anillo naranja; con error, el borde y el mensaje van en rojo.
+ * Campo de texto de DESIGN.md: etiqueta siempre encima, caja de 44 con radio 2 y filete de control.
+ * Al enfocarse se pinta el anillo de foco; con error, el borde y el mensaje (con ícono) van en rojo.
  */
 // memo: solo se vuelve a pintar si cambian sus props.
 export const TextField = memo(function TextField({
@@ -38,9 +40,21 @@ export const TextField = memo(function TextField({
   ...inputProps
 }: Props) {
   const [focused, setFocused] = useState(false);
+  const input = useRef<TextInputInstance>(null);
 
   return (
-    <View style={[styles.container, style]}>
+    <View style={style}>
+      {/* El TextInput ya lleva la etiqueta; la visible se oculta al lector para no leerla dos veces.
+          Tocarla enfoca el campo, como un <label for> de la web. */}
+      <Text
+        onPress={() => input.current?.focus()}
+        suppressHighlighting
+        style={[styles.label, !!error && styles.labelInvalid]}
+        importantForAccessibility="no"
+        accessibilityElementsHidden
+      >
+        {label}
+      </Text>
       <View
         style={[
           styles.field,
@@ -51,6 +65,7 @@ export const TextField = memo(function TextField({
       >
         <TextInput
           {...inputProps}
+          ref={input}
           editable={editable}
           multiline={multiline}
           accessibilityLabel={accessibilityLabel ?? label}
@@ -68,54 +83,45 @@ export const TextField = memo(function TextField({
         />
         {right}
       </View>
-      {/* El TextInput ya lleva la etiqueta; la visible se oculta al lector para no leerla dos veces. */}
-      <Text
-        style={[styles.label, focused && styles.labelFocused, !!error && styles.labelInvalid]}
-        importantForAccessibility="no"
-        accessibilityElementsHidden
-      >
-        {label}
-      </Text>
-      {error && <Text style={styles.error}>{error}</Text>}
+      {error && (
+        <View style={styles.errorRow}>
+          <Ionicons
+            name="alert-circle-outline"
+            size={16}
+            color={colors.danger}
+            importantForAccessibility="no"
+          />
+          <Text style={styles.error}>{error}</Text>
+        </View>
+      )}
     </View>
   );
 });
 
-const LABEL_OFFSET = spacing.sm + spacing.xxs;
-
 const styles = StyleSheet.create({
-  // El margen superior deja lugar a la mitad de la etiqueta que sobresale del borde.
-  container: { paddingTop: LABEL_OFFSET },
+  label: { ...typography.label, color: colors.text, marginBottom: spacing.xs + spacing.xxs },
+  labelInvalid: { color: colors.danger },
   field: {
     flexDirection: 'row',
     alignItems: 'center',
     minHeight: sizes.control,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
     borderRadius: radius.sm,
     backgroundColor: colors.surface,
   },
-  focused: { borderColor: colors.brand, boxShadow: `0 0 0 3px ${colors.focusRing}` },
+  // El anillo de foco no ocupa espacio: no mueve el formulario al enfocar.
+  focused: { borderColor: colors.brand, outlineWidth: 2, outlineColor: colors.brandStrong, outlineOffset: 2 },
   invalid: { borderColor: colors.danger },
-  readOnly: { backgroundColor: colors.elevated },
+  readOnly: { backgroundColor: colors.brandSoft },
   input: {
     flex: 1,
     ...typography.body,
     color: colors.text,
-    paddingHorizontal: spacing.lg,
-    paddingVertical: spacing.md,
+    paddingHorizontal: spacing.md + spacing.xxs,
+    paddingVertical: spacing.sm + spacing.xxs,
   },
   multiline: { minHeight: 96, textAlignVertical: 'top' },
-  label: {
-    position: 'absolute',
-    top: 0,
-    left: spacing.md,
-    paddingHorizontal: spacing.xs,
-    backgroundColor: colors.surface,
-    ...typography.caption,
-    color: colors.textSecondary,
-  },
-  labelFocused: { color: colors.brandStrong },
-  labelInvalid: { color: colors.danger },
-  error: { ...typography.caption, color: colors.danger, marginTop: spacing.xs, marginLeft: spacing.xs },
+  errorRow: { flexDirection: 'row', alignItems: 'flex-start', gap: spacing.xs, marginTop: spacing.xs },
+  error: { ...typography.caption, color: colors.danger, flexShrink: 1 },
 });

@@ -4,7 +4,7 @@ import {
   DMSans_600SemiBold,
   DMSans_700Bold,
 } from '@expo-google-fonts/dm-sans';
-import { Fraunces_600SemiBold, Fraunces_700Bold } from '@expo-google-fonts/fraunces';
+import { Fraunces_400Regular, Fraunces_500Medium } from '@expo-google-fonts/fraunces';
 
 import { fonts } from './typography';
 
@@ -13,8 +13,8 @@ import { fonts } from './typography';
  * pantallas (y sus pruebas) no carguen los .ttf al importar los tokens.
  */
 export const appFonts = {
-  [fonts.display]: Fraunces_700Bold,
-  [fonts.displayMedium]: Fraunces_600SemiBold,
+  [fonts.display]: Fraunces_400Regular,
+  [fonts.displayMedium]: Fraunces_500Medium,
   [fonts.regular]: DMSans_400Regular,
   [fonts.medium]: DMSans_500Medium,
   [fonts.semibold]: DMSans_600SemiBold,

@@ -7,7 +7,7 @@ import { Button } from '../../../shared/presentation/components/Button';
 import { Chip } from '../../../shared/presentation/components/Chip';
 import { Notice } from '../../../shared/presentation/components/Notice';
 import { TextField } from '../../../shared/presentation/components/TextField';
-import { colors, pressScale, radius, sizes, spacing, typography } from '../../../shared/presentation/theme';
+import { colors, pressOffset, radius, sizes, spacing, typography } from '../../../shared/presentation/theme';
 import { DELAY_MINUTES, INCIDENT_TYPES } from '../domain/Kitchen';
 import { useReportIncident } from './viewmodels';
 
@@ -39,13 +39,13 @@ export function ReportIncidentScreen() {
                 accessibilityRole="radio"
                 accessibilityState={{ selected }}
                 accessibilityLabel={option.label}
-                style={({ pressed }) => [styles.type, selected && styles.typeSelected, pressed && pressScale]}
+                style={({ pressed }) => [
+                  styles.type,
+                  selected && styles.typeSelected,
+                  pressed && pressOffset,
+                ]}
               >
-                <Ionicons
-                  name={option.icon as IconName}
-                  size={24}
-                  color={selected ? colors.textOnBrand : colors.brandStrong}
-                />
+                <Ionicons name={option.icon as IconName} size={24} color={colors.brandStrong} />
                 <Text style={[styles.typeText, selected && styles.typeTextSelected]}>{option.label}</Text>
               </Pressable>
             );
@@ -107,17 +107,18 @@ const styles = StyleSheet.create({
     width: TYPE_SIZE,
     minHeight: TYPE_SIZE,
     padding: spacing.sm,
-    borderRadius: radius.lg,
+    borderRadius: radius.sm,
     borderWidth: 1,
-    borderColor: colors.border,
+    borderColor: colors.borderStrong,
     backgroundColor: colors.surface,
     alignItems: 'center',
     justifyContent: 'center',
     gap: spacing.xs,
   },
-  typeSelected: { backgroundColor: colors.brandStrong, borderColor: colors.brandStrong },
+  // Seleccionado: tinte y filete de acento, como Chip (el relleno sólido queda para el botón primario).
+  typeSelected: { backgroundColor: colors.brandTint, borderColor: colors.brand },
   typeText: { ...typography.caption, color: colors.text, textAlign: 'center' },
-  typeTextSelected: { color: colors.textOnBrand },
+  typeTextSelected: { color: colors.brandStrong },
   chips: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.sm, minHeight: sizes.touchTarget },
   field: { marginTop: spacing.xl },
   notice: { marginTop: spacing.lg },

@@ -5,6 +5,7 @@ import { Linking, Pressable, ScrollView, StyleSheet, Text, View } from 'react-na
 import { legalLinks } from '../../../../core/config/legalLinks';
 import { Button } from '../../../../shared/presentation/components/Button';
 import { Card } from '../../../../shared/presentation/components/Card';
+import { DoubleRule } from '../../../../shared/presentation/components/DoubleRule';
 import { Notice } from '../../../../shared/presentation/components/Notice';
 import { colors, opacity, spacing, typography } from '../../../../shared/presentation/theme';
 
@@ -32,6 +33,7 @@ export function PrivacyNoticeScreen({ onAccept, onDecline, isAccepting = false, 
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+      <DoubleRule style={styles.rule} />
       <Text style={styles.title} accessibilityRole="header">
         Aviso de privacidad
       </Text>
@@ -92,6 +94,7 @@ export function PrivacyNoticeScreen({ onAccept, onDecline, isAccepting = false, 
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingTop: spacing.xxxl, paddingBottom: spacing.xxxl },
+  rule: { marginBottom: spacing.md },
   title: { ...typography.title, color: colors.text },
   lead: { ...typography.body, color: colors.textSecondary, marginTop: spacing.sm },
   card: { marginTop: spacing.lg, gap: spacing.md },

@@ -12,7 +12,7 @@ import { Notice } from '../../../../shared/presentation/components/Notice';
 import { TextField } from '../../../../shared/presentation/components/TextField';
 import {
   colors,
-  pressScale,
+  pressOffset,
   radius,
   sizes,
   spacing,
@@ -49,7 +49,7 @@ function MiniStep({ symbol, label, onPress }: { symbol: string; label: string; o
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={label}
-      style={({ pressed }) => [styles.miniStep, pressed && styles.miniStepPressed, pressed && pressScale]}
+      style={({ pressed }) => [styles.miniStep, pressed && styles.miniStepPressed, pressed && pressOffset]}
     >
       <Text style={styles.miniStepText}>{symbol}</Text>
     </Pressable>
@@ -70,7 +70,7 @@ function Receipt({
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.receipt}>
       <View style={styles.check} accessibilityElementsHidden importantForAccessibility="no-hide-descendants">
-        <Ionicons name="checkmark" size={44} color={colors.textOnBrand} />
+        <Ionicons name="checkmark" size={44} color={colors.success} />
       </View>
       <Text style={styles.receiptTitle} accessibilityRole="header">
         Cobrado {formatCurrency(receipt.charged)}
@@ -393,10 +393,10 @@ const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   cardCheckout: { marginTop: spacing.lg },
   content: { padding: spacing.lg, paddingBottom: spacing.xxxl },
-  toPay: { ...typography.amount, color: colors.textOnBrand, marginTop: spacing.sm },
+  toPay: { ...typography.amount, color: colors.text, marginTop: spacing.sm },
   toPayHint: {
     ...typography.small,
-    color: colors.textOnBrandMuted,
+    color: colors.textSecondary,
     textAlign: 'center',
     marginTop: spacing.xs,
   },
@@ -428,14 +428,14 @@ const styles = StyleSheet.create({
     width: MINI_STEP,
     height: MINI_STEP,
     margin: (sizes.touchTarget - MINI_STEP) / 2,
-    borderRadius: radius.pill,
-    borderWidth: 1.5,
-    borderColor: colors.brand,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  miniStepPressed: { backgroundColor: colors.brandSoft },
-  miniStepText: { ...typography.subheading, color: colors.brandStrong },
+  miniStepPressed: { backgroundColor: colors.brandSoft, borderColor: colors.brand },
+  miniStepText: { ...typography.subheading, color: colors.brand },
   changeBox: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -443,9 +443,10 @@ const styles = StyleSheet.create({
     marginTop: spacing.md,
     padding: spacing.lg,
     borderRadius: radius.md,
+    borderWidth: 1,
   },
-  changeOk: { backgroundColor: colors.successSoft },
-  changeMissing: { backgroundColor: colors.dangerSoft },
+  changeOk: { backgroundColor: colors.successSoft, borderColor: colors.success },
+  changeMissing: { backgroundColor: colors.dangerSoft, borderColor: colors.danger },
   changeBoxLabel: { ...typography.subheading, color: colors.success },
   changeBoxValue: { ...typography.title, color: colors.success },
   missingText: { color: colors.danger },
@@ -458,8 +459,11 @@ const styles = StyleSheet.create({
     alignSelf: 'center',
     width: CHECK_SIZE,
     height: CHECK_SIZE,
+    // Sello de confirmación: contorno y tinte de éxito, sin relleno sólido.
     borderRadius: radius.pill,
-    backgroundColor: colors.success,
+    borderWidth: 1,
+    borderColor: colors.success,
+    backgroundColor: colors.successSoft,
     alignItems: 'center',
     justifyContent: 'center',
   },

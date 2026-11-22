@@ -9,7 +9,7 @@ import { LoadingState } from '../../../../shared/presentation/components/Loading
 import { Notice } from '../../../../shared/presentation/components/Notice';
 import { SectionTitle } from '../../../../shared/presentation/components/SectionTitle';
 import { TextField } from '../../../../shared/presentation/components/TextField';
-import { colors, spacing, typography } from '../../../../shared/presentation/theme';
+import { colors, fonts, radius, spacing, typography } from '../../../../shared/presentation/theme';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import { properName, sentenceCase } from '../../../../shared/utils/formatCase';
 import {
@@ -265,11 +265,14 @@ const styles = StyleSheet.create({
     gap: spacing.xs,
     marginTop: spacing.sm,
     padding: spacing.sm,
-    borderRadius: 8,
-    backgroundColor: colors.surface,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
   },
   calcText: { ...typography.caption, color: colors.textMuted },
-  calcKey: { ...typography.caption, color: colors.text, fontFamily: 'monospace' },
-  calcValue: { ...typography.caption, color: colors.text, fontFamily: 'monospace' },
-  bold: { fontWeight: '700' },
+  // Cifras tabulares de DM Sans en lugar de monoespaciada: alinean igual y siguen el sistema.
+  calcKey: { ...typography.caption, color: colors.text },
+  calcValue: { ...typography.caption, color: colors.text },
+  bold: { fontFamily: fonts.semibold },
 });

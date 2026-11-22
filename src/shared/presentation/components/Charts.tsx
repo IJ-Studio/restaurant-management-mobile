@@ -32,7 +32,7 @@ interface HourlyProps {
   emptyMessage?: string;
 }
 
-/** Barras verticales por hora del día; la hora pico va en naranja de marca. */
+/** Barras verticales por hora del día; la hora pico va en acento. */
 export function HourlyBars({ values, format, emptyMessage = 'Sin cobros todavía.' }: HourlyProps) {
   const hours = activeHours(values);
   if (hours.length === 0) return <Text style={styles.empty}>{emptyMessage}</Text>;
@@ -163,18 +163,20 @@ const styles = StyleSheet.create({
   barOn: { backgroundColor: colors.borderStrong },
   barOff: { backgroundColor: colors.subtle },
   barPeak: { backgroundColor: colors.brand },
-  barLabel: { ...typography.badge, color: colors.textSecondary, marginTop: spacing.xs },
+  barLabel: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs },
   rows: { gap: spacing.md },
   row: { flexDirection: 'row', alignItems: 'center', gap: spacing.md },
   avatar: {
     width: AVATAR,
     height: AVATAR,
-    borderRadius: radius.pill,
-    backgroundColor: colors.subtle,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.border,
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
   },
-  avatarFirst: { backgroundColor: colors.brandSoft },
+  avatarFirst: { backgroundColor: colors.brandTint, borderColor: colors.brand },
   avatarText: { ...typography.bodyStrong, color: colors.textSecondary },
   avatarTextFirst: { color: colors.brandStrong },
   rowBody: { flex: 1 },
@@ -186,8 +188,8 @@ const styles = StyleSheet.create({
   },
   rowLabel: { ...typography.bodyStrong, color: colors.text, flexShrink: 1 },
   rowValue: { ...typography.bodyStrong, color: colors.text },
-  track: { height: TRACK, borderRadius: radius.pill, backgroundColor: colors.subtle, overflow: 'hidden' },
-  fill: { height: TRACK, borderRadius: radius.pill, backgroundColor: colors.borderStrong },
+  track: { height: TRACK, borderRadius: radius.sm, backgroundColor: colors.subtle, overflow: 'hidden' },
+  fill: { height: TRACK, borderRadius: radius.sm, backgroundColor: colors.borderStrong },
   fillFirst: { backgroundColor: colors.brand },
   rowDetail: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xxs },
 });

@@ -3,14 +3,7 @@ import { Pressable, StyleSheet, Text, View } from 'react-native';
 
 import { Button } from '../../../../shared/presentation/components/Button';
 import { StatusBadge } from '../../../../shared/presentation/components/StatusBadge';
-import {
-  colors,
-  pressScale,
-  radius,
-  shadows,
-  spacing,
-  typography,
-} from '../../../../shared/presentation/theme';
+import { colors, pressOffset, radius, spacing, typography } from '../../../../shared/presentation/theme';
 import { formatCurrency } from '../../../../shared/utils/formatCurrency';
 import {
   KITCHEN_STATUSES,
@@ -61,7 +54,7 @@ export function OrderCard({ order, onPress, action, showAllItems = false, now = 
         accessibilityRole={onPress ? 'button' : undefined}
         accessibilityLabel={`${order.place}, ${status}, ${order.customer}, ${total}`}
         accessibilityHint={onPress ? 'Abre el detalle del pedido' : undefined}
-        style={({ pressed }) => [styles.body, pressed && styles.pressed, pressed && pressScale]}
+        style={({ pressed }) => [styles.body, pressed && styles.pressed, pressed && pressOffset]}
       >
         <View style={styles.header}>
           <Text style={styles.place} numberOfLines={1}>
@@ -100,7 +93,7 @@ export function OrderCard({ order, onPress, action, showAllItems = false, now = 
         </View>
         <View style={styles.footer}>
           <Text style={styles.total}>{total}</Text>
-          {onPress && <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />}
+          {onPress && <Ionicons name="chevron-forward" size={14} color={colors.textMuted} />}
         </View>
       </Pressable>
       {action && (
@@ -119,15 +112,15 @@ export function OrderCard({ order, onPress, action, showAllItems = false, now = 
 const styles = StyleSheet.create({
   card: {
     backgroundColor: colors.surface,
-    borderRadius: radius.lg,
-    borderWidth: StyleSheet.hairlineWidth,
+    borderRadius: radius.md,
+    borderWidth: 1,
     borderColor: colors.border,
     overflow: 'hidden',
-    ...shadows.card,
   },
-  lateCard: { borderColor: colors.danger, borderWidth: 1.5 },
+  // Pedido atrasado: filete y tinte de error (el estado cambia relleno y filete, no solo el color).
+  lateCard: { borderColor: colors.danger, backgroundColor: colors.dangerSoft },
   body: { padding: spacing.lg },
-  pressed: { backgroundColor: colors.elevated },
+  pressed: { backgroundColor: colors.brandSoft },
   header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', gap: spacing.sm },
   place: { ...typography.heading, color: colors.text, flexShrink: 1 },
   metaRow: {
@@ -148,6 +141,8 @@ const styles = StyleSheet.create({
     marginTop: spacing.sm,
     padding: spacing.sm,
     borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.warning,
     backgroundColor: colors.warningSoft,
   },
   alertText: { ...typography.caption, color: colors.warning, flex: 1 },

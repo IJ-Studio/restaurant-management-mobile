@@ -238,7 +238,7 @@ const ICON = 64;
 const styles = StyleSheet.create({
   container: { flex: 1, backgroundColor: colors.background },
   content: { padding: spacing.lg, paddingBottom: spacing.xxxl },
-  heroHint: { ...typography.small, color: colors.textOnBrandMuted, marginTop: spacing.xs },
+  heroHint: { ...typography.caption, color: colors.textSecondary, marginTop: spacing.xs },
   stats: { flexDirection: 'row', flexWrap: 'wrap', gap: spacing.md, marginTop: spacing.lg },
   stat: { flexGrow: 1, flexBasis: '45%' },
   section: {
@@ -249,9 +249,15 @@ const styles = StyleSheet.create({
   },
   card: { paddingTop: spacing.md },
   field: { marginTop: spacing.lg },
-  diff: { marginTop: spacing.md, padding: spacing.md, borderRadius: radius.md, alignItems: 'center' },
-  diffOk: { backgroundColor: colors.successSoft },
-  diffWarn: { backgroundColor: colors.warningSoft },
+  diff: {
+    marginTop: spacing.md,
+    padding: spacing.md,
+    borderRadius: radius.md,
+    borderWidth: 1,
+    alignItems: 'center',
+  },
+  diffOk: { backgroundColor: colors.successSoft, borderColor: colors.success },
+  diffWarn: { backgroundColor: colors.warningSoft, borderColor: colors.warning },
   diffText: { ...typography.subheading },
   diffOkText: { color: colors.success },
   diffWarnText: { color: colors.warning },
@@ -261,7 +267,9 @@ const styles = StyleSheet.create({
   icon: {
     width: ICON,
     height: ICON,
-    borderRadius: radius.pill,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
     backgroundColor: colors.brandSoft,
     alignItems: 'center',
     justifyContent: 'center',

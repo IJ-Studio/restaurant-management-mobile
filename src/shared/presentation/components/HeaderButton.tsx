@@ -1,28 +1,34 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import type { ComponentProps } from 'react';
-import { Pressable, StyleSheet, Text } from 'react-native';
+import { Pressable, StyleSheet, Text, type StyleProp, type ViewStyle } from 'react-native';
 
-import { colors, pressScale, radius, sizes, spacing, typography } from '../theme';
+import { colors, pressOffset, radius, sizes, spacing, typography } from '../theme';
 
 interface Props {
   label: string;
-  icon: ComponentProps<typeof Ionicons>['name'];
+  icon?: ComponentProps<typeof Ionicons>['name'];
   onPress: () => void;
   accessibilityLabel?: string;
+  style?: StyleProp<ViewStyle>;
 }
 
-/** Botón compacto para el encabezado de navegación (ícono + texto en una pastilla). */
-export function HeaderButton({ label, icon, onPress, accessibilityLabel }: Props) {
+/**
+ * Acceso rápido (cabeceras y módulos del Dashboard): caja de control con radio 2, filete de control,
+ * 44 de alto y chevron que indica que lleva a otra pantalla.
+ */
+export function HeaderButton({ label, icon, onPress, accessibilityLabel, style }: Props) {
   return (
     <Pressable
       onPress={onPress}
       accessibilityRole="button"
       accessibilityLabel={accessibilityLabel ?? label}
-      hitSlop={spacing.sm}
-      style={({ pressed }) => [styles.button, pressed && styles.pressed, pressed && pressScale]}
+      style={({ pressed }) => [styles.button, pressed && styles.pressed, pressed && pressOffset, style]}
     >
-      <Ionicons name={icon} size={16} color={colors.brandStrong} />
-      <Text style={styles.label}>{label}</Text>
+      {icon && <Ionicons name={icon} size={16} color={colors.brand} />}
+      <Text style={styles.label} numberOfLines={1}>
+        {label}
+      </Text>
+      <Ionicons name="chevron-forward" size={14} color={colors.textMuted} style={styles.chevron} />
     </Pressable>
   );
 }
@@ -31,12 +37,17 @@ const styles = StyleSheet.create({
   button: {
     flexDirection: 'row',
     alignItems: 'center',
-    gap: spacing.xs,
-    minHeight: sizes.touchTarget - spacing.sm,
+    gap: spacing.xs + spacing.xxs,
+    minHeight: sizes.touchTarget,
     paddingHorizontal: spacing.md,
-    borderRadius: radius.pill,
-    backgroundColor: colors.brandSoft,
+    borderRadius: radius.sm,
+    borderWidth: 1,
+    borderColor: colors.borderStrong,
+    backgroundColor: colors.surface,
   },
-  pressed: { backgroundColor: colors.border },
-  label: { ...typography.caption, color: colors.brandStrong },
+  pressed: { backgroundColor: colors.brandSoft, borderColor: colors.brand },
+  label: { ...typography.caption, color: colors.text, flexShrink: 1 },
+  // Margen automático y no flexGrow en la etiqueta: con flexGrow, Yoga mide cada acceso a todo lo ancho
+  // dentro de una fila con flexWrap y el contenedor reserva una línea por acceso (hueco en el Dashboard).
+  chevron: { marginLeft: 'auto' },
 });
