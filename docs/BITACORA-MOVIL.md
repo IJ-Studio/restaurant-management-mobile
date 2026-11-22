@@ -8,7 +8,7 @@ grep -n '\[rubrica\]' docs/BITACORA-MOVIL.md
 ```
 
 Etiquetas: `[plan]` `[rubrica]` `[gh-project]` `[decision]` `[api]` `[movil]` `[web]` `[bd]` `[entorno]`
-`[equipo]` `[pruebas]` `[rendimiento]` `[seguridad]` `[pagos]` `[facturacion]` `[validaciones]` `[datos]`.
+`[equipo]` `[pruebas]` `[rendimiento]` `[seguridad]` `[pagos]` `[facturacion]` `[validaciones]` `[datos]` `[ci]` `[play]`.
 
 ---
 
@@ -566,3 +566,26 @@ versionado `_entrada/reportes/pruebas-division-facturacion-pagos.md`):
 - **Decisión:** se conservan carta, paquetes, mesas, horarios, configuración, textos y catálogos, y 3 cuentas. Lo dudoso (empleados, nómina, inventario, proveedores, cupones, ventas, auditoría) se conserva hasta que Irving lo confirme.
 - Probado de ida y vuelta en una copia local: la reversa deja las 30 tablas afectadas idénticas (md5). No se ejecutó en producción.
 
+
+## B-043 · 2026-11-19 · Aprobaciones descartadas por el merge-base y pila fusionada [equipo] [ci] [plan] [decision]
+
+- **Síntoma:** José aprobó #483 cuatro veces (14, 15 y 19-nov) y GitHub descartó cada aprobación a los pocos segundos con «The merge-base changed after approval», sin ningún push a la rama.
+- **Causa:** #453 entró a `develop` con *merge commit* (`cfea9f4`, sin cambios de archivos). Los PRs abiertos conservaban como base `d3b140d`, así que `develop` iba un commit por delante. Con `dismiss_stale_reviews_on_push`, cada aprobación recalculaba el merge-base, lo veía distinto y la descartaba.
+- **Decisión:** antes de pedir una aprobación, `develop` debe ser ancestro de la cabeza del PR; si no, `gh pr update-branch` (merge sin reescribir historia) y después la aprobación. Un solo PR en vuelo a la vez.
+- **Resultado (19-nov):**
+  - #483 actualizado (`8ee2326`), CI 10/10, aprobado por José sobre esa cabeza y fusionado (`9de4a12`). #454–#482 quedaron fusionados con él (29/29).
+  - #484 (regresión nocturna, de José): revisado (solo lectura, `contents: read`, sin secretos ni `pull_request_target`), actualizado, aprobado por Irving y fusionado (`d2f5123`).
+  - #485 (B-038 a B-042): actualizado, CI 10/10, aprobado y fusionado por José (`00abc31`).
+  - `develop` pasa `tsc` y ESLint sin avisos. Jest sobre el mismo contenido: 726 pasan y 8 omitidas (7 archivos vencen el tiempo de 5 s con workers en paralelo en una máquina de 5,6 GB y pasan en serie; en CI, verde).
+- **Sin fusionar a propósito:** dependabot #441, #443–#446 y #486. Menores o parches: #443, #444, #445, #486. Mayores, solo CI y pruebas: #441 (`upload-artifact` v6) y #446 (`jest-junit` 17, Node ≥ 20). Ninguno toca módulos nativos de Expo 58 / RN 0.88.
+- **`main`** solo tiene el commit inicial y no comparte historia con `develop`; un release necesita una rama `release/*` con `--allow-unrelated-histories`. No se hizo.
+
+## B-044 · 2026-11-21 · Auditoría del API y del esquema de producción; móvil lista para Play 1.1.0 [api] [bd] [web] [movil] [play] [decision]
+
+- **API:** `develop` y `main` tienen el mismo árbol: no había nada que liberar y no se hizo release.
+- **Esquema de producción** (solo lectura: `BEGIN TRANSACTION READ ONLY` + `ROLLBACK`), comparado con el de Drizzle cargado en una base local desechable: mismas 65 tablas y 5 vistas, sin diferencias de columnas, tipos, nulabilidad, FK, PK, UNIQUE ni enums. Solo diferencias de forma: 30 defaults `0` frente a `'0'::numeric`, `CURRENT_DATE` frente a `now()` en `nomina_movimientos.fecha`, 13 CHECK de más en producción (coinciden con lo que valida el API) y 2 índices `DESC` frente a `DESC NULLS LAST`.
+- **SQL manuales sin aplicar** (`src/database/sql/` del API): `normalizacion-b` y `telefonos-e164` solo cambian datos y `codigos-verificacion` es solo diseño. Ninguno hace falta.
+- **Contrato:** la web usa 86 endpoints y la móvil 65; todos existen en `main`. **La base de producción sirve al 100 % a la web y a la móvil.**
+- **Trampa:** no correr nunca `drizzle-kit migrate` contra producción: su registro no corresponde al `0000` del repo e intentaría aplicarlo completo.
+- **Móvil:** el pulido (#487) entró a `develop` (`de5df67`), aprobado y fusionado por José. Borrador de la declaración de seguridad de los datos en `docs/play/DATA-SAFETY-BORRADOR.md`. Lo marcado CONFIRMAR lo decide Irving antes de enviarlo, y también si el build incluye Sentry. Los cierres nativos de Android llegan a Sentry aunque la persona apague «Reportes de errores», porque ese filtro solo cubre JavaScript.
+- Sin tags, sin `eas build` ni `eas submit` y sin subir nada a Play: eso lo hace Irving.
