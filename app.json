@@ -54,6 +54,7 @@
         }
       ],
       "./plugins/with-lint-release-off",
+      "./plugins/with-portrait-opcional",
       [
         "expo-build-properties",
         {
