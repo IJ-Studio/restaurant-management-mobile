@@ -174,7 +174,7 @@ jobs:
           ./gitleaks git --redact --verbose --no-banner .
       # SAST que pide la rúbrica: Semgrep (reglas de JavaScript, TypeScript, React y secretos) y
       # mobsfscan (reglas móviles de MobSF). Falla con cualquier hallazgo de severidad ERROR.
-      - uses: actions/setup-python@v6
+      - uses: actions/setup-python@v7
         with:
           python-version: '3.12'
       # Cada uno en su propio entorno (pipx): fijan versiones distintas de las mismas dependencias.
